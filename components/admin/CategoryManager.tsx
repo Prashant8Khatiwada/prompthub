@@ -13,18 +13,22 @@ export default function CategoryManager() {
     fetchCategories()
   }, [])
 
+  const [error, setError] = useState<string | null>(null)
+
   async function fetchCategories() {
     try {
       const res = await fetch('/api/categories')
       const data = await res.json()
-      if (Array.isArray(data)) {
+      if (res.status === 400 && (data.error?.includes('categories') || data.message?.includes('categories'))) {
+        setError('table_missing')
+        setCategories([])
+      } else if (Array.isArray(data)) {
         setCategories(data)
+        setError(null)
       } else {
-        console.error('Expected array of categories, got:', data)
         setCategories([])
       }
     } catch (err) {
-      console.error('Failed to fetch categories:', err)
       setCategories([])
     } finally {
       setLoading(false)
@@ -53,6 +57,43 @@ export default function CategoryManager() {
   }
 
   if (loading) return <div className="animate-pulse space-y-4"><div className="h-10 bg-zinc-800 rounded-xl w-full" /></div>
+
+  if (error === 'table_missing') {
+    return (
+      <div className="p-10 rounded-[3rem] bg-indigo-500/5 border border-indigo-500/10 text-center space-y-6 animate-in fade-in zoom-in duration-500">
+        <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto text-4xl shadow-2xl shadow-indigo-500/20">🚧</div>
+        <div className="space-y-2">
+          <h3 className="text-2xl font-black text-white tracking-tight">Database Setup Required</h3>
+          <p className="text-zinc-500 text-sm max-w-md mx-auto leading-relaxed">
+            The professional <span className="text-indigo-400 font-bold">categories</span> system requires a quick table setup in your Supabase dashboard.
+          </p>
+        </div>
+        <div className="bg-zinc-950 p-6 rounded-[2rem] border border-zinc-800 text-left overflow-hidden relative group">
+          <div className="absolute top-4 right-4 text-[8px] font-black uppercase tracking-widest text-zinc-600 group-hover:text-indigo-400 transition-colors">SQL Editor</div>
+          <pre className="text-[10px] text-zinc-500 font-mono leading-relaxed">
+            {`CREATE TABLE categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  icon TEXT DEFAULT '🎬',
+  featured BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE prompts 
+ADD COLUMN category_id UUID 
+REFERENCES categories(id);`}
+          </pre>
+        </div>
+        <button 
+          onClick={() => fetchCategories()}
+          className="px-10 py-4 bg-indigo-600 text-white font-black rounded-full text-[10px] uppercase tracking-[0.2em] hover:bg-indigo-500 transition-all active:scale-95 shadow-xl shadow-indigo-500/20"
+        >
+          I&apos;ve run the SQL - Check Again
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
