@@ -1,11 +1,6 @@
 import Link from 'next/link'
 
 const AI_TOOLS = ['Midjourney', 'ChatGPT', 'Claude', 'Runway', 'Gemini', 'Pika', 'Kling', 'Veo']
-const GATE_TYPES = [
-  { label: 'Free', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-500/20' },
-  { label: 'Email Gate', color: 'text-blue-400', bg: 'bg-blue-400/10 border-blue-500/20' },
-  { label: 'Paid', color: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-500/20' },
-]
 
 const MOCK_PROMPTS = [
   { title: 'Cinematic Photo Enhance', tool: 'Midjourney', type: 'Image', gate: 'Free', views: '12.4k', copies: '3.2k' },
@@ -260,7 +255,7 @@ export default function LandingPage() {
           <div className="text-center mb-20">
             <p className="text-indigo-400 font-semibold text-sm uppercase tracking-widest mb-3">Features</p>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Built for the Modern Creator</h2>
-            <p className="text-zinc-400 max-w-xl mx-auto">Everything you need to turn your prompt engineering into a professional brand — nothing you don't.</p>
+            <p className="text-zinc-400 max-w-xl mx-auto">Everything you need to turn your prompt engineering into a professional brand — nothing you don&apos;t.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -303,7 +298,7 @@ export default function LandingPage() {
             {TESTIMONIALS.map((t, i) => (
               <div key={i} className="p-8 rounded-3xl bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col gap-6">
                 <div className="flex text-amber-400 gap-1 text-sm">{'★★★★★'}</div>
-                <p className="text-zinc-300 leading-relaxed flex-1">"{t.text}"</p>
+                <p className="text-zinc-300 leading-relaxed flex-1">&quot;{t.text}&quot;</p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ backgroundColor: t.color }}>
                     {t.avatar}
@@ -325,7 +320,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <p className="text-indigo-400 font-semibold text-sm uppercase tracking-widest mb-3">Pricing</p>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Simple, transparent pricing</h2>
-            <p className="text-zinc-400">Start free. Upgrade when you're ready to grow.</p>
+            <p className="text-zinc-400">Start free. Upgrade when you&apos;re ready to grow.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
             {PRICING.map((plan, i) => (
@@ -382,7 +377,7 @@ export default function LandingPage() {
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">a better home.</span>
           </h2>
           <p className="text-zinc-400 text-lg md:text-xl mb-12 max-w-xl mx-auto">
-            Join thousands of AI creators who've stopped leaving money on the table.
+            Join thousands of AI creators who&apos;ve stopped leaving money on the table.
           </p>
           <Link
             href="/login"
