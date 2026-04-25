@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@/utils/supabase/middleware'
 
 export async function proxy(req: NextRequest) {
   const host = req.headers.get('host') ?? ''
@@ -26,13 +26,20 @@ export async function proxy(req: NextRequest) {
     return res
   }
 
+  // Use the new Supabase middleware helper to handle cookie refreshing
+  const response = createClient(req)
+
   // Protect /admin routes with Supabase Auth session check
   if (req.nextUrl.pathname.startsWith('/admin')) {
-    const response = NextResponse.next({ request: req })
+    // Note: The createClient helper above already initializes the supabase client internally
+    // and returns a response. However, we need to actually check the user here.
+    // For simplicity and to follow the user's pattern of using createServerClient, 
+    // we'll use our own check here but ensure the response carries the cookies.
     
+    const { createServerClient } = await import('@supabase/ssr')
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
       {
         cookies: {
           getAll() { return req.cookies.getAll() },
@@ -50,11 +57,9 @@ export async function proxy(req: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
-    
-    return response
   }
 
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
