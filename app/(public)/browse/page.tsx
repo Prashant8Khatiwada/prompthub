@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Prompt, Creator, Category } from '@/types'
 
@@ -10,19 +9,10 @@ interface PromptWithDetails extends Prompt {
   categories: Pick<Category, 'name' | 'icon'>
 }
 
-export default async function CategoryPage({ params }: { params: { slug: string } }) {
+export default async function BrowsePage() {
   const supabase = await createClient()
 
-  // 1. Fetch Category info
-  const { data: category } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('slug', params.slug)
-    .single() as { data: Category | null }
-
-  if (!category) notFound()
-
-  // 2. Fetch Prompts in this category
+  // Fetch all published prompts
   const { data: prompts } = await supabase
     .from('prompts')
     .select(`
@@ -31,18 +21,14 @@ export default async function CategoryPage({ params }: { params: { slug: string 
       categories (name, icon)
     `)
     .eq('status', 'published')
-    .eq('category_id', category.id)
     .order('created_at', { ascending: false }) as { data: PromptWithDetails[] | null }
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white pt-32 pb-20 px-6">
       <div className="max-w-7xl mx-auto">
         <header className="mb-16 space-y-4">
-          <div className="flex items-center gap-4">
-             <span className="text-5xl">{category.icon || '📁'}</span>
-             <h1 className="text-4xl md:text-6xl font-black tracking-tight">{category.name}</h1>
-          </div>
-          <p className="text-zinc-500 text-lg max-w-2xl font-medium">{category.description || `The best AI prompts for ${category.name}.`}</p>
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight">Browse All <span className="text-indigo-500">Prompts</span></h1>
+          <p className="text-zinc-500 text-lg max-w-2xl font-medium">Explore our entire collection of community-verified AI prompts for the next generation of content.</p>
         </header>
 
         {prompts && prompts.length > 0 ? (
@@ -53,7 +39,7 @@ export default async function CategoryPage({ params }: { params: { slug: string 
                   {p.thumbnail_url ? (
                     <img src={p.thumbnail_url} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   ) : (
-                    <div className="text-6xl opacity-20">{category.icon || '🎬'}</div>
+                    <div className="text-6xl opacity-20">{p.categories?.icon || '🎬'}</div>
                   )}
                   {(p.video_url || p.embed_html) && (
                     <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10">
@@ -65,7 +51,7 @@ export default async function CategoryPage({ params }: { params: { slug: string 
 
                 <div className="p-6 space-y-4">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{category.name}</span>
+                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{p.categories?.name}</span>
                     <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">by {p.creators?.subdomain}</span>
                   </div>
                   <h3 className="text-lg font-bold text-white leading-tight h-12 line-clamp-2">{p.title}</h3>
@@ -78,7 +64,7 @@ export default async function CategoryPage({ params }: { params: { slug: string 
           </div>
         ) : (
           <div className="text-center py-20 bg-zinc-900/20 rounded-[3rem] border border-dashed border-zinc-800 text-zinc-500 font-medium">
-            No prompts found in this category yet.
+            No prompts found. Check back soon!
           </div>
         )}
       </div>

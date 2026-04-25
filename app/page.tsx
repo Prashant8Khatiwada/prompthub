@@ -6,30 +6,12 @@ import type { Prompt, Creator, Category } from '@/types'
 export const revalidate = 60
 
 export const metadata: Metadata = {
-  title: 'PromptHub | Premium AI Prompts for Content Creators',
-  description: 'The discovery hub for viral AI prompts. Copy high-performing prompts for Midjourney, Runway, Claude, and more.',
-  openGraph: {
-    title: 'PromptHub | AI Prompt Discovery Hub',
-    description: 'Copy high-performing AI prompts used by top content creators.',
-    type: 'website',
-    url: 'https://prompthub.app',
-  }
-}
-
-const AI_TOOL_COLORS: Record<string, string> = {
-  Midjourney: '#1b6ef3',
-  ChatGPT: '#10a37f',
-  Claude: '#c96442',
-  Gemini: '#4285f4',
-  Runway: '#7c3aed',
-  Pika: '#ec4899',
-  Kling: '#f59e0b',
-  Veo: '#06b6d4',
-  Other: '#6366f1',
+  title: 'PromptHub | The Premier AI Prompt Discovery Platform',
+  description: 'The discovery hub for viral AI prompts. High-performing prompts for Midjourney, Runway, Claude, and more.',
 }
 
 interface PromptWithDetails extends Prompt {
-  creators: Pick<Creator, 'name' | 'handle' | 'subdomain'>
+  creators: Pick<Creator, 'name' | 'handle' | 'subdomain' | 'avatar_url'>
   categories: Pick<Category, 'name' | 'icon'>
 }
 
@@ -43,21 +25,27 @@ export default async function LandingPage() {
     .eq('featured', true)
     .order('name') as { data: Category[] | null }
 
-  // 2. Fetch Featured Prompts with Joins
+  // 2. Fetch Featured Prompts
   const { data: featuredPrompts } = await supabase
     .from('prompts')
     .select(`
       *,
-      creators (name, handle, subdomain),
+      creators (name, handle, subdomain, avatar_url),
       categories (name, icon)
     `)
     .eq('status', 'published')
     .eq('featured', true)
     .order('created_at', { ascending: false })
-    .limit(8) as { data: PromptWithDetails[] | null }
+    .limit(4) as { data: PromptWithDetails[] | null }
+
+  // 3. Fetch Top Creators (Simulated by fetching some creators)
+  const { data: topCreators } = await supabase
+    .from('creators')
+    .select('name, handle, subdomain, avatar_url, bio')
+    .limit(3) as { data: Partial<Creator>[] | null }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-zinc-950 text-white selection:bg-indigo-500/30 font-sans">
       {/* ── NAVBAR ─────────────────────────────────────────── */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -65,148 +53,245 @@ export default async function LandingPage() {
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center font-extrabold text-white shadow-xl shadow-indigo-500/20">
               P
             </div>
-            <span className="text-xl font-bold tracking-tight">Prompt<span className="text-indigo-400">Hub</span></span>
+            <span className="text-xl font-bold tracking-tight text-white">Prompt<span className="text-indigo-400">Hub</span></span>
           </div>
-          <div className="hidden md:flex items-center gap-10 text-sm font-medium text-zinc-400">
-            <a href="#categories" className="hover:text-white transition-colors">Categories</a>
-            <a href="#prompts" className="hover:text-white transition-colors">Featured</a>
-            <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
+          <div className="hidden md:flex items-center gap-10 text-sm font-bold text-zinc-400 uppercase tracking-widest">
+            <Link href="/browse" className="hover:text-white transition-colors">Browse</Link>
+            <a href="#creators" className="hover:text-white transition-colors">Creators</a>
+            <a href="#about" className="hover:text-white transition-colors">About</a>
           </div>
           <Link
-            href="/login"
-            className="rounded-full bg-white px-6 py-2.5 text-sm font-bold text-black hover:bg-zinc-200 transition-all active:scale-95 shadow-xl shadow-white/5"
+            href="/browse"
+            className="rounded-full bg-white px-8 py-3 text-sm font-black text-black hover:bg-zinc-200 transition-all active:scale-95 shadow-xl shadow-white/5 uppercase tracking-widest"
           >
-            Admin Login
+            Explore
           </Link>
         </div>
       </nav>
 
       {/* ── HERO SECTION ───────────────────────────────────── */}
-      <section className="relative pt-40 pb-32 px-6 overflow-hidden">
+      <section className="relative pt-48 pb-32 px-6 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-full -z-10 opacity-30">
-          <div className="absolute top-0 -left-20 w-96 h-96 bg-indigo-600 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-20 -right-20 w-96 h-96 bg-violet-600 rounded-full blur-[120px] animate-pulse delay-700" />
+          <div className="absolute top-20 -left-20 w-[500px] h-[500px] bg-indigo-600 rounded-full blur-[140px] animate-pulse" />
+          <div className="absolute bottom-20 -right-20 w-[500px] h-[500px] bg-violet-600 rounded-full blur-[140px] animate-pulse delay-1000" />
         </div>
 
-        <div className="max-w-5xl mx-auto text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-widest animate-fade-in">
+        <div className="max-w-5xl mx-auto text-center space-y-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] animate-fade-in">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
             </span>
-            Admin Curated Hub
+            The Future of Content Creation
           </div>
-          <h1 className="text-5xl md:text-8xl font-black tracking-tight leading-[0.9] text-white">
-            The Hub for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-400 bg-300% animate-gradient">Viral</span> AI Prompts.
+          <h1 className="text-6xl md:text-9xl font-black tracking-tighter leading-[0.85] text-white">
+            Unlock <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-white to-indigo-400 bg-300% animate-gradient">Viral</span> <br/>AI Magic.
           </h1>
-          <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto font-medium leading-relaxed">
-            Copy high-performing prompts used by top creators. 
+          <p className="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto font-medium leading-relaxed">
+            Access the exclusive prompt library used by the world&apos;s top 1% of content creators. 
             <span className="text-white"> Built for the AI generation.</span>
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <a href="#prompts" className="w-full sm:w-auto rounded-full bg-indigo-600 px-10 py-5 text-base font-bold text-white hover:bg-indigo-500 transition-all shadow-2xl shadow-indigo-500/40 active:scale-95">
-              Start Discovering
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6">
+            <Link href="/browse" className="w-full sm:w-auto rounded-full bg-indigo-600 px-12 py-6 text-sm font-black uppercase tracking-widest text-white hover:bg-indigo-500 transition-all shadow-2xl shadow-indigo-500/40 active:scale-95">
+              Browse Library
+            </Link>
+            <a href="#how-it-works" className="w-full sm:w-auto rounded-full bg-zinc-900 border border-zinc-800 px-12 py-6 text-sm font-black uppercase tracking-widest text-white hover:bg-zinc-800 transition-all active:scale-95">
+              Learn More
             </a>
           </div>
         </div>
       </section>
 
-      {/* ── FEATURED CATEGORIES ─────────────────────────────── */}
-      <section id="categories" className="py-24 px-6 border-y border-white/5 bg-zinc-900/20">
+      {/* ── STATS SECTION ─────────────────────────────────── */}
+      <section className="py-20 border-y border-white/5 bg-white/[0.02]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+            {[
+              { label: 'Prompts', val: '12k+' },
+              { label: 'Creators', val: '450+' },
+              { label: 'Total Downloads', val: '2.5M' },
+              { label: 'Success Rate', val: '98%' },
+            ].map((s, i) => (
+              <div key={i} className="space-y-2">
+                <div className="text-3xl md:text-5xl font-black text-white tracking-tighter">{s.val}</div>
+                <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TOP CATEGORIES ─────────────────────────────────── */}
+      <section id="categories" className="py-32 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-            <div>
-              <p className="text-indigo-400 font-bold text-xs uppercase tracking-[0.2em] mb-3">Browse Topics</p>
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">Prompts by category</h2>
-            </div>
+          <div className="text-center mb-20 space-y-4">
+             <p className="text-indigo-400 font-black text-[10px] uppercase tracking-[0.3em]">Discovery</p>
+             <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">Trending Topics</h2>
           </div>
           
           {featuredCategories && featuredCategories.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               {featuredCategories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/category/${cat.slug}`}
-                  className="group p-6 rounded-[2.5rem] bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 hover:-translate-y-2 transition-all duration-300 text-center block shadow-lg hover:shadow-indigo-500/10"
+                  className="group p-8 rounded-[3rem] bg-zinc-900/40 border border-zinc-800 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all duration-500 text-center block shadow-xl"
                 >
-                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">{cat.icon || '📁'}</div>
-                  <p className="text-sm font-bold text-white leading-snug group-hover:text-indigo-300 transition-colors">{cat.name}</p>
+                  <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-500">{cat.icon || '📁'}</div>
+                  <p className="text-sm font-black text-white uppercase tracking-widest group-hover:text-indigo-400 transition-colors">{cat.name}</p>
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="text-zinc-600 text-center py-10">No categories featured on the landing page yet.</p>
+            <p className="text-zinc-600 text-center py-10">Select featured categories in admin to show them here.</p>
           )}
         </div>
       </section>
 
-      {/* ── FEATURED PROMPTS GRID ──────────────────────────── */}
-      <section id="prompts" className="py-32 px-6">
+      {/* ── EDITOR'S CHOICE (FEATURED PROMPTS) ───────────────── */}
+      <section id="prompts" className="py-32 px-6 bg-zinc-900/30">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-            <div>
-              <p className="text-indigo-400 font-bold text-xs uppercase tracking-[0.2em] mb-3">Editor&apos;s Choice</p>
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">Featured Prompts</h2>
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-10">
+            <div className="space-y-4 text-center md:text-left">
+              <p className="text-indigo-400 font-black text-[10px] uppercase tracking-[0.3em]">Curation</p>
+              <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">Editor&apos;s Choice</h2>
             </div>
+            <Link href="/browse" className="text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-colors border-b border-zinc-800 pb-1">
+              View Entire Library →
+            </Link>
           </div>
 
           {featuredPrompts && featuredPrompts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {featuredPrompts.map((p) => {
-                const toolColor = AI_TOOL_COLORS[p.ai_tool] || '#6366f1'
-                return (
-                  <div key={p.id} className="group rounded-[2rem] border border-zinc-800 bg-zinc-900/40 hover:border-zinc-600 transition-all duration-300 hover:-translate-y-2 overflow-hidden shadow-2xl">
-                    <div className="aspect-[4/3] relative bg-zinc-800 flex items-center justify-center overflow-hidden">
+              {featuredPrompts.map((p) => (
+                <div key={p.id} className="group rounded-[2.5rem] border border-zinc-800 bg-zinc-950 hover:border-zinc-600 transition-all duration-500 hover:-translate-y-2 overflow-hidden shadow-2xl">
+                   <div className="aspect-[4/3] relative bg-zinc-900 overflow-hidden">
                       {p.thumbnail_url ? (
-                        <img src={p.thumbnail_url} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <img src={p.thumbnail_url} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                       ) : (
-                        <div className="text-6xl opacity-20">{p.categories?.icon || '🎬'}</div>
-                      )}
-                      {(p.video_url || p.embed_html) && (
-                        <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10">
-                          <div className="w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse" />
-                          <span className="text-[10px] text-white font-black uppercase tracking-widest">Reel</span>
+                        <div className="w-full h-full flex items-center justify-center text-6xl opacity-10 font-black uppercase tracking-tighter bg-indigo-500/5">
+                           {p.categories?.name}
                         </div>
                       )}
-                    </div>
-
-                    <div className="p-6 space-y-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{p.categories?.name}</span>
-                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">by {p.creators?.subdomain}</span>
+                      {(p.video_url || p.embed_html) && (
+                        <div className="absolute top-6 right-6 flex items-center gap-2 bg-black/80 backdrop-blur-xl rounded-full px-4 py-2 border border-white/10">
+                          <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse" />
+                          <span className="text-[10px] text-white font-black uppercase tracking-[0.2em]">High Impact</span>
+                        </div>
+                      )}
+                   </div>
+                   <div className="p-8 space-y-6">
+                      <div className="flex items-center justify-between">
+                         <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{p.categories?.name}</span>
+                         <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{p.ai_tool}</span>
                       </div>
-                      <h3 className="text-lg font-bold text-white leading-tight h-12 line-clamp-2">{p.title}</h3>
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border" style={{ borderColor: `${toolColor}44`, color: toolColor, background: `${toolColor}11` }}>
-                          {p.ai_tool}
-                        </span>
+                      <h3 className="text-xl font-bold text-white leading-tight h-14 line-clamp-2">{p.title}</h3>
+                      <div className="flex items-center gap-3 pt-2">
+                         <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden">
+                            {p.creators?.avatar_url && <img src={p.creators.avatar_url} alt={p.creators.name} className="w-full h-full object-cover" />}
+                         </div>
+                         <span className="text-xs font-bold text-zinc-500">@{p.creators?.handle}</span>
                       </div>
-                      <Link href={`/${p.creators?.subdomain}/${p.slug}`} className="block w-full text-center rounded-2xl py-4 text-xs font-black uppercase tracking-widest text-white bg-zinc-800 hover:bg-white hover:text-black transition-all duration-300">
-                        View Breakdown →
+                      <Link href={`/${p.creators?.subdomain}/${p.slug}`} className="block w-full text-center rounded-2xl py-5 text-[10px] font-black uppercase tracking-[0.2em] text-white bg-zinc-900 hover:bg-white hover:text-black transition-all duration-500">
+                        View Prompt Breakdown
                       </Link>
-                    </div>
-                  </div>
-                )
-              })}
+                   </div>
+                </div>
+              ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-zinc-900/20 rounded-[3rem] border border-dashed border-zinc-800">
-              <p className="text-zinc-500 font-medium">No prompts featured on the landing page yet.</p>
-              <Link href="/admin/prompts" className="text-indigo-400 mt-4 inline-block font-bold hover:underline underline-offset-4">Manage your prompts →</Link>
+            <div className="text-center py-24 bg-zinc-900/10 rounded-[4rem] border-2 border-dashed border-zinc-800/50">
+              <p className="text-zinc-600 font-bold uppercase tracking-widest">No featured prompts curated yet.</p>
             </div>
           )}
         </div>
       </section>
 
-      {/* ── FOOTER ─────────────────────────────────────────── */}
-      <footer className="py-12 px-6 border-t border-white/5 mt-20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center font-bold text-zinc-400 border border-zinc-800">
-              P
+      {/* ── TOP CREATORS SPOTLIGHT ─────────────────────────── */}
+      <section id="creators" className="py-32 px-6">
+         <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-24 space-y-4">
+               <p className="text-indigo-400 font-black text-[10px] uppercase tracking-[0.3em]">The Artists</p>
+               <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">Creator Spotlight</h2>
             </div>
-            <span className="text-sm font-bold text-zinc-400">© 2024 PromptHub. Admin Curated AI Assets.</span>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+               {topCreators?.map((c, i) => (
+                  <div key={i} className="p-10 rounded-[3.5rem] bg-zinc-900/30 border border-zinc-800 hover:bg-zinc-900/50 transition-all duration-500 space-y-6 text-center">
+                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 mx-auto border-4 border-zinc-950 overflow-hidden shadow-2xl">
+                        {c.avatar_url && <img src={c.avatar_url} alt={c.name} className="w-full h-full object-cover" />}
+                     </div>
+                     <div>
+                        <h3 className="text-2xl font-black text-white">{c.name}</h3>
+                        <p className="text-indigo-400 font-bold text-xs uppercase tracking-widest mt-1">@{c.handle}</p>
+                     </div>
+                     <p className="text-sm text-zinc-500 leading-relaxed line-clamp-3">{c.bio || "Leading AI content creator pushing the boundaries of digital art and cinematic generation."}</p>
+                     <Link href={`/browse`} className="inline-block text-[10px] font-black uppercase tracking-[0.2em] text-white border-b border-indigo-500 pb-1">
+                        View All Prompts
+                     </Link>
+                  </div>
+               ))}
+            </div>
+         </div>
+      </section>
+
+      {/* ── ABOUT / VALUE PROPOSITION ─────────────────────── */}
+      <section id="about" className="py-40 px-6 bg-indigo-600">
+         <div className="max-w-4xl mx-auto text-center space-y-12">
+            <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-tight italic">
+               &quot;The difference between a viral reel and a flop is the prompt.&quot;
+            </h2>
+            <p className="text-xl md:text-2xl text-indigo-100 font-medium leading-relaxed">
+               PromptHub was built to democratize high-end content creation. We verify every prompt against real-world performance metrics so you can create with confidence.
+            </p>
+            <div className="pt-8">
+               <Link href="/browse" className="rounded-full bg-white px-16 py-7 text-sm font-black uppercase tracking-[0.3em] text-indigo-600 hover:bg-zinc-100 transition-all shadow-2xl shadow-black/20">
+                  Join the Hub
+               </Link>
+            </div>
+         </div>
+      </section>
+
+      {/* ── FOOTER ─────────────────────────────────────────── */}
+      <footer className="py-24 px-6 border-t border-white/5 bg-zinc-950">
+        <div className="max-w-7xl mx-auto">
+           <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
+              <div className="space-y-6">
+                 <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center font-bold text-zinc-400 border border-zinc-800">P</div>
+                    <span className="text-sm font-bold text-white">PromptHub</span>
+                 </div>
+                 <p className="text-xs text-zinc-500 leading-relaxed uppercase font-bold tracking-widest">The discovery hub for high-performing AI prompts. Curated by creators, for creators.</p>
+              </div>
+              <div className="space-y-6">
+                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-300">Explore</h4>
+                 <ul className="space-y-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                    <li><Link href="/browse" className="hover:text-white transition-colors">Library</Link></li>
+                    <li><a href="#categories" className="hover:text-white transition-colors">Topics</a></li>
+                    <li><a href="#creators" className="hover:text-white transition-colors">Creators</a></li>
+                 </ul>
+              </div>
+              <div className="space-y-6">
+                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-300">Social</h4>
+                 <ul className="space-y-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                    <li><a href="#" className="hover:text-white transition-colors">Twitter (X)</a></li>
+                    <li><a href="#" className="hover:text-white transition-colors">Instagram</a></li>
+                    <li><a href="#" className="hover:text-white transition-colors">Discord</a></li>
+                 </ul>
+              </div>
+              <div className="space-y-6">
+                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-300">Internal</h4>
+                 <ul className="space-y-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                    <li><Link href="/login" className="hover:text-white transition-colors">Creator Portal</Link></li>
+                 </ul>
+              </div>
+           </div>
+           <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+             <span className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">© 2024 PromptHub Platform. All Rights Reserved.</span>
+             <div className="flex gap-10 text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">
+                <a href="#" className="hover:text-white transition-colors">Terms</a>
+                <a href="#" className="hover:text-white transition-colors">Privacy</a>
+             </div>
+           </div>
         </div>
       </footer>
     </div>
