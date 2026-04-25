@@ -14,10 +14,21 @@ export default function CategoryManager() {
   }, [])
 
   async function fetchCategories() {
-    const res = await fetch('/api/categories')
-    const data = await res.json()
-    setCategories(data)
-    setLoading(false)
+    try {
+      const res = await fetch('/api/categories')
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        setCategories(data)
+      } else {
+        console.error('Expected array of categories, got:', data)
+        setCategories([])
+      }
+    } catch (err) {
+      console.error('Failed to fetch categories:', err)
+      setCategories([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleAdd(e: React.FormEvent) {

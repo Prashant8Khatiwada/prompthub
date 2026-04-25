@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/middleware'
 
-export async function proxy(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   const host = req.headers.get('host') ?? ''
   const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'prompthub.app'
   
