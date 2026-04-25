@@ -63,7 +63,7 @@ export default async function CategoryPage({ params }: Params) {
 
         {prompts && prompts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {prompts.map((p: any) => (
+            {prompts.map((p: { id: string, title: string, ai_tool: string, thumbnail_url: string | null, video_url: string | null, creators: { subdomain: string, name: string } | null, slug: string }) => (
               <div
                 key={p.id}
                 className="group rounded-3xl border border-zinc-800 bg-zinc-900/60 hover:border-zinc-600 transition-all duration-200 hover:-translate-y-1 overflow-hidden"
