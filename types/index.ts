@@ -16,8 +16,20 @@ export interface Creator {
   bio: string | null
   instagram_url: string | null
   tiktok_url: string | null
+  instagram_api_key?: string | null
+  tiktok_api_key?: string | null
   stripe_id: string | null
   plan_tier: PlanTier
+  created_at: string
+}
+
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  icon: string | null
+  image_url: string | null
   created_at: string
 }
 

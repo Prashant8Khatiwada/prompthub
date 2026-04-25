@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const promptSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
-  category: z.enum(['Video Generation', 'Image Creation', 'Brand & Logo', 'Education', 'Scriptwriting', 'Photo Editing', 'Other']),
+  category_id: z.string().uuid('Category is required'),
   description: z.string().max(500).optional().nullable().or(z.literal('')),
   content: z.string().min(1, 'Prompt content is required'),
   ai_tool: z.enum(['Midjourney', 'Claude', 'ChatGPT', 'Gemini', 'Runway', 'Pika', 'Kling', 'Veo', 'Other']),
@@ -27,4 +27,14 @@ export const creatorSettingsSchema = z.object({
   brand_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color'),
   instagram_url: z.string().url().optional().nullable().or(z.literal('')),
   tiktok_url: z.string().url().optional().nullable().or(z.literal('')),
+  instagram_api_key: z.string().optional().nullable().or(z.literal('')),
+  tiktok_api_key: z.string().optional().nullable().or(z.literal('')),
+})
+
+export const categorySchema = z.object({
+  name: z.string().min(1, 'Name is required').max(50),
+  slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
+  description: z.string().max(200).optional().nullable(),
+  icon: z.string().optional().nullable(),
+  image_url: z.string().url().optional().nullable().or(z.literal('')),
 })
