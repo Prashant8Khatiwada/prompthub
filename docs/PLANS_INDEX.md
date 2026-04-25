@@ -1,14 +1,14 @@
 # PromptHub — Phasewise Build Plans Index
 
-> **Project:** PromptHub — A branded prompt-delivery platform for AI content creators  
+> **Project:** PromptHub — A prompt discovery site. Admin posts AI-generated reels on Instagram/TikTok, attaches a PromptHub link, visitors click → see embedded reel + exact prompts used → admin earns through ads.
 > **Stack:** Next.js 16 (App Router) · React 19 · Tailwind CSS v4 · Supabase · TypeScript  
-> **Status:** 🟡 In Progress — Boilerplate only, no feature code yet
+> **Status:** 🟢 Plans 1–3 Complete — On Plan 4
 
 ---
 
 ## What Is PromptHub?
 
-Creators post AI content on Instagram/TikTok. Viewers comment a keyword, get a DM with a branded link. That link lands on a beautiful, mobile-first prompt page on the creator's subdomain (e.g. `milan.prompthub.app/photo-enhance`).
+Admin posts AI content on Instagram/TikTok and drops a PromptHub link in the caption. Visitors click the link and land on a page showing the embedded reel + the exact prompts, tools, and settings used to create it. Prompts are organized by category (Video Generation, Image Creation, Branding, Education, etc.) and can be browsed on the public landing page. Revenue model: ad impressions.
 
 ---
 
@@ -18,13 +18,13 @@ Prompt each plan file serially in this exact order:
 
 | # | Plan File | Focus Area | Status |
 |---|-----------|-----------|--------|
-| 1 | [PLAN_01_FOUNDATION.md](./PLAN_01_FOUNDATION.md) | Project setup, deps, env, DB schema, middleware | ⏳ Pending |
-| 2 | [PLAN_02_PUBLIC_PAGE.md](./PLAN_02_PUBLIC_PAGE.md) | Public prompt page, creator bar, prompt gate, oEmbed | ⏳ Pending |
-| 3 | [PLAN_03_ADMIN_AUTH.md](./PLAN_03_ADMIN_AUTH.md) | Supabase Auth, protected admin routes, login page | ⏳ Pending |
-| 4 | [PLAN_04_PROMPT_CRUD.md](./PLAN_04_PROMPT_CRUD.md) | Admin prompt list, create/edit form, slug logic | ⏳ Pending |
+| 1 | [PLAN_01_FOUNDATION.md](./PLAN_01_FOUNDATION.md) | Project setup, deps, env, DB schema, middleware | ✅ Done |
+| 2 | [PLAN_02_PUBLIC_PAGE.md](./PLAN_02_PUBLIC_PAGE.md) | Public prompt page, creator bar, prompt gate, oEmbed | ✅ Done |
+| 3 | [PLAN_03_ADMIN_AUTH.md](./PLAN_03_ADMIN_AUTH.md) | Supabase Auth, protected admin routes, login page | ✅ Done |
+| 4 | [PLAN_04_PROMPT_CRUD.md](./PLAN_04_PROMPT_CRUD.md) | Admin prompt list, create/edit form with **categories**, slug logic | 🔲 Next |
 | 5 | [PLAN_05_ANALYTICS.md](./PLAN_05_ANALYTICS.md) | Analytics dashboard, charts, event tracking | ⏳ Pending |
 | 6 | [PLAN_06_SETTINGS.md](./PLAN_06_SETTINGS.md) | Creator settings page, avatar upload, branding | ⏳ Pending |
-| 7 | [PLAN_07_POLISH.md](./PLAN_07_POLISH.md) | SEO, performance, error states, final polish | ⏳ Pending |
+| 7 | [PLAN_07_POLISH.md](./PLAN_07_POLISH.md) | Landing page live prompt data, SEO, error states, final polish | ⏳ Pending |
 
 ---
 

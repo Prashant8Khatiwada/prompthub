@@ -1,106 +1,72 @@
 import Link from 'next/link'
 
+// ─── Static mock data for demo sections ───────────────────────────────────────
+
+const CATEGORIES = [
+  { label: 'Video Generation', icon: '🎬', count: 12, color: 'from-violet-500/20 to-indigo-500/20', border: 'border-violet-500/20' },
+  { label: 'Image Creation', icon: '🖼️', count: 28, color: 'from-blue-500/20 to-cyan-500/20', border: 'border-blue-500/20' },
+  { label: 'Brand & Logo', icon: '✨', count: 9, color: 'from-amber-500/20 to-orange-500/20', border: 'border-amber-500/20' },
+  { label: 'Education', icon: '📚', count: 6, color: 'from-emerald-500/20 to-green-500/20', border: 'border-emerald-500/20' },
+  { label: 'Scriptwriting', icon: '📝', count: 14, color: 'from-pink-500/20 to-rose-500/20', border: 'border-pink-500/20' },
+  { label: 'Photo Editing', icon: '🎨', count: 11, color: 'from-indigo-500/20 to-purple-500/20', border: 'border-indigo-500/20' },
+]
+
+const FEATURED_PROMPTS = [
+  {
+    title: 'Cinematic Neon City Reel',
+    category: 'Video Generation',
+    tool: 'Runway',
+    toolColor: '#7c3aed',
+    hasReel: true,
+    thumbnail: null,
+    icon: '🎬',
+    views: '12.4k',
+    slug: 'cinematic-neon-city-reel',
+  },
+  {
+    title: 'Viral Product Photography',
+    category: 'Image Creation',
+    tool: 'Midjourney',
+    toolColor: '#1b6ef3',
+    hasReel: true,
+    thumbnail: null,
+    icon: '🖼️',
+    views: '8.1k',
+    slug: 'viral-product-photography',
+  },
+  {
+    title: 'Logo Animation Pack',
+    category: 'Brand & Logo',
+    tool: 'Pika',
+    toolColor: '#ec4899',
+    hasReel: true,
+    thumbnail: null,
+    icon: '✨',
+    views: '5.7k',
+    slug: 'logo-animation-pack',
+  },
+  {
+    title: 'Educational AI Explainer',
+    category: 'Education',
+    tool: 'ChatGPT',
+    toolColor: '#10a37f',
+    hasReel: false,
+    thumbnail: null,
+    icon: '📚',
+    views: '3.2k',
+    slug: 'educational-ai-explainer',
+  },
+]
+
 const AI_TOOLS = ['Midjourney', 'ChatGPT', 'Claude', 'Runway', 'Gemini', 'Pika', 'Kling', 'Veo']
 
-const MOCK_PROMPTS = [
-  { title: 'Cinematic Photo Enhance', tool: 'Midjourney', type: 'Image', gate: 'Free', views: '12.4k', copies: '3.2k' },
-  { title: 'Brand Logo Generator', tool: 'ChatGPT', type: 'Image', gate: 'Email Gate', views: '8.1k', copies: '2.1k' },
-  { title: 'Viral Reel Script', tool: 'Claude', type: 'Text', gate: 'Paid', views: '5.7k', copies: '1.8k' },
-]
-
-const FEATURES = [
-  {
-    icon: '⚡',
-    title: 'Instant Delivery',
-    desc: 'Viewers comment a keyword, get a DM, land on your branded page — all in seconds.',
-    gradient: 'from-yellow-500/20 to-orange-500/20',
-    border: 'border-yellow-500/10',
-  },
-  {
-    icon: '🎨',
-    title: 'Full Brand Control',
-    desc: 'Custom subdomain, brand colors, avatar, bio. Your page, your rules.',
-    gradient: 'from-indigo-500/20 to-purple-500/20',
-    border: 'border-indigo-500/10',
-  },
-  {
-    icon: '🔒',
-    title: 'Smart Gating',
-    desc: 'Open, email capture, or paid unlock. Grow your list while sharing your best work.',
-    gradient: 'from-blue-500/20 to-cyan-500/20',
-    border: 'border-blue-500/10',
-  },
-  {
-    icon: '📊',
-    title: 'Real-Time Analytics',
-    desc: 'Track views, copies, and conversions. Know exactly what content performs.',
-    gradient: 'from-green-500/20 to-emerald-500/20',
-    border: 'border-green-500/10',
-  },
-  {
-    icon: '🔗',
-    title: 'Social Integration',
-    desc: 'Embed Instagram reels on your page. Connect TikTok, Instagram natively.',
-    gradient: 'from-pink-500/20 to-rose-500/20',
-    border: 'border-pink-500/10',
-  },
-  {
-    icon: '🚀',
-    title: 'SEO Optimized',
-    desc: 'Full Open Graph tags, fast SSR pages. Get discovered organically.',
-    gradient: 'from-violet-500/20 to-indigo-500/20',
-    border: 'border-violet-500/10',
-  },
-]
-
-const STEPS = [
-  { num: '01', title: 'Set Up Your Profile', desc: 'Create your account, pick your subdomain, upload your avatar and set your brand color. Takes 2 minutes.' },
-  { num: '02', title: 'Upload Your Prompts', desc: 'Paste your best-performing prompts, select the AI tool and gate type, and hit publish.' },
-  { num: '03', title: 'Share the Link', desc: 'Drop your PromptHub link in your bio, TikTok comments, or Instagram DMs.' },
-  { num: '04', title: 'Watch It Grow', desc: 'Track views, email captures, and copies in real-time. Iterate on what works.' },
-]
-
-const PRICING = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    desc: 'Perfect for getting started',
-    features: ['3 published prompts', 'Open gate only', 'Basic analytics', 'PromptHub subdomain'],
-    cta: 'Get Started Free',
-    highlighted: false,
-  },
-  {
-    name: 'Creator',
-    price: '$12',
-    period: 'per month',
-    desc: 'For serious AI content creators',
-    features: ['Unlimited prompts', 'Email gate', 'Full analytics dashboard', 'Custom brand colors', 'Instagram embed', 'Priority support'],
-    cta: 'Start Creating',
-    highlighted: true,
-  },
-  {
-    name: 'Pro',
-    price: '$29',
-    period: 'per month',
-    desc: 'For creators who monetize',
-    features: ['Everything in Creator', 'Payment gating', 'Email list export', 'Custom domain', 'API access', 'White-label option'],
-    cta: 'Go Pro',
-    highlighted: false,
-  },
-]
-
-const TESTIMONIALS = [
-  { name: 'Zara K.', handle: '@zaracreates', text: "PromptHub changed how I share content. My email list went from 200 to 4,000 in 6 weeks just from gated prompts.", avatar: 'Z', color: '#6366f1' },
-  { name: 'Raj M.', handle: '@rajmidjourney', text: "Finally a platform built for AI creators. My Midjourney prompts page looks premium and converts like crazy.", avatar: 'R', color: '#10b981' },
-  { name: 'Sofia L.', handle: '@sofiaprompts', text: "The analytics alone are worth it. I can see exactly which prompts drive the most engagement and double down.", avatar: 'S', color: '#f59e0b' },
-]
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white overflow-x-hidden">
 
-      {/* ─── NAVBAR ─────────────────────────────────────────── */}
+      {/* ── NAVBAR ─────────────────────────────────────────── */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -110,26 +76,25 @@ export default function LandingPage() {
             <span className="text-lg font-bold tracking-tight">Prompt<span className="text-indigo-400">Hub</span></span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
+            <a href="#prompts" className="hover:text-white transition-colors">Browse Prompts</a>
+            <a href="#categories" className="hover:text-white transition-colors">Categories</a>
             <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors px-3 py-2">Log in</Link>
-            <Link href="/login" className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-5 py-2.5 text-sm font-semibold text-white transition-all active:scale-95 shadow-lg shadow-indigo-500/20">
-              Get Started Free
-            </Link>
-          </div>
+          <Link
+            href="/login"
+            className="rounded-full bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 px-5 py-2 text-sm font-semibold text-white transition-all active:scale-95"
+          >
+            Admin Login
+          </Link>
         </div>
       </nav>
 
-      {/* ─── HERO ───────────────────────────────────────────── */}
+      {/* ── HERO ───────────────────────────────────────────── */}
       <section className="relative pt-40 pb-24 px-6 text-center">
-        {/* ambient glow */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-indigo-600/15 blur-[150px] rounded-full" />
-          <div className="absolute top-40 left-1/4 w-[300px] h-[300px] bg-purple-600/10 blur-[100px] rounded-full" />
-          <div className="absolute top-40 right-1/4 w-[300px] h-[300px] bg-blue-600/10 blur-[100px] rounded-full" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-indigo-600/10 blur-[150px] rounded-full" />
+          <div className="absolute top-40 left-1/4 w-[300px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full" />
+          <div className="absolute top-40 right-1/4 w-[300px] h-[300px] bg-blue-600/8 blur-[100px] rounded-full" />
         </div>
 
         <div className="max-w-4xl mx-auto">
@@ -138,84 +103,91 @@ export default function LandingPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
             </span>
-            The Prompt Delivery Platform
+            AI Prompts &amp; Reels
           </div>
 
           <h1 className="text-5xl sm:text-6xl md:text-8xl font-extrabold tracking-tight leading-none mb-8">
             <span className="bg-gradient-to-b from-white via-white to-zinc-500 bg-clip-text text-transparent">
-              Turn Prompts
+              The prompts behind
             </span>
             <br />
             <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-blue-400 bg-clip-text text-transparent">
-              Into Revenue.
+              every great reel.
             </span>
           </h1>
 
           <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-            AI content creators use PromptHub to share prompts on beautiful branded pages, 
-            gate them behind emails or payments, and track every click.
+            Discover the exact AI prompts, tools, and techniques behind viral content.
+            Watch the reel, grab the prompt, create your own.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
-            <Link
-              href="/login"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-24">
+            <a
+              href="#prompts"
               className="w-full sm:w-auto rounded-full bg-indigo-600 px-10 py-4 text-lg font-bold text-white shadow-2xl shadow-indigo-500/40 hover:bg-indigo-500 hover:-translate-y-0.5 transition-all active:scale-95"
             >
-              Start Free Today →
-            </Link>
+              Browse Prompts →
+            </a>
             <a
               href="#how-it-works"
               className="w-full sm:w-auto rounded-full border border-zinc-700 px-10 py-4 text-lg font-semibold text-zinc-300 hover:border-zinc-500 hover:text-white transition-all active:scale-95"
             >
-              See How It Works
+              How It Works
             </a>
           </div>
 
-          {/* ── DASHBOARD MOCKUP ── */}
-          <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-b from-indigo-500/10 to-transparent blur-2xl -z-10 rounded-3xl" />
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-900/80 backdrop-blur p-1 shadow-2xl">
-              {/* Window bar */}
-              <div className="flex items-center gap-1.5 px-4 py-3 border-b border-zinc-800">
-                <div className="w-3 h-3 rounded-full bg-red-500/70" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
-                <div className="w-3 h-3 rounded-full bg-green-500/70" />
-                <div className="flex-1 mx-4 h-6 bg-zinc-800 rounded-lg flex items-center justify-center">
-                  <span className="text-xs text-zinc-500 font-mono">milan.prompthub.app</span>
+          {/* ── HERO: Prompt card mockup (3 stacked) ── */}
+          <div className="relative max-w-2xl mx-auto">
+            <div className="absolute -inset-2 bg-gradient-to-b from-indigo-500/10 to-transparent blur-2xl rounded-3xl -z-10" />
+            {/* Card 3 (bottom) */}
+            <div className="absolute bottom-0 left-4 right-4 h-48 rounded-3xl border border-zinc-800 bg-zinc-900/60 -z-10 translate-y-4 scale-[0.96] opacity-40" />
+            {/* Card 2 (middle) */}
+            <div className="absolute bottom-0 left-2 right-2 h-48 rounded-3xl border border-zinc-800 bg-zinc-900/70 -z-10 translate-y-2 scale-[0.98] opacity-70" />
+            {/* Card 1 (top / main) */}
+            <div className="rounded-3xl border border-zinc-700 bg-zinc-900/90 backdrop-blur overflow-hidden shadow-2xl">
+              <div className="flex items-center gap-1.5 px-4 py-3 border-b border-zinc-800 bg-zinc-900">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+                <div className="flex-1 mx-3 h-5 bg-zinc-800 rounded-md flex items-center justify-center">
+                  <span className="text-[10px] text-zinc-500 font-mono">prompthub.app/milan/cinematic-neon-city-reel</span>
                 </div>
               </div>
-
-              {/* Prompt cards grid */}
-              <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {MOCK_PROMPTS.map((p, i) => (
-                  <div key={i} className="rounded-2xl bg-zinc-800/60 border border-zinc-700/50 p-4 text-left hover:border-zinc-600 transition-colors">
-                    <div className="aspect-video bg-zinc-700/50 rounded-xl mb-3 flex items-center justify-center text-2xl">
-                      {p.type === 'Image' ? '🖼️' : p.type === 'Video' ? '🎬' : '📝'}
-                    </div>
-                    <p className="text-sm font-semibold text-white mb-2 leading-snug">{p.title}</p>
-                    <div className="flex gap-1.5 flex-wrap mb-3">
-                      <span className="text-xs bg-zinc-700 text-zinc-300 px-2 py-0.5 rounded-full">{p.tool}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full border ${
-                        p.gate === 'Free' ? 'bg-emerald-400/10 text-emerald-400 border-emerald-500/20' :
-                        p.gate === 'Email Gate' ? 'bg-blue-400/10 text-blue-400 border-blue-500/20' :
-                        'bg-amber-400/10 text-amber-400 border-amber-500/20'
-                      }`}>{p.gate}</span>
-                    </div>
-                    <div className="flex justify-between text-xs text-zinc-500">
-                      <span>👁 {p.views}</span>
-                      <span>📋 {p.copies}</span>
-                    </div>
+              <div className="p-5 flex gap-4">
+                {/* Mini reel thumbnail */}
+                <div className="w-28 flex-shrink-0 aspect-[9/16] rounded-2xl bg-gradient-to-br from-indigo-800 to-black border border-zinc-700 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur border border-white/25 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                   </div>
-                ))}
+                </div>
+                {/* Prompt content */}
+                <div className="flex-1 min-w-0 space-y-3">
+                  <div>
+                    <p className="text-base font-bold text-white leading-snug">Cinematic Neon City Reel</p>
+                    <p className="text-xs text-zinc-500 mt-1">by @milan.ai &middot; Video Generation</p>
+                  </div>
+                  <div className="rounded-xl bg-zinc-800/60 border border-zinc-700/50 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-zinc-400">Prompt</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#7c3aed22', color: '#7c3aed' }}>Runway</span>
+                    </div>
+                    <p className="text-xs text-zinc-300 font-mono leading-relaxed line-clamp-3">
+                      Cinematic anime cityscape, neon rain reflections, slow motion water ripples on asphalt, volumetric fog, anamorphic lens flare, 8K, --ar 9:16
+                    </p>
+                  </div>
+                  <button className="w-full rounded-lg py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors">
+                    Copy Prompt
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── TRUSTED TOOLS ──────────────────────────────────── */}
-      <div className="py-12 border-y border-zinc-900">
-        <p className="text-center text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-8">Works with every AI tool</p>
+      {/* ── SUPPORTED TOOLS ────────────────────────────────── */}
+      <div className="py-10 border-y border-zinc-900">
+        <p className="text-center text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-6">Prompts for every AI tool</p>
         <div className="flex flex-wrap justify-center items-center gap-8 md:gap-14 px-6">
           {AI_TOOLS.map(tool => (
             <span key={tool} className="text-sm font-bold text-zinc-600 hover:text-zinc-400 transition-colors cursor-default">{tool}</span>
@@ -223,173 +195,144 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* ─── HOW IT WORKS ───────────────────────────────────── */}
-      <section id="how-it-works" className="py-28 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-20">
-            <p className="text-indigo-400 font-semibold text-sm uppercase tracking-widest mb-3">The Process</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-white">Live in 4 simple steps</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {STEPS.map((step, i) => (
-              <div key={i} className="group flex gap-6 p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-all">
-                <div className="flex-shrink-0">
-                  <span className="text-5xl font-extrabold bg-gradient-to-b from-indigo-400 to-indigo-700 bg-clip-text text-transparent leading-none">
-                    {step.num}
-                  </span>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">{step.title}</h3>
-                  <p className="text-zinc-400 leading-relaxed text-sm">{step.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── FEATURES ───────────────────────────────────────── */}
-      <section id="features" className="py-28 px-6 bg-gradient-to-b from-transparent to-zinc-900/30">
+      {/* ── CATEGORIES ─────────────────────────────────────── */}
+      <section id="categories" className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <p className="text-indigo-400 font-semibold text-sm uppercase tracking-widest mb-3">Features</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Built for the Modern Creator</h2>
-            <p className="text-zinc-400 max-w-xl mx-auto">Everything you need to turn your prompt engineering into a professional brand — nothing you don&apos;t.</p>
+          <div className="flex items-end justify-between mb-12">
+            <div>
+              <p className="text-indigo-400 font-semibold text-sm uppercase tracking-widest mb-2">Browse by Category</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-white">Find prompts by topic</h2>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {FEATURES.map((f, i) => (
-              <div key={i} className={`group p-8 rounded-3xl bg-gradient-to-br ${f.gradient} border ${f.border} hover:-translate-y-1 transition-all duration-300 cursor-default`}>
-                <div className="text-4xl mb-5">{f.icon}</div>
-                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">{f.title}</h3>
-                <p className="text-zinc-400 text-sm leading-relaxed">{f.desc}</p>
-              </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {CATEGORIES.map((cat, i) => (
+              <a
+                key={i}
+                href="#prompts"
+                className={`group p-5 rounded-2xl bg-gradient-to-br ${cat.color} border ${cat.border} hover:-translate-y-1 transition-all duration-200 text-center block`}
+              >
+                <div className="text-3xl mb-3">{cat.icon}</div>
+                <p className="text-sm font-bold text-white leading-snug group-hover:text-indigo-300 transition-colors">{cat.label}</p>
+                <p className="text-xs text-zinc-500 mt-1">{cat.count} prompts</p>
+              </a>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── STATS ──────────────────────────────────────────── */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[
-            { value: '10k+', label: 'Prompts Delivered' },
-            { value: '4.2k', label: 'Email Captures' },
-            { value: '$0', label: 'To Start' },
-            { value: '2 min', label: 'Setup Time' },
-          ].map((s, i) => (
-            <div key={i} className="text-center p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800">
-              <p className="text-4xl md:text-5xl font-extrabold text-indigo-400 mb-2">{s.value}</p>
-              <p className="text-sm text-zinc-500 font-medium">{s.label}</p>
+      {/* ── FEATURED PROMPTS ───────────────────────────────── */}
+      <section id="prompts" className="py-24 px-6 bg-gradient-to-b from-transparent to-zinc-900/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-end justify-between mb-12">
+            <div>
+              <p className="text-indigo-400 font-semibold text-sm uppercase tracking-widest mb-2">Latest Prompts</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-white">Ready to copy &amp; use</h2>
             </div>
-          ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {FEATURED_PROMPTS.map((p, i) => (
+              <div
+                key={i}
+                className="group rounded-3xl border border-zinc-800 bg-zinc-900/60 hover:border-zinc-600 transition-all duration-200 hover:-translate-y-1 overflow-hidden cursor-pointer"
+              >
+                {/* Thumbnail / reel area */}
+                <div className="aspect-video relative bg-zinc-800 flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center text-5xl">
+                    {p.icon}
+                  </div>
+                  {p.hasReel && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur border border-white/30 flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      </div>
+                    </div>
+                  )}
+                  {p.hasReel && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur rounded-full px-2 py-1">
+                      <svg className="w-3 h-3 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                      </svg>
+                      <span className="text-[10px] text-white font-semibold">Reel</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="p-4 space-y-3">
+                  <div>
+                    <p className="text-xs text-zinc-500 mb-1">{p.category}</p>
+                    <p className="text-sm font-bold text-white leading-snug">{p.title}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: `${p.toolColor}22`, color: p.toolColor }}>
+                      {p.tool}
+                    </span>
+                    <span className="text-xs text-zinc-500">👁 {p.views}</span>
+                  </div>
+                  <button className="w-full rounded-xl py-2.5 text-sm font-bold text-white bg-zinc-800 hover:bg-indigo-600 border border-zinc-700 hover:border-indigo-500 transition-all">
+                    View Prompt →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <button className="rounded-full border border-zinc-700 px-8 py-3.5 text-sm font-semibold text-zinc-300 hover:border-zinc-500 hover:text-white transition-all">
+              Load More Prompts
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* ─── TESTIMONIALS ───────────────────────────────────── */}
-      <section className="py-28 px-6">
-        <div className="max-w-6xl mx-auto">
+      {/* ── HOW IT WORKS ───────────────────────────────────── */}
+      <section id="how-it-works" className="py-24 px-6">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-indigo-400 font-semibold text-sm uppercase tracking-widest mb-3">Testimonials</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-white">Creators love PromptHub</h2>
+            <p className="text-indigo-400 font-semibold text-sm uppercase tracking-widest mb-3">How It Works</p>
+            <h2 className="text-3xl md:text-5xl font-bold text-white">Watch the reel. Get the prompt.</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="p-8 rounded-3xl bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col gap-6">
-                <div className="flex text-amber-400 gap-1 text-sm">{'★★★★★'}</div>
-                <p className="text-zinc-300 leading-relaxed flex-1">&quot;{t.text}&quot;</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ backgroundColor: t.color }}>
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white text-sm">{t.name}</p>
-                    <p className="text-zinc-500 text-xs">{t.handle}</p>
-                  </div>
-                </div>
+            {[
+              { step: '01', icon: '📱', title: 'See a reel you love', desc: 'Spot an AI-generated video on Instagram or TikTok — any category, any style.' },
+              { step: '02', icon: '🔗', title: 'Follow the link', desc: 'The creator drops a PromptHub link in the caption. Tap it to see the full breakdown.' },
+              { step: '03', icon: '📋', title: 'Copy the prompt', desc: 'Watch the embedded reel, read the exact prompts used, and copy them in one click.' },
+            ].map((s, i) => (
+              <div key={i} className="group p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-all text-center">
+                <div className="text-4xl mb-3">{s.icon}</div>
+                <span className="block text-4xl font-extrabold bg-gradient-to-b from-indigo-400 to-indigo-700 bg-clip-text text-transparent mb-4">{s.step}</span>
+                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">{s.title}</h3>
+                <p className="text-zinc-400 text-sm leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── PRICING ────────────────────────────────────────── */}
-      <section id="pricing" className="py-28 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-indigo-400 font-semibold text-sm uppercase tracking-widest mb-3">Pricing</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Simple, transparent pricing</h2>
-            <p className="text-zinc-400">Start free. Upgrade when you&apos;re ready to grow.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-            {PRICING.map((plan, i) => (
-              <div key={i} className={`relative p-8 rounded-3xl border flex flex-col ${
-                plan.highlighted
-                  ? 'bg-indigo-600 border-indigo-500 shadow-2xl shadow-indigo-500/30 scale-105'
-                  : 'bg-zinc-900/50 border-zinc-800'
-              }`}>
-                {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white text-indigo-900 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">
-                    Most Popular
-                  </div>
-                )}
-                <div className="mb-6">
-                  <p className={`text-sm font-semibold uppercase tracking-widest mb-2 ${plan.highlighted ? 'text-indigo-200' : 'text-zinc-400'}`}>{plan.name}</p>
-                  <div className="flex items-end gap-1 mb-2">
-                    <span className={`text-5xl font-extrabold ${plan.highlighted ? 'text-white' : 'text-white'}`}>{plan.price}</span>
-                    <span className={`text-sm pb-1.5 ${plan.highlighted ? 'text-indigo-200' : 'text-zinc-500'}`}>/{plan.period}</span>
-                  </div>
-                  <p className={`text-sm ${plan.highlighted ? 'text-indigo-200' : 'text-zinc-500'}`}>{plan.desc}</p>
-                </div>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map((f, j) => (
-                    <li key={j} className={`flex items-center gap-2.5 text-sm ${plan.highlighted ? 'text-indigo-100' : 'text-zinc-300'}`}>
-                      <svg className={`w-4 h-4 flex-shrink-0 ${plan.highlighted ? 'text-white' : 'text-indigo-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/login"
-                  className={`w-full text-center rounded-full py-3.5 font-bold text-sm transition-all active:scale-95 ${
-                    plan.highlighted
-                      ? 'bg-white text-indigo-700 hover:bg-zinc-100 shadow-lg'
-                      : 'bg-zinc-800 border border-zinc-700 text-white hover:bg-zinc-700'
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── FINAL CTA ──────────────────────────────────────── */}
-      <section className="py-28 px-6">
-        <div className="max-w-4xl mx-auto text-center relative">
+      {/* ── CTA ────────────────────────────────────────────── */}
+      <section className="py-24 px-6">
+        <div className="max-w-3xl mx-auto text-center relative">
           <div className="absolute inset-0 bg-indigo-500/5 blur-3xl rounded-full -z-10" />
-          <h2 className="text-4xl md:text-7xl font-extrabold text-white mb-8 tracking-tight">
-            Your prompts deserve<br />
-            <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">a better home.</span>
+          <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
+            Start creating<br />
+            <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+              with better prompts.
+            </span>
           </h2>
-          <p className="text-zinc-400 text-lg md:text-xl mb-12 max-w-xl mx-auto">
-            Join thousands of AI creators who&apos;ve stopped leaving money on the table.
+          <p className="text-zinc-400 text-lg mb-12 max-w-xl mx-auto">
+            Browse all prompts, watch the reels they created, and copy what works.
           </p>
-          <Link
-            href="/login"
+          <a
+            href="#prompts"
             className="inline-block rounded-full bg-indigo-600 px-12 py-5 text-xl font-bold text-white shadow-2xl shadow-indigo-500/40 hover:bg-indigo-500 hover:-translate-y-1 transition-all active:scale-95"
           >
-            Start Building Free
-          </Link>
-          <p className="mt-6 text-zinc-600 text-sm">No credit card required. Free forever plan available.</p>
+            Browse All Prompts
+          </a>
         </div>
       </section>
 
-      {/* ─── FOOTER ─────────────────────────────────────────── */}
+      {/* ── FOOTER ─────────────────────────────────────────── */}
       <footer className="border-t border-zinc-900 py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2.5">
@@ -399,10 +342,9 @@ export default function LandingPage() {
           <div className="flex gap-8 text-sm text-zinc-600">
             <a href="#" className="hover:text-zinc-300 transition-colors">Privacy</a>
             <a href="#" className="hover:text-zinc-300 transition-colors">Terms</a>
-            <a href="#" className="hover:text-zinc-300 transition-colors">Twitter</a>
             <a href="https://github.com/Prashant8Khatiwada/prompthub" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">GitHub</a>
           </div>
-          <p className="text-sm text-zinc-700">© {new Date().getFullYear()} PromptHub. Built for creators.</p>
+          <p className="text-sm text-zinc-700">&copy; {new Date().getFullYear()} PromptHub</p>
         </div>
       </footer>
     </div>

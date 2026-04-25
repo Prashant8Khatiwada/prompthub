@@ -131,6 +131,7 @@ Client component used for both create and edit. Fields:
 | Field | Type | Notes |
 |-------|------|-------|
 | `title` | text input | Required |
+| `category` | select | Video Generation, Image Creation, Brand & Logo, Education, Scriptwriting, Photo Editing, Other — **Required** |
 | `description` | textarea | Optional |
 | `content` | large textarea | Required — the actual prompt |
 | `ai_tool` | select | Midjourney, Claude, ChatGPT, Gemini, Runway, Pika, Kling, Veo, Other |
