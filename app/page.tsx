@@ -3,12 +3,12 @@ import Link from 'next/link'
 // ─── Static mock data for demo sections ───────────────────────────────────────
 
 const CATEGORIES = [
-  { label: 'Video Generation', icon: '🎬', count: 12, color: 'from-violet-500/20 to-indigo-500/20', border: 'border-violet-500/20' },
-  { label: 'Image Creation', icon: '🖼️', count: 28, color: 'from-blue-500/20 to-cyan-500/20', border: 'border-blue-500/20' },
-  { label: 'Brand & Logo', icon: '✨', count: 9, color: 'from-amber-500/20 to-orange-500/20', border: 'border-amber-500/20' },
-  { label: 'Education', icon: '📚', count: 6, color: 'from-emerald-500/20 to-green-500/20', border: 'border-emerald-500/20' },
-  { label: 'Scriptwriting', icon: '📝', count: 14, color: 'from-pink-500/20 to-rose-500/20', border: 'border-pink-500/20' },
-  { label: 'Photo Editing', icon: '🎨', count: 11, color: 'from-indigo-500/20 to-purple-500/20', border: 'border-indigo-500/20' },
+  { label: 'Video Generation', slug: 'video-generation', icon: '🎬', count: 12, color: 'from-violet-500/20 to-indigo-500/20', border: 'border-violet-500/20' },
+  { label: 'Image Creation', slug: 'image-creation', icon: '🖼️', count: 28, color: 'from-blue-500/20 to-cyan-500/20', border: 'border-blue-500/20' },
+  { label: 'Brand & Logo', slug: 'brand-logo', icon: '✨', count: 9, color: 'from-amber-500/20 to-orange-500/20', border: 'border-amber-500/20' },
+  { label: 'Education', slug: 'education', icon: '📚', count: 6, color: 'from-emerald-500/20 to-green-500/20', border: 'border-emerald-500/20' },
+  { label: 'Scriptwriting', slug: 'scriptwriting', icon: '📝', count: 14, color: 'from-pink-500/20 to-rose-500/20', border: 'border-pink-500/20' },
+  { label: 'Photo Editing', slug: 'photo-editing', icon: '🎨', count: 11, color: 'from-indigo-500/20 to-purple-500/20', border: 'border-indigo-500/20' },
 ]
 
 const FEATURED_PROMPTS = [
@@ -206,15 +206,15 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {CATEGORIES.map((cat, i) => (
-              <a
+              <Link
                 key={i}
-                href="#prompts"
+                href={`/category/${cat.slug}`}
                 className={`group p-5 rounded-2xl bg-gradient-to-br ${cat.color} border ${cat.border} hover:-translate-y-1 transition-all duration-200 text-center block`}
               >
                 <div className="text-3xl mb-3">{cat.icon}</div>
                 <p className="text-sm font-bold text-white leading-snug group-hover:text-indigo-300 transition-colors">{cat.label}</p>
                 <p className="text-xs text-zinc-500 mt-1">{cat.count} prompts</p>
-              </a>
+              </Link>
             ))}
           </div>
         </div>
@@ -270,9 +270,12 @@ export default function LandingPage() {
                     </span>
                     <span className="text-xs text-zinc-500">👁 {p.views}</span>
                   </div>
-                  <button className="w-full rounded-xl py-2.5 text-sm font-bold text-white bg-zinc-800 hover:bg-indigo-600 border border-zinc-700 hover:border-indigo-500 transition-all">
+                  <Link 
+                    href={`/milan/${p.slug}`}
+                    className="block w-full text-center rounded-xl py-2.5 text-sm font-bold text-white bg-zinc-800 hover:bg-indigo-600 border border-zinc-700 hover:border-indigo-500 transition-all"
+                  >
                     View Prompt →
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))}
