@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<subdomain>[^.]+)\\.prompthub\\.app"
+        }
+      ],
+      "destination": "/:path*"
+    }
+  ]
+}
