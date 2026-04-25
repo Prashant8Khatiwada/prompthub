@@ -8,7 +8,8 @@ import {
   BarChart3, 
   Settings, 
   LogOut,
-  ExternalLink
+  ExternalLink,
+  Folder
 } from 'lucide-react'
 
 interface Props {
@@ -27,6 +28,7 @@ export default function Sidebar({ creator }: Props) {
   const navItems = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Prompts', href: '/admin/prompts', icon: FileText },
+    { label: 'Categories', href: '/admin/categories', icon: Folder },
     { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { label: 'Settings', href: '/admin/settings', icon: Settings },
   ]
@@ -77,7 +79,7 @@ export default function Sidebar({ creator }: Props) {
       {/* Footer / Profile */}
       <div className="p-4 border-t border-zinc-800 space-y-4">
         <Link 
-          href={`/${creator.handle}`}
+          href={`/${creator.handle.replace('@', '')}`}
           target="_blank"
           className="flex items-center justify-between w-full p-3 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 transition-all text-xs font-semibold text-zinc-400"
         >
@@ -92,13 +94,13 @@ export default function Sidebar({ creator }: Props) {
               <img src={creator.avatar_url} alt={creator.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-zinc-500 font-bold uppercase">
-                {creator.name[0]}
+                {creator.name?.[0] || 'A'}
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-white truncate">{creator.name}</p>
-            <p className="text-xs text-zinc-500 truncate">@{creator.handle}</p>
+            <p className="text-xs text-zinc-500 truncate">{creator.handle}</p>
           </div>
           <button 
             onClick={handleLogout}

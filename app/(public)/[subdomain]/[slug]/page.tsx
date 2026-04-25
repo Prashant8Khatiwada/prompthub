@@ -124,9 +124,9 @@ export default async function PublicPromptPage({ params }: Params) {
       <CreatorBar creator={creator} />
 
       {/* Video embed */}
-      {prompt.video_url && (
+      {(prompt.embed_html || prompt.video_url) && (
         <VideoEmbed
-          html={oEmbedHtml}
+          html={prompt.embed_html || oEmbedHtml}
           fallbackThumbnail={prompt.thumbnail_url}
           url={prompt.video_url}
         />

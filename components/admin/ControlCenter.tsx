@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import SettingsForm from './SettingsForm'
-import CategoryManager from './CategoryManager'
 import type { Creator } from '@/types'
 
 interface Props {
@@ -10,12 +9,11 @@ interface Props {
 }
 
 export default function ControlCenter({ creator }: Props) {
-  const [activeTab, setActiveTab] = useState<'profile' | 'integrations' | 'categories'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'integrations'>('profile')
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
     { id: 'integrations', label: 'Integrations', icon: '🔌' },
-    { id: 'categories', label: 'Categories', icon: '📁' },
   ]
 
   return (
@@ -56,16 +54,6 @@ export default function ControlCenter({ creator }: Props) {
               <p className="text-zinc-500 text-sm">Securely connect your social API keys for automated features.</p>
             </div>
             <SettingsForm defaultValues={creator} section="integrations" />
-          </div>
-        )}
-
-        {activeTab === 'categories' && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-white">Manage Categories</h2>
-              <p className="text-zinc-500 text-sm">Create and organize the categories available for your prompts.</p>
-            </div>
-            <CategoryManager />
           </div>
         )}
       </div>

@@ -41,6 +41,7 @@ export interface Prompt {
   description: string | null
   content: string
   video_url: string | null
+  embed_html: string | null
   thumbnail_url: string | null
   ai_tool: AiTool
   output_type: OutputType
