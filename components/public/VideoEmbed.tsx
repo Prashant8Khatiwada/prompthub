@@ -12,13 +12,22 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Load Instagram embed script after mount
-    if (html && ref.current) {
+    if (!html || !ref.current) return
+
+    // 1. Load the script if not present
+    if (!document.getElementById('instagram-embed-script')) {
       const script = document.createElement('script')
+      script.id = 'instagram-embed-script'
       script.src = 'https://www.instagram.com/embed.js'
       script.async = true
       document.body.appendChild(script)
-      return () => { document.body.removeChild(script) }
+    }
+
+    // 2. If script is already loaded, tell Instagram to process the new HTML
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).instgrm) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).instgrm.Embeds.process()
     }
   }, [html])
 
@@ -38,7 +47,7 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">
             <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/40">
               <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
+                <path d="M8 5v14l11-7z" />
               </svg>
             </div>
           </div>

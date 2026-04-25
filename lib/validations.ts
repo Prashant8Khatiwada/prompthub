@@ -11,6 +11,7 @@ export const promptSchema = z.object({
   price: z.number().positive().optional().nullable(),
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, hyphens only'),
   video_url: z.string().url().optional().nullable().or(z.literal('')),
+  embed_html: z.string().optional().nullable().or(z.literal('')),
   thumbnail_url: z.string().url().optional().nullable().or(z.literal('')),
   status: z.enum(['draft', 'published']),
   featured: z.boolean().default(false),
