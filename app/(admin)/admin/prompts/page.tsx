@@ -10,7 +10,7 @@ export default async function AdminPromptsPage() {
 
   const { data: prompts } = await supabase
     .from('prompts')
-    .select('*')
+    .select('*, categories(name)')
     .eq('creator_id', user!.id)
     .order('created_at', { ascending: false })
 

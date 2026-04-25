@@ -13,6 +13,7 @@ export const promptSchema = z.object({
   video_url: z.string().url().optional().nullable().or(z.literal('')),
   thumbnail_url: z.string().url().optional().nullable().or(z.literal('')),
   status: z.enum(['draft', 'published']),
+  featured: z.boolean().default(false),
 })
 
 export const emailCaptureSchema = z.object({
@@ -37,4 +38,5 @@ export const categorySchema = z.object({
   description: z.string().max(200).optional().nullable(),
   icon: z.string().optional().nullable(),
   image_url: z.string().url().optional().nullable().or(z.literal('')),
+  featured: z.boolean().default(false),
 })

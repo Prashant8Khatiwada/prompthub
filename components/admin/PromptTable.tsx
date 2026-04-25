@@ -5,8 +5,14 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Prompt } from '@/types'
 
+interface PromptWithCategory extends Prompt {
+  categories?: {
+    name: string
+  }
+}
+
 interface Props {
-  prompts: Prompt[]
+  prompts: PromptWithCategory[]
 }
 
 const GATE_STYLES: Record<string, string> = {
@@ -31,7 +37,7 @@ export default function PromptTable({ prompts: initial }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
 
-  async function handleToggleStatus(p: Prompt) {
+  async function handleToggleStatus(p: PromptWithCategory) {
     setTogglingId(p.id)
     const newStatus = p.status === 'published' ? 'draft' : 'published'
     const res = await fetch(`/api/prompts/${p.id}`, {
@@ -93,7 +99,7 @@ export default function PromptTable({ prompts: initial }: Props) {
                 </div>
               </td>
               <td className="px-4 py-4 hidden md:table-cell">
-                <span className="text-xs text-zinc-400">{p.category}</span>
+                <span className="text-xs text-zinc-400">{p.categories?.name || 'Uncategorized'}</span>
               </td>
               <td className="px-4 py-4 hidden lg:table-cell">
                 <span className="text-xs font-semibold text-zinc-300">{p.ai_tool}</span>

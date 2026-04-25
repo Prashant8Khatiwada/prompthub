@@ -1,15 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Prompt, PromptCategory } from '@/types'
+import Link from 'next/link'
+import { Link as LinkIcon } from 'lucide-react'
+import type { Prompt, Category } from '@/types'
 
 const AI_TOOLS = ['Midjourney', 'Claude', 'ChatGPT', 'Gemini', 'Runway', 'Pika', 'Kling', 'Veo', 'Other'] as const
 const OUTPUT_TYPES = ['image', 'video', 'text', 'code', 'audio'] as const
 const GATE_TYPES = ['open', 'email', 'payment'] as const
-const CATEGORIES: PromptCategory[] = [
-  'Video Generation', 'Image Creation', 'Brand & Logo', 'Education', 'Scriptwriting', 'Photo Editing', 'Other',
-]
 
 function toSlug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -30,7 +29,8 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
   const isEdit = !!promptId
 
   const [title, setTitle] = useState(defaultValues?.title ?? '')
-  const [category, setCategory] = useState<PromptCategory>(defaultValues?.category ?? 'Video Generation')
+  const [categoryId, setCategoryId] = useState<string>(defaultValues?.category_id ?? '')
+  const [categories, setCategories] = useState<Category[]>([])
   const [description, setDescription] = useState(defaultValues?.description ?? '')
   const [content, setContent] = useState(defaultValues?.content ?? '')
   const [aiTool, setAiTool] = useState<typeof AI_TOOLS[number]>(defaultValues?.ai_tool ?? 'Midjourney')
@@ -39,16 +39,29 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
   const [price, setPrice] = useState<string>(defaultValues?.price?.toString() ?? '')
   const [slug, setSlug] = useState(defaultValues?.slug ?? '')
   const [videoUrl, setVideoUrl] = useState(defaultValues?.video_url ?? '')
+  const [embedHtml, setEmbedHtml] = useState(defaultValues?.embed_html ?? '')
   const [thumbnailUrl, setThumbnailUrl] = useState(defaultValues?.thumbnail_url ?? '')
   const [status, setStatus] = useState<'draft' | 'published'>(defaultValues?.status ?? 'draft')
+  const [featured, setFeatured] = useState(defaultValues?.featured ?? false)
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [serverError, setServerError] = useState<string | null>(null)
 
-  // Auto-generate slug from title unless manually edited
-
+  useEffect(() => {
+    async function fetchCategories() {
+      const res = await fetch('/api/categories')
+      const data = await res.json()
+      if (res.ok) {
+        setCategories(data)
+        if (!categoryId && data.length > 0) {
+          setCategoryId(data[0].id)
+        }
+      }
+    }
+    fetchCategories()
+  }, [])
 
   async function handleThumbnailUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -74,7 +87,7 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
 
     const body = {
       title,
-      category,
+      category_id: categoryId,
       description: description || null,
       content,
       ai_tool: aiTool,
@@ -83,8 +96,10 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
       price: gateType === 'payment' && price ? parseFloat(price) : null,
       slug,
       video_url: videoUrl || null,
+      embed_html: embedHtml || null,
       thumbnail_url: thumbnailUrl || null,
       status,
+      featured,
     }
 
     const url = isEdit ? `/api/prompts/${promptId}` : '/api/prompts'
@@ -143,14 +158,20 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
       <div>
         <label className={labelCls}>Category *</label>
         <select
-          value={category}
-          onChange={e => setCategory(e.target.value as PromptCategory)}
+          value={categoryId}
+          onChange={e => setCategoryId(e.target.value)}
           className={inputCls}
           required
         >
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          {categories.length === 0 && <option value="">No categories available</option>}
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        {errors.category && <p className="text-red-400 text-xs mt-1">{errors.category[0]}</p>}
+        {errors.category_id && <p className="text-red-400 text-xs mt-1">{errors.category_id[0]}</p>}
+        {categories.length === 0 && (
+          <p className="text-amber-500 text-[10px] mt-1 uppercase font-bold">
+            Go to <Link href="/admin/categories" className="underline">Categories</Link> to create one first.
+          </p>
+        )}
       </div>
 
       {/* Description */}
@@ -204,11 +225,10 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
               key={g}
               type="button"
               onClick={() => setGateType(g)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-                gateType === g
-                  ? 'bg-indigo-600 border-indigo-500 text-white'
-                  : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white'
-              }`}
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all ${gateType === g
+                ? 'bg-indigo-600 border-indigo-500 text-white'
+                : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white'
+                }`}
             >
               {g === 'open' ? '🔓 Open' : g === 'email' ? '📧 Email Gate' : '💳 Payment'}
             </button>
@@ -236,7 +256,7 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
         <label className={labelCls}>Slug *</label>
         <div className="flex items-center">
           <span className="px-4 py-3 bg-zinc-900 border border-r-0 border-zinc-700 rounded-l-xl text-zinc-500 text-sm">
-            /milan/
+            /{toSlug(title)}/
           </span>
           <input
             type="text"
@@ -249,17 +269,30 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
         {errors.slug && <p className="text-red-400 text-xs mt-1">{errors.slug[0]}</p>}
       </div>
 
-      {/* Instagram/TikTok Video URL */}
-      <div>
-        <label className={labelCls}>Instagram / TikTok Reel URL</label>
-        <input
-          type="url"
-          value={videoUrl}
-          onChange={e => setVideoUrl(e.target.value)}
-          placeholder="https://www.instagram.com/reel/..."
-          className={inputCls}
-        />
-        {errors.video_url && <p className="text-red-400 text-xs mt-1">{errors.video_url[0]}</p>}
+      {/* Video / Embed */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className={labelCls}>Instagram / TikTok Reel URL</label>
+          <input
+            type="url"
+            value={videoUrl}
+            onChange={e => setVideoUrl(e.target.value)}
+            placeholder="https://www.instagram.com/reel/..."
+            className={inputCls}
+          />
+          <p className="text-[10px] text-zinc-500 mt-1">Use this if you have an API Key in Settings.</p>
+        </div>
+        <div>
+          <label className={labelCls}>OR: Manual Embed Code</label>
+          <textarea
+            value={embedHtml}
+            onChange={e => setEmbedHtml(e.target.value)}
+            placeholder="Paste <blockquote>...</blockquote> code here"
+            rows={1}
+            className={inputCls + ' resize-none'}
+          />
+          <p className="text-[10px] text-zinc-500 mt-1">Copy from Instagram &gt; ... &gt; Embed.</p>
+        </div>
       </div>
 
       {/* Thumbnail */}
@@ -293,16 +326,26 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
           <button
             type="button"
             onClick={() => setStatus(s => s === 'draft' ? 'published' : 'draft')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              status === 'published' ? 'bg-indigo-600' : 'bg-zinc-700'
-            }`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${status === 'published' ? 'bg-indigo-600' : 'bg-zinc-700'}`}
           >
-            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              status === 'published' ? 'translate-x-6' : 'translate-x-1'
-            }`} />
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${status === 'published' ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
           <span className={`text-sm font-semibold ${status === 'published' ? 'text-emerald-400' : 'text-zinc-500'}`}>
             {status === 'published' ? 'Published' : 'Draft'}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-semibold text-zinc-400">Featured:</label>
+          <button
+            type="button"
+            onClick={() => setFeatured(!featured)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${featured ? 'bg-amber-500' : 'bg-zinc-700'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${featured ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+          <span className={`text-sm font-semibold ${featured ? 'text-amber-400' : 'text-zinc-500'}`}>
+            {featured ? '★ Featured' : 'Standard'}
           </span>
         </div>
 
@@ -316,7 +359,7 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
           </button>
           <button
             type="submit"
-            disabled={saving || uploading}
+            disabled={saving || uploading || categories.length === 0}
             className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 shadow-lg shadow-indigo-500/20"
           >
             {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Prompt'}

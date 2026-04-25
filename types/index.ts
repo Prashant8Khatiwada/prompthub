@@ -30,6 +30,7 @@ export interface Category {
   description: string | null
   icon: string | null
   image_url: string | null
+  featured: boolean
   created_at: string
 }
 
@@ -37,7 +38,7 @@ export interface Prompt {
   id: string
   creator_id: string
   title: string
-  category: PromptCategory
+  category_id: string
   description: string | null
   content: string
   video_url: string | null
@@ -49,6 +50,7 @@ export interface Prompt {
   price: number | null
   slug: string
   status: PromptStatus
+  featured: boolean
   created_at: string
 }
 

@@ -7,7 +7,7 @@ export default function CategoryManager() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [newCat, setNewCat] = useState({ name: '', slug: '', icon: '🎬', description: '' })
+  const [newCat, setNewCat] = useState({ name: '', slug: '', icon: '🎬', description: '', featured: false })
 
   useEffect(() => {
     fetchCategories()
@@ -29,7 +29,7 @@ export default function CategoryManager() {
       body: JSON.stringify(newCat),
     })
     if (res.ok) {
-      setNewCat({ name: '', slug: '', icon: '🎬', description: '' })
+      setNewCat({ name: '', slug: '', icon: '🎬', description: '', featured: false })
       fetchCategories()
     }
     setSaving(false)
@@ -69,6 +69,16 @@ export default function CategoryManager() {
             onChange={e => setNewCat({ ...newCat, icon: e.target.value })}
             className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-sm"
           />
+          <div className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl">
+            <input 
+              type="checkbox" 
+              id="cat-featured"
+              checked={newCat.featured}
+              onChange={e => setNewCat({ ...newCat, featured: e.target.checked })}
+              className="accent-indigo-500"
+            />
+            <label htmlFor="cat-featured" className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Featured</label>
+          </div>
           <button 
             type="submit" 
             disabled={saving}
@@ -85,7 +95,10 @@ export default function CategoryManager() {
             <div className="flex items-center gap-3">
               <span className="text-2xl">{cat.icon}</span>
               <div>
-                <p className="text-white font-bold text-sm">{cat.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-white font-bold text-sm">{cat.name}</p>
+                  {cat.featured && <span className="text-[8px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded-full border border-indigo-500/20 font-black uppercase">Featured</span>}
+                </div>
                 <p className="text-xs text-zinc-500">/{cat.slug}</p>
               </div>
             </div>
