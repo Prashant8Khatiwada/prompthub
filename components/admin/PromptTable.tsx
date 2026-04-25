@@ -1,0 +1,148 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import type { Prompt } from '@/types'
+
+interface Props {
+  prompts: Prompt[]
+}
+
+const GATE_STYLES: Record<string, string> = {
+  open: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  email: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  payment: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  published: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+  draft: 'bg-zinc-700/50 text-zinc-500 border-zinc-600/30',
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+export default function PromptTable({ prompts: initial }: Props) {
+  const router = useRouter()
+  const [prompts, setPrompts] = useState(initial)
+  const [isPending, startTransition] = useTransition()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+
+  async function handleToggleStatus(p: Prompt) {
+    setTogglingId(p.id)
+    const newStatus = p.status === 'published' ? 'draft' : 'published'
+    const res = await fetch(`/api/prompts/${p.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    })
+    if (res.ok) {
+      setPrompts(prev => prev.map(x => x.id === p.id ? { ...x, status: newStatus } : x))
+      startTransition(() => router.refresh())
+    }
+    setTogglingId(null)
+  }
+
+  async function handleDelete(id: string, title: string) {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return
+    setDeletingId(id)
+    const res = await fetch(`/api/prompts/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setPrompts(prev => prev.filter(p => p.id !== id))
+    }
+    setDeletingId(null)
+  }
+
+  if (prompts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-zinc-800 rounded-3xl">
+        <div className="w-16 h-16 rounded-2xl bg-zinc-800 flex items-center justify-center text-3xl mb-4">📝</div>
+        <p className="text-white font-bold text-lg mb-2">No prompts yet</p>
+        <p className="text-zinc-500 text-sm mb-6">Create your first prompt to get started.</p>
+        <Link href="/admin/prompts/new" className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-6 py-3 text-sm font-bold text-white transition-all">
+          Create First Prompt
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-2xl border border-zinc-800 overflow-hidden">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-zinc-800 bg-zinc-900/50">
+            <th className="text-left px-5 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Title</th>
+            <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden md:table-cell">Category</th>
+            <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden lg:table-cell">Tool</th>
+            <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Gate</th>
+            <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</th>
+            <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden xl:table-cell">Created</th>
+            <th className="px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-800">
+          {prompts.map((p) => (
+            <tr key={p.id} className={`hover:bg-zinc-900/40 transition-colors ${deletingId === p.id ? 'opacity-40' : ''}`}>
+              <td className="px-5 py-4">
+                <div>
+                  <p className="font-semibold text-white truncate max-w-[200px]">{p.title}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">/{p.slug}</p>
+                </div>
+              </td>
+              <td className="px-4 py-4 hidden md:table-cell">
+                <span className="text-xs text-zinc-400">{p.category}</span>
+              </td>
+              <td className="px-4 py-4 hidden lg:table-cell">
+                <span className="text-xs font-semibold text-zinc-300">{p.ai_tool}</span>
+              </td>
+              <td className="px-4 py-4">
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${GATE_STYLES[p.gate_type]}`}>
+                  {p.gate_type}
+                </span>
+              </td>
+              <td className="px-4 py-4">
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${STATUS_STYLES[p.status]}`}>
+                  {p.status}
+                </span>
+              </td>
+              <td className="px-4 py-4 hidden xl:table-cell">
+                <span className="text-xs text-zinc-500">{formatDate(p.created_at)}</span>
+              </td>
+              <td className="px-4 py-4">
+                <div className="flex items-center justify-end gap-2">
+                  <Link
+                    href={`/admin/prompts/${p.id}`}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => handleToggleStatus(p)}
+                    disabled={togglingId === p.id || isPending}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
+                      p.status === 'published'
+                        ? 'text-zinc-400 hover:text-white border-transparent hover:border-zinc-700 hover:bg-zinc-800'
+                        : 'text-indigo-400 border-indigo-500/30 hover:bg-indigo-600/10'
+                    }`}
+                  >
+                    {togglingId === p.id ? '…' : p.status === 'published' ? 'Unpublish' : 'Publish'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(p.id, p.title)}
+                    disabled={deletingId === p.id}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all disabled:opacity-50"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}

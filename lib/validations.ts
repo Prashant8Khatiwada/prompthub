@@ -2,7 +2,8 @@ import { z } from 'zod'
 
 export const promptSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
-  description: z.string().max(500).optional(),
+  category: z.enum(['Video Generation', 'Image Creation', 'Brand & Logo', 'Education', 'Scriptwriting', 'Photo Editing', 'Other']),
+  description: z.string().max(500).optional().nullable().or(z.literal('')),
   content: z.string().min(1, 'Prompt content is required'),
   ai_tool: z.enum(['Midjourney', 'Claude', 'ChatGPT', 'Gemini', 'Runway', 'Pika', 'Kling', 'Veo', 'Other']),
   output_type: z.enum(['image', 'video', 'text', 'code', 'audio']),
@@ -10,6 +11,7 @@ export const promptSchema = z.object({
   price: z.number().positive().optional().nullable(),
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, hyphens only'),
   video_url: z.string().url().optional().nullable().or(z.literal('')),
+  thumbnail_url: z.string().url().optional().nullable().or(z.literal('')),
   status: z.enum(['draft', 'published']),
 })
 

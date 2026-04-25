@@ -3,6 +3,7 @@ export type GateType = 'open' | 'email' | 'payment'
 export type PromptStatus = 'draft' | 'published'
 export type OutputType = 'image' | 'video' | 'text' | 'code' | 'audio'
 export type AiTool = 'Midjourney' | 'Claude' | 'ChatGPT' | 'Gemini' | 'Runway' | 'Pika' | 'Kling' | 'Veo' | 'Other'
+export type PromptCategory = 'Video Generation' | 'Image Creation' | 'Brand & Logo' | 'Education' | 'Scriptwriting' | 'Photo Editing' | 'Other'
 
 export interface Creator {
   id: string
@@ -24,6 +25,7 @@ export interface Prompt {
   id: string
   creator_id: string
   title: string
+  category: PromptCategory
   description: string | null
   content: string
   video_url: string | null
