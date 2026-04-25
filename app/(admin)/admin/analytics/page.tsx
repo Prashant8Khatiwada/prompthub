@@ -1,73 +1,15 @@
 import { cookies } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
+import { getAggregatedStats } from '@/lib/analytics'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
 
 async function getStats() {
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
   const { data: { user } } = await supabase.auth.getUser()
-
+  
   if (!user) return null
-
-  // In a real app, we'd call the API route or use a shared lib function
-  // For this server component, we'll fetch from our API route directly
-  // or re-implement the logic. Let's use the API logic directly.
-
-  const { data: prompts } = await supabase
-    .from('prompts')
-    .select('id, title, slug')
-    .eq('creator_id', user.id)
-
-  const { data: recentCaptures } = await supabase
-    .from('email_captures')
-    .select('id, email, captured_at, prompt_id')
-    .order('captured_at', { ascending: false })
-    .limit(10)
-
-  // Join prompts for recent captures (manual join if prompts available)
-  const recentWithPrompts = recentCaptures?.map(c => ({
-    ...c,
-    prompts: prompts?.find(p => p.id === c.prompt_id)
-  }))
-
-  // Stubs for charts
-  const dailyViews = [
-    { date: '2024-04-01', views: 45 },
-    { date: '2024-04-02', views: 52 },
-    { date: '2024-04-03', views: 38 },
-    { date: '2024-04-04', views: 65 },
-    { date: '2024-04-05', views: 48 },
-    { date: '2024-04-06', views: 59 },
-    { date: '2024-04-07', views: 72 },
-  ]
-
-  const promptStats = prompts?.map(p => ({
-    title: p.title,
-    copies: Math.floor(Math.random() * 100),
-    email_captures: Math.floor(Math.random() * 50),
-  })) || []
-
-  const topByViews = prompts?.map(p => ({
-    id: p.id,
-    title: p.title,
-    slug: p.slug,
-    view_count: Math.floor(Math.random() * 1000),
-  })).sort((a, b) => b.view_count - a.view_count).slice(0, 5) || []
-
-  const topByConversion = prompts?.map(p => ({
-    id: p.id,
-    title: p.title,
-    slug: p.slug,
-    conversion_rate: (Math.random() * 15).toFixed(1) + '%',
-  })).sort((a, b) => parseFloat(b.conversion_rate) - parseFloat(a.conversion_rate)).slice(0, 5) || []
-
-  return {
-    dailyViews,
-    promptStats,
-    topByViews,
-    topByConversion,
-    recentCaptures: recentWithPrompts || []
-  }
+  return getAggregatedStats(supabase, user.id)
 }
 
 export default async function AnalyticsPage() {

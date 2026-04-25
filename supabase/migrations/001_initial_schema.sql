@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS prompts (
   content TEXT NOT NULL,
   video_url TEXT,
   thumbnail_url TEXT,
+  category TEXT,
   ai_tool TEXT NOT NULL,
   output_type TEXT NOT NULL,
   gate_type TEXT DEFAULT 'open',
