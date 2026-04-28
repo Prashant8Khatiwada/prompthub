@@ -13,6 +13,7 @@ interface Props {
   campaignId?: string
   clients: { id: string; name: string }[]
   prompts: { id: string; title: string; slug: string }[]
+  categories: { id: string; name: string }[]
   initialClientId?: string
 }
 
@@ -43,11 +44,17 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
   const existingGlobal = defaultValues?.ad_placements?.find(p => p.is_global)
   const existingSpecific = defaultValues?.ad_placements?.filter(p => !p.is_global) ?? []
 
-  const [isGlobal, setIsGlobal] = useState(existingGlobal ? true : (isEdit ? false : true))
+  const [selectedPrompts, setSelectedPrompts] = useState<Record<string, 'below_video' | 'above_gate' | 'below_gate'>>(
+    existingSpecific.filter(p => p.prompt_id).reduce((acc, p) => ({ ...acc, [p.prompt_id!]: p.position }), {})
+  )
+  const [selectedCategories, setSelectedCategories] = useState<Record<string, 'below_video' | 'above_gate' | 'below_gate'>>(
+    existingSpecific.filter(p => p.category_id).reduce((acc, p) => ({ ...acc, [p.category_id!]: p.position }), {})
+  )
+
   const [globalPosition, setGlobalPosition] = useState<'below_video' | 'above_gate' | 'below_gate'>(existingGlobal?.position ?? 'below_video')
 
-  const [selectedPrompts, setSelectedPrompts] = useState<Record<string, 'below_video' | 'above_gate' | 'below_gate'>>(
-    existingSpecific.reduce((acc, p) => ({ ...acc, [p.prompt_id!]: p.position }), {})
+  const [placementType, setPlacementType] = useState<'global' | 'prompts' | 'categories'>(
+    existingGlobal ? 'global' : (existingSpecific.some(p => p.category_id) ? 'categories' : (isEdit ? 'prompts' : 'global'))
   )
 
   const [uploading, setUploading] = useState(false)
@@ -55,16 +62,13 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
   const [errors, setErrors] = useState<FieldErrors>({})
   const [serverError, setServerError] = useState<string | null>(null)
 
-  // Auto-suggest UTM campaign
-  useEffect(() => {
-    if (!isEdit && name && !utmCampaign) {
-      const suggested = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-      if (suggested !== utmCampaign) {
-        setUtmCampaign(suggested)
-      }
+  function handleNameChange(newName: string) {
+    setName(newName)
+    if (!isEdit && !utmCampaign) {
+      const suggested = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      setUtmCampaign(suggested)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, isEdit])
+  }
 
   const finalUrl = targetUrl ? `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}utm_source=${utmSource}&utm_medium=${utmMedium}${utmCampaign ? `&utm_campaign=${utmCampaign}` : ''}` : ''
 
@@ -96,9 +100,15 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
     setErrors({})
     setServerError(null)
 
-    const placements = isGlobal
-      ? [{ is_global: true, position: globalPosition }]
-      : Object.entries(selectedPrompts).map(([prompt_id, position]) => ({ prompt_id, position, is_global: false }))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let placements: any[] = []
+    if (placementType === 'global') {
+      placements = [{ is_global: true, position: globalPosition }]
+    } else if (placementType === 'categories') {
+      placements = Object.entries(selectedCategories).map(([catId, pos]) => ({ category_id: catId, position: pos, is_global: false }))
+    } else {
+      placements = Object.entries(selectedPrompts).map(([pId, pos]) => ({ prompt_id: pId, position: pos, is_global: false }))
+    }
 
     const body = {
       name,
@@ -154,7 +164,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
 
         <div>
           <label className={labelCls}>Campaign Name *</label>
-          <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nike Summer 2025" className={inputCls} required />
+          <input type="text" value={name} onChange={e => handleNameChange(e.target.value)} placeholder="Nike Summer 2025" className={inputCls} required />
           {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name[0]}</p>}
         </div>
 
@@ -276,7 +286,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
 
         <div className="space-y-4">
           <label className="flex items-center gap-3 p-4 rounded-xl border border-zinc-800 cursor-pointer hover:bg-zinc-800/30 transition-colors">
-            <input type="radio" checked={isGlobal} onChange={() => setIsGlobal(true)} className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 bg-zinc-900 border-zinc-700" />
+            <input type="radio" checked={placementType === 'global'} onChange={() => setPlacementType('global')} className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 bg-zinc-900 border-zinc-700" />
             <div>
               <p className="font-semibold text-white">Show on ALL my prompt pages</p>
               <p className="text-xs text-zinc-500">Run this campaign globally across your entire domain.</p>
@@ -284,15 +294,23 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
           </label>
 
           <label className="flex items-center gap-3 p-4 rounded-xl border border-zinc-800 cursor-pointer hover:bg-zinc-800/30 transition-colors">
-            <input type="radio" checked={!isGlobal} onChange={() => setIsGlobal(false)} className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 bg-zinc-900 border-zinc-700" />
+            <input type="radio" checked={placementType === 'categories'} onChange={() => setPlacementType('categories')} className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 bg-zinc-900 border-zinc-700" />
             <div>
-              <p className="font-semibold text-white">Show on specific pages only</p>
+              <p className="font-semibold text-white">Show on specific categories</p>
+              <p className="text-xs text-zinc-500">Display this ad on all prompts within selected categories.</p>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 p-4 rounded-xl border border-zinc-800 cursor-pointer hover:bg-zinc-800/30 transition-colors">
+            <input type="radio" checked={placementType === 'prompts'} onChange={() => setPlacementType('prompts')} className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 bg-zinc-900 border-zinc-700" />
+            <div>
+              <p className="font-semibold text-white">Show on specific prompts only</p>
               <p className="text-xs text-zinc-500">Select which individual prompt pages should display this ad.</p>
             </div>
           </label>
         </div>
 
-        {isGlobal ? (
+        {placementType === 'global' && (
           <div className="pl-4 border-l-2 border-zinc-800 mt-4">
             <label className={labelCls}>Global Display Position</label>
             <select value={globalPosition} onChange={e => setGlobalPosition(e.target.value as AdPlacementPosition)} className={inputCls + ' max-w-xs'}>
@@ -301,7 +319,51 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
               <option value="below_gate">Below Content Gate / Bottom</option>
             </select>
           </div>
-        ) : (
+        )}
+
+        {placementType === 'categories' && (
+          <div className="pl-4 border-l-2 border-zinc-800 mt-4 space-y-3">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {(categories as any[]).map(c => {
+              const isSelected = !!selectedCategories[c.id]
+              return (
+                <div key={c.id} className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${isSelected ? 'bg-indigo-600/5 border-indigo-500/20' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'}`}>
+                  <label className="flex items-center gap-3 cursor-pointer flex-1">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCategories(prev => ({ ...prev, [c.id]: 'below_video' }))
+                        } else {
+                          const next = { ...selectedCategories }
+                          delete next[c.id]
+                          setSelectedCategories(next)
+                        }
+                      }}
+                      className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 bg-zinc-800 border-zinc-700"
+                    />
+                    <p className="font-semibold text-sm text-white">{c.name}</p>
+                  </label>
+                  {isSelected && (
+                    <select
+                      value={selectedCategories[c.id]}
+                      onChange={e => setSelectedCategories(prev => ({ ...prev, [c.id]: e.target.value as AdPlacementPosition }))}
+                      className="px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-white focus:ring-indigo-500 min-w-[140px]"
+                    >
+                      <option value="below_video">Below Video</option>
+                      <option value="above_gate">Above Gate</option>
+                      <option value="below_gate">Below Gate</option>
+                    </select>
+                  )}
+                </div>
+              )
+            })}
+            {categories.length === 0 && <p className="text-zinc-500 text-sm">No categories found.</p>}
+          </div>
+        )}
+
+        {placementType === 'prompts' && (
           <div className="pl-4 border-l-2 border-zinc-800 mt-4 space-y-3 max-h-96 overflow-y-auto pr-4">
             {prompts.map(p => {
               const isSelected = !!selectedPrompts[p.id]
@@ -371,7 +433,11 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
       {/* Submit */}
       <div className="flex gap-3 pt-6 border-t border-zinc-800 justify-end">
         <button type="button" onClick={() => router.back()} className="px-6 py-3 rounded-xl border border-zinc-700 text-sm font-semibold text-zinc-400 hover:text-white hover:border-zinc-600 transition-all">Cancel</button>
-        <button type="submit" disabled={saving || !bannerUrl || (!isGlobal && Object.keys(selectedPrompts).length === 0)} className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 shadow-lg shadow-indigo-500/20">
+        <button
+          type="submit"
+          disabled={saving || !bannerUrl || (placementType === 'prompts' && Object.keys(selectedPrompts).length === 0) || (placementType === 'categories' && Object.keys(selectedCategories).length === 0)}
+          className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 shadow-lg shadow-indigo-500/20"
+        >
           {saving ? 'Saving…' : isEdit ? 'Save Campaign' : 'Create Campaign'}
         </button>
       </div>

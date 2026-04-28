@@ -118,6 +118,7 @@ export interface AdPlacement {
   id: string
   campaign_id: string
   prompt_id: string | null
+  category_id: string | null
   position: AdPlacementPosition
   is_global: boolean
   created_at: string

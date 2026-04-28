@@ -37,6 +37,12 @@ export default async function EditAdCampaignPage({ params }: Params) {
     .eq('status', 'published')
     .order('created_at', { ascending: false })
 
+  // Fetch categories
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name')
+    .order('name')
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-3xl">
       <div>
@@ -49,6 +55,7 @@ export default async function EditAdCampaignPage({ params }: Params) {
           campaignId={id} 
           clients={clients ?? []} 
           prompts={prompts ?? []} 
+          categories={categories ?? []}
         />
       </div>
     </div>

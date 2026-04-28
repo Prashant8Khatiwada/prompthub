@@ -9,14 +9,24 @@ export async function GET(req: NextRequest) {
 
   const now = new Date().toISOString()
 
-  // Find active placements: global OR specific to this prompt
-  const { data: placements, error } = await adminClient
+  // Fetch the prompt's category first
+  const { data: prompt } = await adminClient
+    .from('prompts')
+    .select('category_id')
+    .eq('id', promptId)
+    .single()
+
+  const categoryId = prompt?.category_id
+
+  // Find active placements: global OR specific to this prompt OR specific to this category
+  const query = adminClient
     .from('ad_placements')
     .select(`
       id,
       position,
       is_global,
       prompt_id,
+      category_id,
       campaign:ad_campaigns(
         id,
         name,
@@ -31,12 +41,18 @@ export async function GET(req: NextRequest) {
         ends_at
       )
     `)
-    .or(`prompt_id.eq.${promptId},is_global.eq.true`)
+
+  const filter = categoryId
+    ? `prompt_id.eq.${promptId},is_global.eq.true,category_id.eq.${categoryId}`
+    : `prompt_id.eq.${promptId},is_global.eq.true`
+
+  const { data: placements, error } = await query.or(filter)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Filter: campaign must be active + within date range
   const active = (placements ?? []).filter((p) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cam = p.campaign as any
     if (!cam || cam.status !== 'active') return false
     if (cam.starts_at && cam.starts_at > now) return false

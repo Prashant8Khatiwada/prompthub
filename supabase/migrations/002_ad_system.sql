@@ -45,13 +45,13 @@ CREATE TABLE IF NOT EXISTS ad_campaigns (
 
 -- ── Ad Placements ────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS ad_placements (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id UUID REFERENCES ad_campaigns(id) ON DELETE CASCADE,
-  prompt_id   UUID REFERENCES prompts(id) ON DELETE CASCADE,
-  -- NULL prompt_id = show on ALL creator's pages
-  position    TEXT DEFAULT 'below_video',  -- below_video | above_gate | below_gate
-  is_global   BOOLEAN DEFAULT false,
-  created_at  TIMESTAMPTZ DEFAULT now()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    campaign_id UUID REFERENCES ad_campaigns(id) ON DELETE CASCADE,
+    prompt_id UUID REFERENCES prompts(id) ON DELETE CASCADE,
+    category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+    position TEXT NOT NULL, -- 'below_video', 'above_gate', 'below_gate'
+    is_global BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- ── Ad Impressions ───────────────────────────────────────────

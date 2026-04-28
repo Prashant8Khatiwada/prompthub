@@ -6,6 +6,7 @@ import { z } from 'zod'
 
 const placementSchema = z.object({
   prompt_id: z.string().uuid().nullable().optional(),
+  category_id: z.string().uuid().nullable().optional(),
   position: z.enum(['below_video', 'above_gate', 'below_gate']).default('below_video'),
   is_global: z.boolean().default(false),
 })

@@ -25,6 +25,12 @@ export default async function NewAdCampaignPage({ searchParams }: Params) {
     .eq('status', 'published')
     .order('created_at', { ascending: false })
 
+  // Fetch categories
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name')
+    .order('name')
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-3xl">
       <div>
@@ -32,7 +38,12 @@ export default async function NewAdCampaignPage({ searchParams }: Params) {
         <p className="text-zinc-500 text-sm mt-1">Configure your ad creative and display rules.</p>
       </div>
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8">
-        <AdCampaignForm clients={clients ?? []} prompts={prompts ?? []} initialClientId={client_id} />
+        <AdCampaignForm 
+          clients={clients ?? []} 
+          prompts={prompts ?? []} 
+          categories={categories ?? []}
+          initialClientId={client_id} 
+        />
       </div>
     </div>
   )
