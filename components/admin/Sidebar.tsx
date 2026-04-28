@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut,
   ExternalLink,
-  Folder
+  Folder,
+  Megaphone
 } from 'lucide-react'
 
 interface Props {
@@ -29,6 +30,8 @@ export default function Sidebar({ creator }: Props) {
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Prompts', href: '/admin/prompts', icon: FileText },
     { label: 'Categories', href: '/admin/categories', icon: Folder },
+    { label: 'Ads: Clients', href: '/admin/ads/clients', icon: Megaphone },
+    { label: 'Ads: Campaigns', href: '/admin/ads/campaigns', icon: Megaphone },
     { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { label: 'Settings', href: '/admin/settings', icon: Settings },
   ]

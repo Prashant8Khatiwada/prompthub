@@ -8,6 +8,7 @@ import VideoEmbed from '@/components/public/VideoEmbed'
 import PromptGate from '@/components/public/PromptGate'
 import RelatedPrompts from '@/components/public/RelatedPrompts'
 import ViewTracker from '@/components/public/ViewTracker'
+import AdBanner from '@/components/public/AdBanner'
 
 export const revalidate = 60
 
@@ -112,6 +113,13 @@ export default async function PublicPromptPage({ params }: Params) {
 
   const toolColor = AI_TOOL_COLORS[prompt.ai_tool] ?? '#6366f1'
 
+  // 6. Fetch active ad placements for this prompt
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
+  const placementsRes = await fetch(`${baseUrl}/api/ads/placements?prompt_id=${prompt.id}`, {
+    next: { revalidate: 60 } // Cache briefly to reduce DB load
+  })
+  const placements = placementsRes.ok ? await placementsRes.json() : []
+
   return (
     <main
       style={{ '--brand': creator.brand_color } as React.CSSProperties}
@@ -130,6 +138,13 @@ export default async function PublicPromptPage({ params }: Params) {
           fallbackThumbnail={prompt.thumbnail_url}
           url={prompt.video_url}
         />
+      )}
+
+      {/* Ad: Below Video */}
+      {placements.some((p: any) => p.position === 'below_video') && (
+        <div className="max-w-2xl mx-auto px-4 mt-8">
+          <AdBanner placements={placements} position="below_video" promptId={prompt.id} />
+        </div>
       )}
 
       {/* Prompt content */}
@@ -154,8 +169,22 @@ export default async function PublicPromptPage({ params }: Params) {
           <p className="text-zinc-400 text-sm leading-relaxed mb-6">{prompt.description}</p>
         )}
 
+        {/* Ad: Above Gate */}
+        {placements.some((p: any) => p.position === 'above_gate') && (
+          <div className="mb-6">
+            <AdBanner placements={placements} position="above_gate" promptId={prompt.id} />
+          </div>
+        )}
+
         {/* Gate */}
         <PromptGate prompt={prompt} />
+
+        {/* Ad: Below Gate */}
+        {placements.some((p: any) => p.position === 'below_gate') && (
+          <div className="mt-6">
+            <AdBanner placements={placements} position="below_gate" promptId={prompt.id} />
+          </div>
+        )}
       </section>
 
       {/* Related prompts */}

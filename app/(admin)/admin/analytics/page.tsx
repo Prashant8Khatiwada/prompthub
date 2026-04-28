@@ -50,6 +50,49 @@ export default async function AnalyticsPage() {
       </div>
 
       <section className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-zinc-800">
+          <h2 className="text-lg font-bold text-white">Ads Performance</h2>
+          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Top Campaigns</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-zinc-900/50">
+                <th className="text-left px-8 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Campaign</th>
+                <th className="text-right px-8 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Imps</th>
+                <th className="text-right px-8 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Clicks</th>
+                <th className="text-right px-8 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">CTR</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {stats.topCampaigns?.length > 0 ? stats.topCampaigns.map((c: any) => {
+                const ctr = c.impressions > 0 ? (c.clicks / c.impressions) * 100 : 0
+                return (
+                  <tr key={c.id} className="hover:bg-zinc-800/30 transition-colors">
+                    <td className="px-8 py-4 text-white font-medium">
+                      {c.name}
+                      <span className="ml-2 text-xs text-zinc-500 border border-zinc-700 px-1.5 py-0.5 rounded uppercase">{c.status}</span>
+                    </td>
+                    <td className="px-8 py-4 text-right text-zinc-400 font-mono">{c.impressions.toLocaleString()}</td>
+                    <td className="px-8 py-4 text-right text-zinc-400 font-mono">{c.clicks.toLocaleString()}</td>
+                    <td className={`px-8 py-4 text-right font-mono font-bold ${ctr > 5 ? 'text-emerald-400' : ctr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>
+                      {ctr.toFixed(2)}%
+                    </td>
+                  </tr>
+                )
+              }) : (
+                <tr>
+                  <td colSpan={4} className="px-8 py-10 text-center text-zinc-500">
+                    No active campaigns. Create one in Ads &gt; Campaigns.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
         <div className="px-8 py-6 border-b border-zinc-800">
           <h2 className="text-lg font-bold text-white">Recent Email Captures</h2>
         </div>

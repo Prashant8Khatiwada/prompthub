@@ -95,11 +95,35 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
     }
   }).sort((a, b) => parseFloat(b.conversion_rate) - parseFloat(a.conversion_rate)).slice(0, 5)
 
+  // Fetch creator's campaigns + stats
+  const { data: topCampaignsData } = await supabase
+    .from('ad_campaigns')
+    .select('id, name, status')
+    .eq('creator_id', userId)
+
+  let topCampaigns = []
+  if (topCampaignsData && topCampaignsData.length > 0) {
+    const ids = topCampaignsData.map(c => c.id)
+    const [{ data: imps }, { data: clks }] = await Promise.all([
+      supabase.from('ad_impressions').select('campaign_id').in('campaign_id', ids),
+      supabase.from('ad_clicks').select('campaign_id').in('campaign_id', ids)
+    ])
+    
+    topCampaigns = topCampaignsData.map(c => {
+      return {
+        ...c,
+        impressions: (imps || []).filter(i => i.campaign_id === c.id).length,
+        clicks: (clks || []).filter(clk => clk.campaign_id === c.id).length
+      }
+    }).sort((a, b) => b.clicks - a.clicks).slice(0, 5)
+  }
+
   return {
     dailyViews,
     promptStats,
     topByViews,
     topByConversion,
+    topCampaigns,
     recentCaptures: recentCaptures?.map(c => ({
       ...c,
       prompts: prompts?.find(p => p.id === c.prompt_id)
