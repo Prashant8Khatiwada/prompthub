@@ -1,0 +1,30 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { adminClient } from '@/lib/supabase/admin'
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { campaign_id, placement_id, prompt_id, session_id } = body
+
+    if (!campaign_id || !placement_id) {
+      return NextResponse.json({ error: 'campaign_id and placement_id required' }, { status: 400 })
+    }
+
+    const ua = req.headers.get('user-agent') ?? ''
+    const device = /mobile|android|iphone|ipad/i.test(ua) ? 'mobile' : 'desktop'
+
+    // Fire and forget — do not await
+    adminClient.from('ad_impressions').insert({
+      campaign_id,
+      placement_id,
+      prompt_id: prompt_id ?? null,
+      session_id: session_id ?? null,
+      device,
+      referrer: req.headers.get('referer') ?? null,
+    }).then(() => {/* no-op */})
+
+    return NextResponse.json({ ok: true })
+  } catch {
+    return NextResponse.json({ ok: true }) // Always 200 — never block rendering
+  }
+}

@@ -51,6 +51,8 @@ export interface Prompt {
   slug: string
   status: PromptStatus
   featured: boolean
+  content_type: 'prompt' | 'pdf'
+  pdf_url: string | null
   created_at: string
 }
 
@@ -65,4 +67,80 @@ export interface EmailCapture {
   prompt_id: string
   email: string
   captured_at: string
+}
+
+// ── Ad System Types ────────────────────────────────────────────
+
+export type AdClientStatus = 'active' | 'inactive'
+export type AdCampaignStatus = 'active' | 'paused' | 'ended' | 'scheduled'
+export type AdPlacementPosition = 'below_video' | 'above_gate' | 'below_gate'
+
+export interface AdClient {
+  id: string
+  creator_id: string
+  name: string
+  email: string | null
+  phone: string | null
+  company: string | null
+  website: string | null
+  notes: string | null
+  status: AdClientStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface AdCampaign {
+  id: string
+  creator_id: string
+  client_id: string | null
+  name: string
+  banner_url: string
+  banner_alt: string | null
+  target_url: string
+  utm_source: string
+  utm_medium: string
+  utm_campaign: string | null
+  client_webhook_url: string | null
+  report_token: string
+  status: AdCampaignStatus
+  starts_at: string | null
+  ends_at: string | null
+  created_at: string
+  updated_at: string
+  // Joined fields
+  client?: AdClient
+  impressions_count?: number
+  clicks_count?: number
+}
+
+export interface AdPlacement {
+  id: string
+  campaign_id: string
+  prompt_id: string | null
+  position: AdPlacementPosition
+  is_global: boolean
+  created_at: string
+  campaign?: AdCampaign
+}
+
+export interface AdStats {
+  total_impressions: number
+  total_clicks: number
+  ctr: number
+  campaign_name: string
+  campaign_status: AdCampaignStatus
+  client_name: string | null
+  starts_at: string | null
+  ends_at: string | null
+  daily_breakdown: { date: string; impressions: number; clicks: number }[]
+  per_prompt_breakdown: {
+    prompt_id: string
+    title: string
+    slug: string
+    impressions: number
+    clicks: number
+    ctr: number
+  }[]
+  device_breakdown: { device: string; count: number; percentage: number }[]
+  country_breakdown: { country: string; count: number; percentage: number }[]
 }
