@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { AdCampaign, AdPlacement, AdClient, Prompt } from '@/types'
+import type { AdCampaign, AdCampaignStatus, AdPlacementPosition } from '@/types'
 
 const inputCls = 'w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm'
 const labelCls = 'block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2'
@@ -11,8 +11,8 @@ const labelCls = 'block text-xs font-semibold text-zinc-400 uppercase tracking-w
 interface Props {
   defaultValues?: Partial<AdCampaign>
   campaignId?: string
-  clients: AdClient[]
-  prompts: Prompt[]
+  clients: { id: string; name: string }[]
+  prompts: { id: string; title: string; slug: string }[]
   initialClientId?: string
 }
 
@@ -27,25 +27,25 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
   const [status, setStatus] = useState<'active' | 'paused' | 'ended' | 'scheduled'>(defaultValues?.status ?? 'active')
   const [startsAt, setStartsAt] = useState(defaultValues?.starts_at ? new Date(defaultValues.starts_at).toISOString().slice(0, 16) : '')
   const [endsAt, setEndsAt] = useState(defaultValues?.ends_at ? new Date(defaultValues.ends_at).toISOString().slice(0, 16) : '')
-  
+
   const [bannerUrl, setBannerUrl] = useState(defaultValues?.banner_url ?? '')
   const [bannerAlt, setBannerAlt] = useState(defaultValues?.banner_alt ?? '')
   const [targetUrl, setTargetUrl] = useState(defaultValues?.target_url ?? '')
-  
+
   const [utmSource, setUtmSource] = useState(defaultValues?.utm_source ?? 'prompthub')
   const [utmMedium, setUtmMedium] = useState(defaultValues?.utm_medium ?? 'banner')
   const [utmCampaign, setUtmCampaign] = useState(defaultValues?.utm_campaign ?? '')
-  
+
   const [clientWebhookUrl, setClientWebhookUrl] = useState(defaultValues?.client_webhook_url ?? '')
   const reportToken = defaultValues?.report_token ?? ''
 
   // Placements
-  const existingGlobal = (defaultValues?.campaign as unknown as { ad_placements?: AdPlacement[] })?.ad_placements?.find(p => p.is_global)
-  const existingSpecific = (defaultValues?.campaign as unknown as { ad_placements?: AdPlacement[] })?.ad_placements?.filter(p => !p.is_global) ?? []
-  
+  const existingGlobal = defaultValues?.ad_placements?.find(p => p.is_global)
+  const existingSpecific = defaultValues?.ad_placements?.filter(p => !p.is_global) ?? []
+
   const [isGlobal, setIsGlobal] = useState(existingGlobal ? true : (isEdit ? false : true))
   const [globalPosition, setGlobalPosition] = useState<'below_video' | 'above_gate' | 'below_gate'>(existingGlobal?.position ?? 'below_video')
-  
+
   const [selectedPrompts, setSelectedPrompts] = useState<Record<string, 'below_video' | 'above_gate' | 'below_gate'>>(
     existingSpecific.reduce((acc, p) => ({ ...acc, [p.prompt_id!]: p.position }), {})
   )
@@ -58,9 +58,13 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
   // Auto-suggest UTM campaign
   useEffect(() => {
     if (!isEdit && name && !utmCampaign) {
-      setUtmCampaign(name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))
+      const suggested = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      if (suggested !== utmCampaign) {
+        setUtmCampaign(suggested)
+      }
     }
-  }, [name, isEdit, utmCampaign])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, isEdit])
 
   const finalUrl = targetUrl ? `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}utm_source=${utmSource}&utm_medium=${utmMedium}${utmCampaign ? `&utm_campaign=${utmCampaign}` : ''}` : ''
 
@@ -92,7 +96,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
     setErrors({})
     setServerError(null)
 
-    const placements = isGlobal 
+    const placements = isGlobal
       ? [{ is_global: true, position: globalPosition }]
       : Object.entries(selectedPrompts).map(([prompt_id, position]) => ({ prompt_id, position, is_global: false }))
 
@@ -147,7 +151,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
       {/* 1. Campaign Details */}
       <section className="space-y-6">
         <h2 className="text-xl font-bold text-white border-b border-zinc-800 pb-4">1. Campaign Details</h2>
-        
+
         <div>
           <label className={labelCls}>Campaign Name *</label>
           <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nike Summer 2025" className={inputCls} required />
@@ -167,7 +171,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
           </div>
           <div>
             <label className={labelCls}>Status</label>
-            <select value={status} onChange={e => setStatus(e.target.value as any)} className={inputCls}>
+            <select value={status} onChange={e => setStatus(e.target.value as AdCampaignStatus)} className={inputCls}>
               <option value="active">Active</option>
               <option value="paused">Paused</option>
               <option value="scheduled">Scheduled</option>
@@ -191,7 +195,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
       {/* 2. Ad Creative */}
       <section className="space-y-6">
         <h2 className="text-xl font-bold text-white border-b border-zinc-800 pb-4">2. Ad Creative</h2>
-        
+
         <div>
           <label className={labelCls}>Banner Image *</label>
           <div className="flex gap-4 items-start">
@@ -207,7 +211,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
               {errors.banner_url && <p className="text-red-400 text-xs mt-1">{errors.banner_url[0]}</p>}
             </div>
           </div>
-          
+
           {bannerUrl && (
             <div className="mt-6">
               <p className="text-xs text-zinc-500 mb-2">Live Preview (rendered size may vary):</p>
@@ -233,7 +237,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
       {/* 3. UTM Tracking */}
       <section className="space-y-6">
         <h2 className="text-xl font-bold text-white border-b border-zinc-800 pb-4">3. UTM Tracking</h2>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div>
             <label className={labelCls}>utm_source</label>
@@ -269,7 +273,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
       {/* 4. Placement Rules */}
       <section className="space-y-6">
         <h2 className="text-xl font-bold text-white border-b border-zinc-800 pb-4">4. Placement Rules</h2>
-        
+
         <div className="space-y-4">
           <label className="flex items-center gap-3 p-4 rounded-xl border border-zinc-800 cursor-pointer hover:bg-zinc-800/30 transition-colors">
             <input type="radio" checked={isGlobal} onChange={() => setIsGlobal(true)} className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 bg-zinc-900 border-zinc-700" />
@@ -291,7 +295,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
         {isGlobal ? (
           <div className="pl-4 border-l-2 border-zinc-800 mt-4">
             <label className={labelCls}>Global Display Position</label>
-            <select value={globalPosition} onChange={e => setGlobalPosition(e.target.value as any)} className={inputCls + ' max-w-xs'}>
+            <select value={globalPosition} onChange={e => setGlobalPosition(e.target.value as AdPlacementPosition)} className={inputCls + ' max-w-xs'}>
               <option value="below_video">Below Video / Top</option>
               <option value="above_gate">Above Content Gate</option>
               <option value="below_gate">Below Content Gate / Bottom</option>
@@ -304,8 +308,8 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
               return (
                 <div key={p.id} className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${isSelected ? 'bg-indigo-600/5 border-indigo-500/20' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'}`}>
                   <label className="flex items-center gap-3 cursor-pointer flex-1">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={isSelected}
                       onChange={(e) => {
                         if (e.target.checked) {
@@ -324,9 +328,9 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
                     </div>
                   </label>
                   {isSelected && (
-                    <select 
-                      value={selectedPrompts[p.id]} 
-                      onChange={e => setSelectedPrompts(prev => ({ ...prev, [p.id]: e.target.value as any }))}
+                    <select
+                      value={selectedPrompts[p.id]}
+                      onChange={e => setSelectedPrompts(prev => ({ ...prev, [p.id]: e.target.value as AdPlacementPosition }))}
                       className="px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-white focus:ring-indigo-500 min-w-[140px]"
                     >
                       <option value="below_video">Below Video</option>
@@ -337,7 +341,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
                 </div>
               )
             })}
-            {prompts.length === 0 && <p className="text-zinc-500 text-sm">You don't have any published prompts yet.</p>}
+            {prompts.length === 0 && <p className="text-zinc-500 text-sm">You don&apos;t have any published prompts yet.</p>}
           </div>
         )}
       </section>
@@ -345,7 +349,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
       {/* 5. Client Reporting */}
       <section className="space-y-6">
         <h2 className="text-xl font-bold text-white border-b border-zinc-800 pb-4">5. Client Reporting</h2>
-        
+
         {isEdit && reportToken && (
           <div className="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 flex flex-col gap-3">
             <p className="text-sm font-semibold text-white">Shareable Report Link</p>
@@ -360,7 +364,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
         <div>
           <label className={labelCls}>Client Webhook URL (Optional)</label>
           <input type="url" value={clientWebhookUrl} onChange={e => setClientWebhookUrl(e.target.value)} placeholder="https://client-system.com/webhook" className={inputCls} />
-          <p className="text-[10px] text-zinc-500 mt-1">We'll POST click events here in real-time.</p>
+          <p className="text-[10px] text-zinc-500 mt-1">We&apos;ll POST click events here in real-time.</p>
         </div>
       </section>
 

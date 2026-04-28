@@ -15,11 +15,9 @@ interface Props {
 export default function PdfViewer({ url }: Props) {
   const [numPages, setNumPages] = useState<number>()
   const [pageNumber, setPageNumber] = useState<number>(1)
-  const [loading, setLoading] = useState(true)
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages)
-    setLoading(false)
   }
 
   return (
