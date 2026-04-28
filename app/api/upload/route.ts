@@ -21,11 +21,11 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer())
 
   const { error } = await adminClient.storage
-    .from('media')
+    .from('prompts')
     .upload(filename, buffer, { contentType: file.type, upsert: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const { data: { publicUrl } } = adminClient.storage.from('media').getPublicUrl(filename)
+  const { data: { publicUrl } } = adminClient.storage.from('prompts').getPublicUrl(filename)
   return NextResponse.json({ url: publicUrl })
 }

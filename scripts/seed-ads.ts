@@ -113,9 +113,10 @@ async function seedAds() {
     }
   ]
 
-  const { error: placementsError } = await supabase
+  const { data: seededPlacements, error: placementsError } = await supabase
     .from('ad_placements')
     .upsert(placements)
+    .select()
 
   if (placementsError) {
     console.error('❌ Placements error:', placementsError.message)
@@ -132,11 +133,13 @@ async function seedAds() {
     const impressions = []
     const clicks = []
     
+    const placementId = seededPlacements?.[0]?.id
+
     for (let i = 0; i < 50; i++) {
       const date = new Date(Date.now() - Math.floor(Math.random() * 7) * 86400000)
       impressions.push({
         campaign_id: summerCampaign.id,
-        placement_id: placements[0].campaign_id, // simplified
+        placement_id: placementId,
         prompt_id: promptIds[Math.floor(Math.random() * promptIds.length)],
         ip_hash: `ip_${Math.random()}`,
         user_agent: 'Mozilla/5.0',
@@ -146,7 +149,7 @@ async function seedAds() {
       if (Math.random() > 0.8) {
         clicks.push({
           campaign_id: summerCampaign.id,
-          placement_id: placements[0].campaign_id,
+          placement_id: placementId,
           prompt_id: promptIds[Math.floor(Math.random() * promptIds.length)],
           ip_hash: `ip_${Math.random()}`,
           user_agent: 'Mozilla/5.0',
