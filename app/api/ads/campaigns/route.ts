@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
+import { adminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const placementSchema = z.object({
@@ -48,8 +49,8 @@ export async function GET() {
 
   const impMap: Record<string, number> = {}
   const clickMap: Record<string, number> = {}
-  ;(imps ?? []).forEach((r) => { impMap[r.campaign_id] = (impMap[r.campaign_id] ?? 0) + 1 })
-  ;(clicks ?? []).forEach((r) => { clickMap[r.campaign_id] = (clickMap[r.campaign_id] ?? 0) + 1 })
+    ; (imps ?? []).forEach((r) => { impMap[r.campaign_id] = (impMap[r.campaign_id] ?? 0) + 1 })
+    ; (clicks ?? []).forEach((r) => { clickMap[r.campaign_id] = (clickMap[r.campaign_id] ?? 0) + 1 })
 
   const enriched = (campaigns ?? []).map((c) => ({
     ...c,
@@ -74,9 +75,12 @@ export async function POST(req: NextRequest) {
 
   const { placements, ...campaignData } = parsed.data
 
-  const { data: campaign, error } = await supabase
+  const crypto = await import('crypto')
+  const report_token = crypto.randomUUID()
+
+  const { data: campaign, error } = await adminClient
     .from('ad_campaigns')
-    .insert({ ...campaignData, creator_id: user.id })
+    .insert({ ...campaignData, creator_id: user.id, report_token })
     .select()
     .single()
 
@@ -84,9 +88,13 @@ export async function POST(req: NextRequest) {
 
   // Insert placements
   if (placements.length > 0) {
-    await supabase.from('ad_placements').insert(
-      placements.map((p) => ({ ...p, campaign_id: campaign.id }))
+    const { error: placementError } = await adminClient.from('ad_placements').insert(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      placements.map((p: any) => ({ ...p, campaign_id: campaign.id }))
     )
+    if (placementError) {
+      console.error('Placement error:', placementError.message)
+    }
   }
 
   return NextResponse.json(campaign, { status: 201 })

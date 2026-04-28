@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
+import { adminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const placementSchema = z.object({
@@ -60,7 +61,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const { placements, ...campaignData } = parsed.data
 
-  const { data: campaign, error } = await supabase
+  const { data: campaign, error } = await adminClient
     .from('ad_campaigns')
     .update({ ...campaignData, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -72,9 +73,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   // Replace placements if provided
   if (placements !== undefined) {
-    await supabase.from('ad_placements').delete().eq('campaign_id', id)
+    await adminClient.from('ad_placements').delete().eq('campaign_id', id)
     if (placements.length > 0) {
-      await supabase.from('ad_placements').insert(
+      await adminClient.from('ad_placements').insert(
         placements.map((p) => ({ ...p, campaign_id: id }))
       )
     }
