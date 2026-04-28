@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
   // Filter: campaign must be active + within date range
   const active = (placements ?? []).filter((p) => {
-    const cam = p.campaign as { status: string; starts_at: string | null; ends_at: string | null } | null
+    const cam = p.campaign as any
     if (!cam || cam.status !== 'active') return false
     if (cam.starts_at && cam.starts_at > now) return false
     if (cam.ends_at && cam.ends_at < now) return false

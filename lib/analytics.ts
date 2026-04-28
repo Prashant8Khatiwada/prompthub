@@ -101,7 +101,7 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
     .select('id, name, status')
     .eq('creator_id', userId)
 
-  let topCampaigns = []
+  let topCampaigns: any[] = []
   if (topCampaignsData && topCampaignsData.length > 0) {
     const ids = topCampaignsData.map(c => c.id)
     const [{ data: imps }, { data: clks }] = await Promise.all([

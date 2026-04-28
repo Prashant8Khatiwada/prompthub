@@ -45,7 +45,7 @@ export default async function EditAdCampaignPage({ params }: Params) {
       </div>
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8">
         <AdCampaignForm 
-          defaultValues={{ ...campaign, campaign: campaign as any } as AdCampaign} 
+          defaultValues={campaign as AdCampaign} 
           campaignId={id} 
           clients={clients ?? []} 
           prompts={prompts ?? []} 

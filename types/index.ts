@@ -109,6 +109,7 @@ export interface AdCampaign {
   updated_at: string
   // Joined fields
   client?: AdClient
+  ad_placements?: AdPlacement[]
   impressions_count?: number
   clicks_count?: number
 }

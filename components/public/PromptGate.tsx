@@ -1,7 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import type { Prompt } from '@/types'
+
+// Dynamically import PdfViewer with SSR disabled since it relies on window
+const PdfViewer = dynamic(() => import('./PdfViewer'), { ssr: false })
 import CopyButton from './CopyButton'
 import { trackEmailSubmit } from '@/lib/analytics'
 
@@ -22,7 +27,7 @@ export default function PromptGate({ prompt }: Props) {
   if (prompt.gate_type === 'open') {
     return (
       <div className="space-y-4">
-        <PromptContent content={prompt.content} />
+        <PromptContent prompt={prompt} content={prompt.content} />
         <CopyButton content={prompt.content} promptId={prompt.id} slug={prompt.slug} />
       </div>
     )
@@ -32,14 +37,8 @@ export default function PromptGate({ prompt }: Props) {
   if (prompt.gate_type === 'email') {
     if (unlockedContent) {
       return (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Prompt unlocked!
-          </div>
-          <PromptContent content={unlockedContent} />
+        <div className="space-y-4 animate-in slide-in-from-bottom-4 fade-in duration-500">
+          <PromptContent prompt={prompt} content={unlockedContent} />
           <CopyButton content={unlockedContent} promptId={prompt.id} slug={prompt.slug} />
         </div>
       )
@@ -148,7 +147,15 @@ export default function PromptGate({ prompt }: Props) {
   )
 }
 
-function PromptContent({ content }: { content: string }) {
+function PromptContent({ prompt, content }: { prompt: Prompt; content: string }) {
+  if (prompt.content_type === 'pdf' && prompt.pdf_url) {
+    return (
+      <div className="mt-8 border-t border-zinc-800/50 pt-8">
+        <PdfViewer url={prompt.pdf_url} />
+      </div>
+    )
+  }
+
   return (
     <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
       <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-zinc-800 bg-zinc-900/80">

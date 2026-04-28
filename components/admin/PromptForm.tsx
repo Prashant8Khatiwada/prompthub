@@ -41,9 +41,12 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
   const [videoUrl, setVideoUrl] = useState(defaultValues?.video_url ?? '')
   const [embedHtml, setEmbedHtml] = useState(defaultValues?.embed_html ?? '')
   const [thumbnailUrl, setThumbnailUrl] = useState(defaultValues?.thumbnail_url ?? '')
-  const [status, setStatus] = useState<'draft' | 'published'>(defaultValues?.status ?? 'draft')
+  const [status, setStatus] = useState<'draft' | 'published'>(defaultValues?.status ?? 'published')
   const [featured, setFeatured] = useState(defaultValues?.featured ?? false)
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!defaultValues?.slug)
+  const [contentType, setContentType] = useState<'prompt' | 'pdf'>(defaultValues?.content_type ?? 'prompt')
+  const [pdfUrl, setPdfUrl] = useState(defaultValues?.pdf_url ?? '')
+  const [uploadingPdf, setUploadingPdf] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<FieldErrors>({})
@@ -79,6 +82,23 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
     }
   }
 
+  async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingPdf(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/upload/pdf', { method: 'POST', body: fd })
+    const data = await res.json()
+    setUploadingPdf(false)
+    if (data.url) {
+      setPdfUrl(data.url)
+      if (content === '') setContent('See attached PDF for instructions.')
+    } else {
+      setServerError(data.error ?? 'Upload failed')
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -87,19 +107,21 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
 
     const body = {
       title,
+      slug,
       category_id: categoryId,
       description: description || null,
-      content,
+      content: contentType === 'prompt' ? content : (content || 'PDF Document'),
+      content_type: contentType,
+      pdf_url: contentType === 'pdf' ? pdfUrl : null,
       ai_tool: aiTool,
       output_type: outputType,
       gate_type: gateType,
-      price: gateType === 'payment' && price ? parseFloat(price) : null,
-      slug,
+      price: gateType === 'payment' ? parseFloat(price) : null,
       video_url: videoUrl || null,
       embed_html: embedHtml || null,
       thumbnail_url: thumbnailUrl || null,
       status,
-      featured,
+      is_featured: featured,
     }
 
     const url = isEdit ? `/api/prompts/${promptId}` : '/api/prompts'
@@ -186,18 +208,62 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
         />
       </div>
 
-      {/* Content */}
-      <div>
-        <label className={labelCls}>Prompt Content *</label>
-        <textarea
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          placeholder="Paste the full AI prompt here..."
-          rows={6}
-          className={inputCls + ' resize-y font-mono'}
-          required
-        />
-        {errors.content && <p className="text-red-400 text-xs mt-1">{errors.content[0]}</p>}
+      {/* Content Type & Content */}
+      <div className="space-y-4 border border-zinc-800 rounded-2xl p-6 bg-zinc-900/30">
+        <div>
+          <label className={labelCls}>Content Type</label>
+          <div className="flex gap-3 bg-zinc-900 p-1 rounded-xl w-fit border border-zinc-800">
+            <button
+              type="button"
+              onClick={() => setContentType('prompt')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${contentType === 'prompt' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+            >
+              📝 Text Prompt
+            </button>
+            <button
+              type="button"
+              onClick={() => setContentType('pdf')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${contentType === 'pdf' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+            >
+              📄 PDF Document
+            </button>
+          </div>
+        </div>
+
+        {contentType === 'prompt' ? (
+          <div>
+            <label className={labelCls}>Prompt Content *</label>
+            <textarea
+              value={content}
+              onChange={e => setContent(e.target.value)}
+              placeholder="Paste the full AI prompt here..."
+              rows={6}
+              className={inputCls + ' resize-y font-mono'}
+              required={contentType === 'prompt'}
+            />
+            {errors.content && <p className="text-red-400 text-xs mt-1">{errors.content[0]}</p>}
+          </div>
+        ) : (
+          <div>
+            <label className={labelCls}>PDF File *</label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={handlePdfUpload}
+              className="block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 transition-all cursor-pointer"
+            />
+            <p className="text-zinc-600 text-xs mt-1">Max 20MB. PDF only.</p>
+            {uploadingPdf && <p className="text-indigo-400 text-xs mt-1">Uploading PDF…</p>}
+            {pdfUrl && !uploadingPdf && (
+              <p className="text-emerald-400 text-xs mt-1 truncate">✓ PDF Uploaded: {pdfUrl.split('/').pop()}</p>
+            )}
+            {errors.pdf_url && <p className="text-red-400 text-xs mt-1">{errors.pdf_url[0]}</p>}
+            {/* Hidden content field for DB constraints */}
+            <input type="hidden" value={content} />
+          </div>
+        )}
       </div>
 
       {/* AI Tool + Output Type row */}
@@ -359,7 +425,7 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
           </button>
           <button
             type="submit"
-            disabled={saving || uploading || categories.length === 0}
+            disabled={saving || uploading || uploadingPdf || categories.length === 0}
             className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 shadow-lg shadow-indigo-500/20"
           >
             {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Prompt'}
