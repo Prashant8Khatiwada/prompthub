@@ -25,6 +25,10 @@ docker build \
   --build-arg INSTAGRAM_ACCESS_TOKEN="IGAAaNcwNKpMBBZAFpOOEd2Yk1PeVVpdzdXQWNnRnpyWHNTMlhBN1AzU3dEZAmZArS09SMDlNTTl1OTk2TXVpTXFHeWJqT1dadVo2cE9GOVJSdGNOUEdUMGgwNGV5TE9nUDFzOFhjS21ZALVlORGlIUmp3RGo5bEZArX2U1b29Ta3RBNAZDZD" \
   --build-arg NEXT_PUBLIC_BASE_DOMAIN="localhost:3000" \
   --build-arg CRON_SECRET="24f525879220359b23fe8b312a9a9fcf24ab0abc222342a2f93318c18ba2de68" \
+  --build-arg INSTAGRAM_APP_ID="17841423213743046" \
+  --build-arg INSTAGRAM_APP_SECRET="e3dc546a1370a20d2a3010fd02563acd" \
+  --build-arg INSTAGRAM_REDIRECT_URI="https://zip.fotosfolio.com/api/auth/instagram/callback" \
+  --build-arg TOKEN_ENCRYPTION_KEY="4d47a1eee73a4fc05718375fe118daa30d6d3cfd9615a6b300a1196d1674f129" \
   -t "$IMAGE_TAG" .
 
 if [ $? -eq 0 ]; then
