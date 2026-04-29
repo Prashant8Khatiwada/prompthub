@@ -30,10 +30,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'placement_id and campaign_id required' }, { status: 400 })
   }
 
-  // Fetch campaign data
+  // Fetch campaign data (include creator_id for analytics attribution)
   const { data: campaign } = await adminClient
     .from('ad_campaigns')
-    .select('target_url, utm_source, utm_medium, utm_campaign, client_webhook_url')
+    .select('target_url, utm_source, utm_medium, utm_campaign, client_webhook_url, creator_id')
     .eq('id', campaignId)
     .single()
 
@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
   const sessionId = searchParams.get('session_id') ?? 'unknown'
   trackEvent({
     event_type: 'ad_click',
+    creator_id: campaign.creator_id ?? undefined,
     campaign_id: campaignId,
     placement_id: placementId ?? undefined,
     prompt_id: promptId ?? undefined,

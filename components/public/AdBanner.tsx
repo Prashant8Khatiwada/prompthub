@@ -17,6 +17,7 @@ export interface AdPlacementData {
     utm_medium: string
     utm_campaign: string
     status: string
+    creator_id?: string
   }
 }
 
@@ -24,9 +25,10 @@ interface Props {
   placements: AdPlacementData[]
   position: 'below_video' | 'above_gate' | 'below_gate'
   promptId: string
+  creatorId?: string
 }
 
-export default function AdBanner({ placements, position, promptId }: Props) {
+export default function AdBanner({ placements, position, promptId, creatorId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [hasImpressed, setHasImpressed] = useState(false)
 
@@ -46,6 +48,7 @@ export default function AdBanner({ placements, position, promptId }: Props) {
       (entries) => {
         const [entry] = entries
         if (entry.isIntersecting) {
+          const sessionId = sessionStorage.getItem('ph_sid') || null
           // Send impression
           fetch('/api/ads/impression', {
             method: 'POST',
@@ -54,7 +57,8 @@ export default function AdBanner({ placements, position, promptId }: Props) {
               campaign_id: placement.campaign.id,
               placement_id: placement.id,
               prompt_id: promptId,
-              session_id: sessionStorage.getItem('ph_sid') || null,
+              session_id: sessionId,
+              creator_id: creatorId ?? placement.campaign.creator_id ?? null,
             }),
           }).catch(() => {})
 
@@ -69,12 +73,13 @@ export default function AdBanner({ placements, position, promptId }: Props) {
     if (containerRef.current) observer.observe(containerRef.current)
 
     return () => observer.disconnect()
-  }, [placement, hasImpressed, promptId])
+  }, [placement, hasImpressed, promptId, creatorId])
 
   if (!placement) return null
 
-  // All clicks route through the tracking endpoint
-  const trackingUrl = `/api/ads/click?placement_id=${placement.id}&campaign_id=${placement.campaign.id}&prompt_id=${promptId}`
+  // All clicks route through the tracking endpoint — include session_id
+  const sessionId = typeof window !== 'undefined' ? (sessionStorage.getItem('ph_sid') || '') : ''
+  const trackingUrl = `/api/ads/click?placement_id=${placement.id}&campaign_id=${placement.campaign.id}&prompt_id=${promptId}&session_id=${sessionId}`
 
   return (
     <div ref={containerRef} className="relative w-full overflow-hidden rounded-xl bg-zinc-900 border border-zinc-800 transition-transform hover:scale-[1.01]">

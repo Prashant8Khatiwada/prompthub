@@ -220,7 +220,7 @@ export default async function PublicPromptPage({ params }: Params) {
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {placements.some((p: any) => p.position === 'above_gate') && (
           <div className="mb-6">
-            <AdBanner placements={placements} position="above_gate" promptId={prompt.id} />
+            <AdBanner placements={placements} position="above_gate" promptId={prompt.id} creatorId={creator.id} />
           </div>
         )}
 
@@ -231,7 +231,7 @@ export default async function PublicPromptPage({ params }: Params) {
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {placements.some((p: any) => p.position === 'below_gate') && (
           <div className="mt-6">
-            <AdBanner placements={placements} position="below_gate" promptId={prompt.id} />
+            <AdBanner placements={placements} position="below_gate" promptId={prompt.id} creatorId={creator.id} />
           </div>
         )}
       </section>
@@ -249,7 +249,7 @@ export default async function PublicPromptPage({ params }: Params) {
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {placements.some((p: any) => p.position === 'below_video') && (
         <div className="max-w-2xl mx-auto px-4 mt-8">
-          <AdBanner placements={placements} position="below_video" promptId={prompt.id} />
+          <AdBanner placements={placements} position="below_video" promptId={prompt.id} creatorId={creator.id} />
         </div>
       )}
 

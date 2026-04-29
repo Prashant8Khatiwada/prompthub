@@ -5,7 +5,7 @@ import { trackEvent } from '@/lib/analytics/track'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { campaign_id, placement_id, prompt_id, session_id } = body
+    const { campaign_id, placement_id, prompt_id, session_id, creator_id } = body
 
     if (!campaign_id || !placement_id) {
       return NextResponse.json({ error: 'campaign_id and placement_id required' }, { status: 400 })
@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
 
     trackEvent({
       event_type: 'ad_impression',
+      creator_id: creator_id ?? undefined,
       campaign_id,
       placement_id,
       prompt_id: prompt_id ?? undefined,
