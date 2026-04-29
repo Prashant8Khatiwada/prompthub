@@ -170,7 +170,7 @@ export default async function PublicPromptPage({ params }: Params) {
       className="min-h-screen bg-white text-zinc-900 pb-16"
     >
       {/* Track page view */}
-      {pageId && <ViewTracker pageId={pageId} />}
+      {pageId && <ViewTracker pageId={pageId} promptId={prompt.id} creatorId={creator.id} />}
 
       {/* Sticky creator header */}
       {/* <CreatorBar creator={creator} /> */}

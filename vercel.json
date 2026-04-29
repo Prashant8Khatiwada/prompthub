@@ -10,5 +10,11 @@
       ],
       "destination": "/:path*"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/aggregate",
+      "schedule": "0 * * * *"
+    }
   ]
 }

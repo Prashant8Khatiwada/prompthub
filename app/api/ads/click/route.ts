@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminClient } from '@/lib/supabase/admin'
+import { trackEvent } from '@/lib/analytics/track'
 
 function buildUtmUrl(base: string, params: Record<string, string | null | undefined>) {
   const url = new URL(base)
@@ -48,6 +49,16 @@ export async function GET(req: NextRequest) {
     prompt_id: promptId ?? null,
     device,
   }).then(() => {/* no-op */})
+
+  const sessionId = searchParams.get('session_id') ?? 'unknown'
+  trackEvent({
+    event_type: 'ad_click',
+    campaign_id: campaignId,
+    placement_id: placementId ?? undefined,
+    prompt_id: promptId ?? undefined,
+    session_id: sessionId,
+    request: req,
+  })
 
   // Fire webhook async (no await)
   if (campaign.client_webhook_url) {
