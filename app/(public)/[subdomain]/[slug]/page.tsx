@@ -88,8 +88,6 @@ export default async function PublicPromptPage({ params }: Params) {
 
   // 4. Track page view (removed dependency on non-existent 'pages' table)
   // We now use prompt_id directly as the primary identifier for events
-
-  // 5. Fetch Instagram oEmbed HTML (if video_url present)
   const oEmbedHtml = prompt.video_url
     ? await fetchInstagramOEmbed(prompt.video_url)
     : null

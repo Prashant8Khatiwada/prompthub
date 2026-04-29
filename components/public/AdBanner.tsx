@@ -78,7 +78,6 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
           // Original Impression logic (one-time per session)
           if (!hasImpressed && !sessionStorage.getItem(sessionKey)) {
             const sessionId = sessionStorage.getItem('ph_sid') || null
-            console.log('[AdBanner] sending impression for campaign:', placement.campaign.id)
             fetch('/api/ads/impression', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -89,7 +88,7 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
                 session_id: sessionId,
                 creator_id: creatorId ?? placement.campaign.creator_id ?? null,
               }),
-            }).catch((err) => console.error('[AdBanner] impression failed:', err))
+            }).catch(() => {})
 
             sessionStorage.setItem(sessionKey, '1')
             setHasImpressed(true)
@@ -121,11 +120,9 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
   const baseClickUrl = `/api/ads/click?placement_id=${placement.id}&campaign_id=${placement.campaign.id}&prompt_id=${promptId}`
 
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
-    console.log('[AdBanner] link clicked, preparing redirect...')
     e.preventDefault()
     const sessionId = sessionStorage.getItem('ph_sid') || ''
     const url = `${baseClickUrl}&session_id=${encodeURIComponent(sessionId)}`
-    console.log('[AdBanner] opening tracking URL:', url)
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
