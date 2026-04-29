@@ -107,11 +107,13 @@ export async function GET(req: NextRequest, { params }: Params) {
   const placementMap: Record<string, any> = {}
   ;(placementData || []).forEach(row => {
     const pId = row.prompt_id || 'unknown'
+    const promptObj = Array.isArray(row.prompts) ? row.prompts[0] : row.prompts
+
     if (!placementMap[pId]) {
       placementMap[pId] = {
         prompt_id: pId,
-        prompt_title: row.prompts?.title || 'Global Placement (All Prompts)',
-        prompt_slug: row.prompts?.slug || '',
+        prompt_title: (promptObj as any)?.title || 'Global Placement (All Prompts)',
+        prompt_slug: (promptObj as any)?.slug || '',
         impressions: 0,
         clicks: 0
       }

@@ -159,10 +159,11 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const adMap: Record<string, any> = {}
   ;(adsData || []).forEach(row => {
+    const campaignObj = Array.isArray(row.ad_campaigns) ? row.ad_campaigns[0] : row.ad_campaigns
     if (!adMap[row.campaign_id]) {
       adMap[row.campaign_id] = {
         campaign_id: row.campaign_id,
-        campaign_name: row.ad_campaigns?.name || 'Unknown',
+        campaign_name: (campaignObj as any)?.name || 'Unknown',
         impressions: 0,
         clicks: 0
       }

@@ -95,12 +95,13 @@ export async function GET(req: NextRequest) {
 
   const promptMap: Record<string, any> = {}
   ;(promptStatsData || []).forEach(row => {
+    const promptObj = Array.isArray(row.prompts) ? row.prompts[0] : row.prompts
     if (!promptMap[row.prompt_id]) {
       promptMap[row.prompt_id] = {
         id: row.prompt_id,
-        title: row.prompts?.title || 'Unknown',
-        slug: row.prompts?.slug || '',
-        gate_type: row.prompts?.gate_type || 'open',
+        title: (promptObj as any)?.title || 'Unknown',
+        slug: (promptObj as any)?.slug || '',
+        gate_type: (promptObj as any)?.gate_type || 'open',
         views: 0, unique_views: 0, copies: 0,
         conversions: 0, revenue: 0
       }
@@ -127,11 +128,12 @@ export async function GET(req: NextRequest) {
 
   const campaignMap: Record<string, any> = {}
   ;(campaignStatsData || []).forEach(row => {
+    const campaignObj = Array.isArray(row.ad_campaigns) ? row.ad_campaigns[0] : row.ad_campaigns
     if (!campaignMap[row.campaign_id]) {
       campaignMap[row.campaign_id] = {
         id: row.campaign_id,
-        name: row.ad_campaigns?.name || 'Unknown',
-        status: row.ad_campaigns?.status || 'unknown',
+        name: (campaignObj as any)?.name || 'Unknown',
+        status: (campaignObj as any)?.status || 'unknown',
         impressions: 0, unique_impressions: 0,
         clicks: 0, unique_clicks: 0
       }

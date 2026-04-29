@@ -18,7 +18,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   }
 
   const campaignId = campaign.id
-  
+
   // Public report always shows last 30 days
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -34,7 +34,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   let total_impressions = 0
   let total_clicks = 0
   let total_view_time = 0
-  
+
   // Daily breakdown (last 30 days)
   const dailyMap: Record<string, { impressions: number; clicks: number; view_time: number }> = {}
   for (let i = 29; i >= 0; i--) {
@@ -43,7 +43,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     dailyMap[d.toISOString().split('T')[0]] = { impressions: 0, clicks: 0, view_time: 0 }
   }
 
-  ;(stats || []).forEach((row) => {
+  ; (stats || []).forEach((row) => {
     total_impressions += row.impressions || 0
     total_clicks += row.clicks || 0
     total_view_time += Number(row.total_view_time || 0)
@@ -68,20 +68,22 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const promptMap: Record<string, any> = {}
   ;(promptStats || []).forEach(row => {
     const pId = row.prompt_id || 'unknown'
+    const promptObj = Array.isArray(row.prompts) ? row.prompts[0] : row.prompts
+
     if (!promptMap[pId]) {
       promptMap[pId] = {
         prompt_id: pId,
-        title: row.prompts?.title || 'Global Placement',
-        slug: row.prompts?.slug || '',
+        title: (promptObj as any)?.title || 'Global Placement',
+        slug: (promptObj as any)?.slug || '',
         impressions: 0,
         clicks: 0,
         view_time: 0
       }
     }
-    promptMap[pId].impressions += row.impressions || 0
-    promptMap[pId].clicks += row.clicks || 0
-    promptMap[pId].view_time += Number(row.total_view_time || 0)
-  })
+      promptMap[pId].impressions += row.impressions || 0
+      promptMap[pId].clicks += row.clicks || 0
+      promptMap[pId].view_time += Number(row.total_view_time || 0)
+    })
 
   const per_prompt_breakdown = Object.values(promptMap).map((v: any) => ({
     ...v,
@@ -101,14 +103,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const countryMap: Record<string, number> = {}
   let totalRawImps = 0
 
-  ;(rawEvents || []).forEach(row => {
-    totalRawImps++
-    const device = row.device_type || 'unknown'
-    deviceMap[device] = (deviceMap[device] || 0) + 1
-    
-    const country = row.country || 'Unknown'
-    countryMap[country] = (countryMap[country] || 0) + 1
-  })
+    ; (rawEvents || []).forEach(row => {
+      totalRawImps++
+      const device = row.device_type || 'unknown'
+      deviceMap[device] = (deviceMap[device] || 0) + 1
+
+      const country = row.country || 'Unknown'
+      countryMap[country] = (countryMap[country] || 0) + 1
+    })
 
   const device_breakdown = Object.entries(deviceMap).map(([device, count]) => ({
     device,
@@ -124,7 +126,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const clientData = campaign.client as any
-  
+
   return NextResponse.json({
     total_impressions,
     total_clicks,
