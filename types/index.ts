@@ -17,6 +17,8 @@ export interface Creator {
   instagram_url: string | null
   tiktok_url: string | null
   instagram_api_key?: string | null
+  instagram_app_id?: string | null
+  instagram_app_secret?: string | null
   tiktok_api_key?: string | null
   stripe_id: string | null
   plan_tier: PlanTier
