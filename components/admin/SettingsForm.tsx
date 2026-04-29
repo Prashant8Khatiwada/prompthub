@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Creator } from '@/types'
+import InstagramIntegration from './InstagramIntegration'
 
 interface Props {
   defaultValues: Creator
@@ -126,30 +127,21 @@ export default function SettingsForm({ defaultValues, section }: Props) {
       )}
 
       {section === 'integrations' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Instagram Access Token</label>
-              <input
-                type="password"
-                value={formData.instagram_api_key || ''}
-                onChange={e => setFormData(prev => ({ ...prev, instagram_api_key: e.target.value }))}
-                placeholder="Paste Instagram Token"
-                className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none"
-              />
-              <p className="text-[10px] text-zinc-500">Required for direct reel embedding and automation.</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">TikTok App Key</label>
-              <input
-                type="password"
-                value={formData.tiktok_api_key || ''}
-                onChange={e => setFormData(prev => ({ ...prev, tiktok_api_key: e.target.value }))}
-                placeholder="Paste TikTok Key"
-                className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none"
-              />
+        <div className="space-y-8">
+          <InstagramIntegration />
+          
+          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">TikTok App Key</label>
+                <input
+                  type="password"
+                  value={formData.tiktok_api_key || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, tiktok_api_key: e.target.value }))}
+                  placeholder="Paste TikTok Key"
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none"
+                />
+              </div>
             </div>
           </div>
         </div>
