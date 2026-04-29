@@ -114,11 +114,34 @@ export default async function PublicPromptPage({ params }: Params) {
   const toolColor = AI_TOOL_COLORS[prompt.ai_tool] ?? '#6366f1'
 
   // 6. Fetch active ad placements for this prompt
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
-  const placementsRes = await fetch(`${baseUrl}/api/ads/placements?prompt_id=${prompt.id}`, {
-    next: { revalidate: 60 } // Cache briefly to reduce DB load
-  })
-  const placements = placementsRes.ok ? await placementsRes.json() : []
+  // Fetch placements directly via adminClient (instead of internal fetch to avoid baseUrl issues)
+  const now = new Date().toISOString()
+  const { data: rawPlacements } = await adminClient
+    .from('ad_placements')
+    .select(`
+      id,
+      position,
+      is_global,
+      prompt_id,
+      category_id,
+      campaign:ad_campaigns(*)
+    `)
+    .or(`prompt_id.eq.${prompt.id},is_global.eq.true,category_id.eq.${prompt.category_id || '00000000-0000-0000-0000-000000000000'}`)
+
+  const placements = (rawPlacements ?? [])
+    .map((p: any) => ({
+      ...p,
+      campaign: Array.isArray(p.campaign) ? p.campaign[0] : p.campaign
+    }))
+    .filter((p: any) => {
+      const cam = p.campaign
+      if (!cam || cam.status !== 'active') return false
+      if (cam.starts_at && cam.starts_at > now) return false
+      if (cam.ends_at && cam.ends_at < now) return false
+      return true
+    })
+
+  console.log(`DEBUG: Found ${placements.length} active placements for prompt ${prompt.id}`)
 
   return (
     <main

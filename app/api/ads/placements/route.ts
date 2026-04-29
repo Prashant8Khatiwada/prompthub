@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
     : `prompt_id.eq.${promptId},is_global.eq.true`
 
   const { data: placements, error } = await query.or(filter)
+  console.log('DEBUG: Fetched placements:', JSON.stringify(placements, null, 2))
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
