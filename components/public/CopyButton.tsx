@@ -16,7 +16,7 @@ export default function CopyButton({ content, promptId, slug }: Props) {
     try {
       await navigator.clipboard.writeText(content)
       setCopied(true)
-      trackCopy(promptId, slug)
+      trackCopy(promptId)
       setTimeout(() => setCopied(false), 2000)
     } catch {
       // Fallback for older browsers
@@ -27,7 +27,7 @@ export default function CopyButton({ content, promptId, slug }: Props) {
       document.execCommand('copy')
       document.body.removeChild(textarea)
       setCopied(true)
-      trackCopy(promptId, slug)
+      trackCopy(promptId)
       setTimeout(() => setCopied(false), 2000)
     }
   }
