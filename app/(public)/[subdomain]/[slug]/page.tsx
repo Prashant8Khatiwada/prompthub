@@ -10,7 +10,8 @@ import RelatedPrompts from '@/components/public/RelatedPrompts'
 import ViewTracker from '@/components/public/ViewTracker'
 import AdBanner from '@/components/public/AdBanner'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 interface Params {
   params: Promise<{ subdomain: string; slug: string }>
@@ -116,7 +117,21 @@ export default async function PublicPromptPage({ params }: Params) {
   // 6. Fetch active ad placements for this prompt
   // Fetch placements directly via adminClient (instead of internal fetch to avoid baseUrl issues)
   const now = new Date().toISOString()
-  const { data: rawPlacements } = await adminClient
+  const filters = [
+    `prompt_id.eq.${prompt.id}`,
+    `is_global.eq.true`
+  ]
+  if (prompt.category_id) {
+    filters.push(`category_id.eq.${prompt.category_id}`)
+  }
+
+  const filterString = filters.join(',')
+  console.log(`DEBUG: Filter String: ${filterString}`)
+
+  const { count: totalCount } = await adminClient.from('ad_placements').select('*', { count: 'exact', head: true })
+  console.log(`DEBUG: Total placements in DB: ${totalCount}`)
+
+  const { data: rawPlacements, error: placementError } = await adminClient
     .from('ad_placements')
     .select(`
       id,
@@ -126,22 +141,44 @@ export default async function PublicPromptPage({ params }: Params) {
       category_id,
       campaign:ad_campaigns(*)
     `)
-    .or(`prompt_id.eq.${prompt.id},is_global.eq.true,category_id.eq.${prompt.category_id || '00000000-0000-0000-0000-000000000000'}`)
+    .or(filters.join(','))
+
+  if (placementError) {
+    console.error('DEBUG: Database error fetching placements:', placementError)
+  }
+
+  console.log(`DEBUG: Current Time (now): ${now}`)
+  console.log(`DEBUG: Raw Placements from DB:`, JSON.stringify(rawPlacements, null, 2))
 
   const placements = (rawPlacements ?? [])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((p: any) => ({
       ...p,
       campaign: Array.isArray(p.campaign) ? p.campaign[0] : p.campaign
     }))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((p: any) => {
       const cam = p.campaign
-      if (!cam || cam.status !== 'active') return false
-      if (cam.starts_at && cam.starts_at > now) return false
-      if (cam.ends_at && cam.ends_at < now) return false
+      if (!cam) {
+        console.log(`DEBUG: Placement ${p.id} skipped - no campaign data`)
+        return false
+      }
+      if (cam.status !== 'active') {
+        console.log(`DEBUG: Placement ${p.id} skipped - status is ${cam.status}`)
+        return false
+      }
+      if (cam.starts_at && cam.starts_at > now) {
+        console.log(`DEBUG: Placement ${p.id} skipped - starts in future: ${cam.starts_at}`)
+        return false
+      }
+      if (cam.ends_at && cam.ends_at < now) {
+        console.log(`DEBUG: Placement ${p.id} skipped - ended at: ${cam.ends_at}`)
+        return false
+      }
       return true
     })
 
-  console.log(`DEBUG: Found ${placements.length} active placements for prompt ${prompt.id}`)
+  console.log(`DEBUG: Final Active Placements count: ${placements.length}`)
 
   return (
     <main
@@ -164,6 +201,7 @@ export default async function PublicPromptPage({ params }: Params) {
       )}
 
       {/* Ad: Below Video */}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {placements.some((p: any) => p.position === 'below_video') && (
         <div className="max-w-2xl mx-auto px-4 mt-8">
           <AdBanner placements={placements} position="below_video" promptId={prompt.id} />
@@ -193,6 +231,7 @@ export default async function PublicPromptPage({ params }: Params) {
         )}
 
         {/* Ad: Above Gate */}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {placements.some((p: any) => p.position === 'above_gate') && (
           <div className="mb-6">
             <AdBanner placements={placements} position="above_gate" promptId={prompt.id} />
@@ -203,6 +242,7 @@ export default async function PublicPromptPage({ params }: Params) {
         <PromptGate prompt={prompt} />
 
         {/* Ad: Below Gate */}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {placements.some((p: any) => p.position === 'below_gate') && (
           <div className="mt-6">
             <AdBanner placements={placements} position="below_gate" promptId={prompt.id} />
