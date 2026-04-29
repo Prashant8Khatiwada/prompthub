@@ -29,7 +29,7 @@ export function trackEvent({
   const city = request?.headers.get('x-vercel-ip-city') ?? null
   const referrer = request?.headers.get('referer') ?? null
   const device_type = /mobile/i.test(ua) ? 'mobile' : /tablet/i.test(ua) ? 'tablet' : 'desktop'
-  const is_valid = !/bot|crawler|spider|headless|phantom|selenium/i.test(ua) && !!session_id
+  const is_valid = !/bot|crawler|spider|headless|phantom|selenium/i.test(ua)
 
   // Fire and forget — never await this
   adminClient.from('analytics_events').insert({
@@ -45,5 +45,8 @@ export function trackEvent({
     city,
     value: value ?? null,
     is_valid,
-  }).then()
+  }).then(({ error }) => {
+    if (error) console.error('[trackEvent] INSERT ERROR:', error.message, { event_type, prompt_id, creator_id })
+    else console.log('[trackEvent] inserted:', event_type, { prompt_id, creator_id, session_id, is_valid })
+  })
 }

@@ -49,6 +49,7 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
         const [entry] = entries
         if (entry.isIntersecting) {
           const sessionId = sessionStorage.getItem('ph_sid') || null
+          console.log('[AdBanner] sending impression for campaign:', placement.campaign.id)
           // Send impression
           fetch('/api/ads/impression', {
             method: 'POST',
@@ -60,7 +61,7 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
               session_id: sessionId,
               creator_id: creatorId ?? placement.campaign.creator_id ?? null,
             }),
-          }).catch(() => {})
+          }).catch((err) => console.error('[AdBanner] impression failed:', err))
 
           sessionStorage.setItem(sessionKey, '1')
           setHasImpressed(true)
@@ -77,13 +78,21 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
 
   if (!placement) return null
 
-  // All clicks route through the tracking endpoint — include session_id
-  const sessionId = typeof window !== 'undefined' ? (sessionStorage.getItem('ph_sid') || '') : ''
-  const trackingUrl = `/api/ads/click?placement_id=${placement.id}&campaign_id=${placement.campaign.id}&prompt_id=${promptId}&session_id=${sessionId}`
+  // Build click URL reading sessionStorage at click time, not render time
+  const baseClickUrl = `/api/ads/click?placement_id=${placement.id}&campaign_id=${placement.campaign.id}&prompt_id=${promptId}`
+
+  function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    console.log('[AdBanner] link clicked, preparing redirect...')
+    e.preventDefault()
+    const sessionId = sessionStorage.getItem('ph_sid') || ''
+    const url = `${baseClickUrl}&session_id=${encodeURIComponent(sessionId)}`
+    console.log('[AdBanner] opening tracking URL:', url)
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <div ref={containerRef} className="relative w-full overflow-hidden rounded-xl bg-zinc-900 border border-zinc-800 transition-transform hover:scale-[1.01]">
-      <a href={trackingUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
+      <a href={baseClickUrl} onClick={handleClick} target="_blank" rel="noopener noreferrer" className="block w-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
           src={placement.campaign.banner_url} 
