@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
+import RefreshStatsButton from '@/components/admin/RefreshStatsButton'
 
 export default function PromptAnalyticsPage() {
   const params = useParams()
@@ -80,7 +81,9 @@ export default function PromptAnalyticsPage() {
             </div>
             <p className="text-zinc-500 text-sm font-mono">/{prompt?.slug}</p>
           </div>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 flex gap-1">
+          <div className="flex items-center gap-4">
+            <RefreshStatsButton />
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 flex gap-1">
             {['7d', '14d', '30d'].map((r) => (
               <button
                 key={r}
@@ -95,6 +98,7 @@ export default function PromptAnalyticsPage() {
           </div>
         </div>
       </div>
+    </div>
 
       {loading && <div className="opacity-50 pointer-events-none transition-opacity">Updating...</div>}
 

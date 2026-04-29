@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
+import RefreshStatsButton from '@/components/admin/RefreshStatsButton'
 
 export default function AnalyticsPage() {
   const [range, setRange] = useState('7d')
@@ -40,7 +41,9 @@ export default function AnalyticsPage() {
           <h1 className="text-3xl font-bold text-white tracking-tight">Analytics Overview</h1>
           <p className="text-zinc-500 text-sm">Track your prompt performance and audience growth.</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 flex gap-1">
+        <div className="flex items-center gap-4">
+          <RefreshStatsButton />
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 flex gap-1">
           {['7d', '14d', '30d'].map((r) => (
             <button
               key={r}
@@ -54,6 +57,7 @@ export default function AnalyticsPage() {
           ))}
         </div>
       </div>
+    </div>
 
       {loading && <div className="opacity-50 pointer-events-none transition-opacity">Updating...</div>}
 
