@@ -135,46 +135,26 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
  * CLIENT-SIDE TRACKING FUNCTIONS
  */
 
-export async function trackCopy(promptId: string, slug: string) {
-  try {
-    // 1. Get page_id for this prompt
-    const res = await fetch(`/api/prompts/page?id=${promptId}`)
-    const { pageId } = await res.json()
-    if (!pageId) return
-
-    // 2. Fire event
-    await fetch('/api/analytics/event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        page_id: pageId,
-        type: 'copy',
-        session_id: sessionStorage.getItem('ph_sid'),
-        value: slug,
-      }),
-    })
-  } catch (err) {
-    console.error('Failed to track copy:', err)
-  }
+export const trackCopy = (promptId: string) => {
+  fetch('/api/analytics/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      prompt_id: promptId,
+      type: 'prompt_copy',
+      session_id: sessionStorage.getItem('ph_sid'),
+    }),
+  }).catch(() => {})
 }
 
-export async function trackEmailSubmit(promptId: string) {
-  try {
-    const res = await fetch(`/api/prompts/page?id=${promptId}`)
-    const { pageId } = await res.json()
-    if (!pageId) return
-
-    await fetch('/api/analytics/event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        page_id: pageId,
-        type: 'email_submit',
-        session_id: sessionStorage.getItem('ph_sid'),
-      }),
-    })
-  } catch (err) {
-    console.error('Failed to track email submit:', err)
-  }
+export const trackEmailSubmit = (promptId: string) => {
+  fetch('/api/analytics/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      prompt_id: promptId,
+      type: 'email_capture',
+      session_id: sessionStorage.getItem('ph_sid'),
+    }),
+  }).catch(() => {})
 }
-

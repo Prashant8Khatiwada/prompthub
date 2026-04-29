@@ -86,19 +86,8 @@ export default async function PublicPromptPage({ params }: Params) {
     .neq('id', prompt.id)
     .limit(3)
 
-  // 4. Fetch or create page record for analytics
-  let pageId: string | null = null
-  const { data: page } = await adminClient
-    .from('pages').select('id').eq('prompt_id', prompt.id).maybeSingle()
-  if (page) {
-    pageId = page.id
-  } else {
-    const { data: newPage } = await adminClient
-      .from('pages').insert({ prompt_id: prompt.id }).select('id').single()
-    pageId = newPage?.id ?? null
-  }
-
-  // 5. Fetch Instagram oEmbed HTML (if video_url present)
+  // 4. Track page view (removed dependency on non-existent 'pages' table)
+  // We now use prompt_id directly as the primary identifier for events
   const oEmbedHtml = prompt.video_url
     ? await fetchInstagramOEmbed(prompt.video_url)
     : null
@@ -170,7 +159,7 @@ export default async function PublicPromptPage({ params }: Params) {
       className="min-h-screen bg-white text-zinc-900 pb-16"
     >
       {/* Track page view */}
-      {pageId && <ViewTracker pageId={pageId} />}
+      <ViewTracker pageId={prompt.id} promptId={prompt.id} creatorId={creator.id} />
 
       {/* Sticky creator header */}
       {/* <CreatorBar creator={creator} /> */}
@@ -220,7 +209,7 @@ export default async function PublicPromptPage({ params }: Params) {
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {placements.some((p: any) => p.position === 'above_gate') && (
           <div className="mb-6">
-            <AdBanner placements={placements} position="above_gate" promptId={prompt.id} />
+            <AdBanner placements={placements} position="above_gate" promptId={prompt.id} creatorId={creator.id} />
           </div>
         )}
 
@@ -231,7 +220,7 @@ export default async function PublicPromptPage({ params }: Params) {
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {placements.some((p: any) => p.position === 'below_gate') && (
           <div className="mt-6">
-            <AdBanner placements={placements} position="below_gate" promptId={prompt.id} />
+            <AdBanner placements={placements} position="below_gate" promptId={prompt.id} creatorId={creator.id} />
           </div>
         )}
       </section>
@@ -249,7 +238,7 @@ export default async function PublicPromptPage({ params }: Params) {
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {placements.some((p: any) => p.position === 'below_video') && (
         <div className="max-w-2xl mx-auto px-4 mt-8">
-          <AdBanner placements={placements} position="below_video" promptId={prompt.id} />
+          <AdBanner placements={placements} position="below_video" promptId={prompt.id} creatorId={creator.id} />
         </div>
       )}
 

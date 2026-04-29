@@ -17,6 +17,7 @@ export interface AdPlacementData {
     utm_medium: string
     utm_campaign: string
     status: string
+    creator_id?: string
   }
 }
 
@@ -24,43 +25,77 @@ interface Props {
   placements: AdPlacementData[]
   position: 'below_video' | 'above_gate' | 'below_gate'
   promptId: string
+  creatorId?: string
 }
 
-export default function AdBanner({ placements, position, promptId }: Props) {
+export default function AdBanner({ placements, position, promptId, creatorId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [hasImpressed, setHasImpressed] = useState(false)
+  
+  // Viewport time tracking
+  const startTimeRef = useRef<number | null>(null)
+  const totalViewTimeRef = useRef<number>(0)
 
   // Find placement for this exact position
   const placement = placements.find(p => p.position === position)
 
   useEffect(() => {
-    if (!placement || hasImpressed) return
+    if (!placement) return
 
     const sessionKey = `imp_${placement.id}`
-    if (sessionStorage.getItem(sessionKey)) {
-      setHasImpressed(true)
-      return
+    
+    const sendDuration = () => {
+      if (startTimeRef.current !== null) {
+        const duration = (Date.now() - startTimeRef.current) / 1000
+        totalViewTimeRef.current += duration
+        startTimeRef.current = null
+
+        if (duration > 0.5) { // Only track if at least half a second
+          fetch('/api/analytics/event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt_id: promptId,
+              campaign_id: placement.campaign.id,
+              type: 'ad_view_duration',
+              value: parseFloat(duration.toFixed(2)),
+              session_id: sessionStorage.getItem('ph_sid'),
+              creator_id: creatorId ?? placement.campaign.creator_id ?? null,
+            }),
+          }).catch(() => {})
+        }
+      }
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries
+        
         if (entry.isIntersecting) {
-          // Send impression
-          fetch('/api/ads/impression', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              campaign_id: placement.campaign.id,
-              placement_id: placement.id,
-              prompt_id: promptId,
-              session_id: sessionStorage.getItem('ph_sid') || null,
-            }),
-          }).catch(() => {})
+          // Start timer
+          startTimeRef.current = Date.now()
 
-          sessionStorage.setItem(sessionKey, '1')
-          setHasImpressed(true)
-          observer.disconnect()
+          // Original Impression logic (one-time per session)
+          if (!hasImpressed && !sessionStorage.getItem(sessionKey)) {
+            const sessionId = sessionStorage.getItem('ph_sid') || null
+            fetch('/api/ads/impression', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                campaign_id: placement.campaign.id,
+                placement_id: placement.id,
+                prompt_id: promptId,
+                session_id: sessionId,
+                creator_id: creatorId ?? placement.campaign.creator_id ?? null,
+              }),
+            }).catch(() => {})
+
+            sessionStorage.setItem(sessionKey, '1')
+            setHasImpressed(true)
+          }
+        } else {
+          // Left viewport, stop timer and send
+          sendDuration()
         }
       },
       { threshold: 0.5 } // 50% visible
@@ -68,17 +103,32 @@ export default function AdBanner({ placements, position, promptId }: Props) {
 
     if (containerRef.current) observer.observe(containerRef.current)
 
-    return () => observer.disconnect()
-  }, [placement, hasImpressed, promptId])
+    // Also send if the user leaves the page while looking at the ad
+    const handleUnload = () => sendDuration()
+    window.addEventListener('beforeunload', handleUnload)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('beforeunload', handleUnload)
+      sendDuration()
+    }
+  }, [placement, hasImpressed, promptId, creatorId])
 
   if (!placement) return null
 
-  // All clicks route through the tracking endpoint
-  const trackingUrl = `/api/ads/click?placement_id=${placement.id}&campaign_id=${placement.campaign.id}&prompt_id=${promptId}`
+  // Build click URL reading sessionStorage at click time, not render time
+  const baseClickUrl = `/api/ads/click?placement_id=${placement.id}&campaign_id=${placement.campaign.id}&prompt_id=${promptId}`
+
+  function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    e.preventDefault()
+    const sessionId = sessionStorage.getItem('ph_sid') || ''
+    const url = `${baseClickUrl}&session_id=${encodeURIComponent(sessionId)}`
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <div ref={containerRef} className="relative w-full overflow-hidden rounded-xl bg-zinc-900 border border-zinc-800 transition-transform hover:scale-[1.01]">
-      <a href={trackingUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
+      <a href={baseClickUrl} onClick={handleClick} target="_blank" rel="noopener noreferrer" className="block w-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
           src={placement.campaign.banner_url} 

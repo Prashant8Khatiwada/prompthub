@@ -18,89 +18,118 @@ export async function GET(_req: NextRequest, { params }: Params) {
   }
 
   const campaignId = campaign.id
+  
+  // Public report always shows last 30 days
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  const startStr = thirtyDaysAgo.toISOString()
 
-  // Fetch impressions + clicks in parallel
-  const [{ data: impressions }, { data: clicks }] = await Promise.all([
-    adminClient
-      .from('ad_impressions')
-      .select('id, created_at, prompt_id, device, country')
-      .eq('campaign_id', campaignId)
-      .gte('created_at', thirtyDaysAgo.toISOString()),
-    adminClient
-      .from('ad_clicks')
-      .select('id, created_at, prompt_id, device, country')
-      .eq('campaign_id', campaignId)
-      .gte('created_at', thirtyDaysAgo.toISOString()),
-  ])
+  // 1. Fetch daily stats
+  const { data: stats } = await adminClient
+    .from('campaign_stats_daily')
+    .select('*')
+    .eq('campaign_id', campaignId)
+    .gte('date', startStr)
 
-  const imps = impressions ?? []
-  const clks = clicks ?? []
-  const total_impressions = imps.length
-  const total_clicks = clks.length
-  const ctr = total_impressions > 0 ? (total_clicks / total_impressions) * 100 : 0
-
+  let total_impressions = 0
+  let total_clicks = 0
+  let total_view_time = 0
+  
   // Daily breakdown (last 30 days)
-  const dailyMap: Record<string, { impressions: number; clicks: number }> = {}
+  const dailyMap: Record<string, { impressions: number; clicks: number; view_time: number }> = {}
   for (let i = 29; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    dailyMap[d.toISOString().split('T')[0]] = { impressions: 0, clicks: 0 }
+    dailyMap[d.toISOString().split('T')[0]] = { impressions: 0, clicks: 0, view_time: 0 }
   }
-  imps.forEach((r) => {
-    const d = new Date(r.created_at).toISOString().split('T')[0]
-    if (dailyMap[d]) dailyMap[d].impressions++
+
+  ;(stats || []).forEach((row) => {
+    total_impressions += row.impressions || 0
+    total_clicks += row.clicks || 0
+    total_view_time += Number(row.total_view_time || 0)
+    const d = row.date.split('T')[0]
+    if (dailyMap[d]) {
+      dailyMap[d].impressions += row.impressions || 0
+      dailyMap[d].clicks += row.clicks || 0
+      dailyMap[d].view_time += Number(row.total_view_time || 0)
+    }
   })
-  clks.forEach((r) => {
-    const d = new Date(r.created_at).toISOString().split('T')[0]
-    if (dailyMap[d]) dailyMap[d].clicks++
-  })
+
+  const ctr = total_impressions > 0 ? (total_clicks / total_impressions) * 100 : 0
   const daily_breakdown = Object.entries(dailyMap).map(([date, v]) => ({ date, ...v }))
 
-  // Per-prompt breakdown
-  const promptIds = [...new Set([...imps.map((r) => r.prompt_id), ...clks.map((r) => r.prompt_id)].filter(Boolean))] as string[]
-  let promptTitles: Record<string, { title: string; slug: string }> = {}
-  if (promptIds.length > 0) {
-    const { data: promptRows } = await adminClient
-      .from('prompts').select('id, title, slug').in('id', promptIds)
-    ;(promptRows ?? []).forEach((p) => { promptTitles[p.id] = { title: p.title, slug: p.slug } })
-  }
-  const perPromptMap: Record<string, { impressions: number; clicks: number }> = {}
-  imps.forEach((r) => { if (r.prompt_id) { perPromptMap[r.prompt_id] = perPromptMap[r.prompt_id] ?? { impressions: 0, clicks: 0 }; perPromptMap[r.prompt_id].impressions++ } })
-  clks.forEach((r) => { if (r.prompt_id) { perPromptMap[r.prompt_id] = perPromptMap[r.prompt_id] ?? { impressions: 0, clicks: 0 }; perPromptMap[r.prompt_id].clicks++ } })
-  const per_prompt_breakdown = Object.entries(perPromptMap).map(([pid, v]) => ({
-    prompt_id: pid,
-    title: promptTitles[pid]?.title ?? 'Unknown',
-    slug: promptTitles[pid]?.slug ?? '',
-    impressions: v.impressions,
-    clicks: v.clicks,
-    ctr: v.impressions > 0 ? parseFloat(((v.clicks / v.impressions) * 100).toFixed(2)) : 0,
-  })).sort((a, b) => b.clicks - a.clicks)
+  // 2. Fetch prompt breakdown from rollups
+  const { data: promptStats } = await adminClient
+    .from('campaign_prompt_stats_daily')
+    .select('prompt_id, impressions, clicks, total_view_time, prompts(title, slug)')
+    .eq('campaign_id', campaignId)
+    .gte('date', startStr)
 
-  // Device breakdown
+  const promptMap: Record<string, any> = {}
+  ;(promptStats || []).forEach(row => {
+    const pId = row.prompt_id || 'unknown'
+    if (!promptMap[pId]) {
+      promptMap[pId] = {
+        prompt_id: pId,
+        title: row.prompts?.title || 'Global Placement',
+        slug: row.prompts?.slug || '',
+        impressions: 0,
+        clicks: 0,
+        view_time: 0
+      }
+    }
+    promptMap[pId].impressions += row.impressions || 0
+    promptMap[pId].clicks += row.clicks || 0
+    promptMap[pId].view_time += Number(row.total_view_time || 0)
+  })
+
+  const per_prompt_breakdown = Object.values(promptMap).map((v: any) => ({
+    ...v,
+    ctr: v.impressions > 0 ? parseFloat(((v.clicks / v.impressions) * 100).toFixed(2)) : 0,
+    avg_duration: v.impressions > 0 ? parseFloat((v.view_time / v.impressions).toFixed(2)) : 0
+  })).sort((a: any, b: any) => b.clicks - a.clicks)
+
+  // 3. Device & Country breakdown from analytics_events
+  const { data: rawEvents } = await adminClient
+    .from('analytics_events')
+    .select('device_type, country')
+    .eq('campaign_id', campaignId)
+    .eq('event_type', 'ad_impression')
+    .gte('created_at', startStr)
+
   const deviceMap: Record<string, number> = {}
-  imps.forEach((r) => { const d = r.device ?? 'unknown'; deviceMap[d] = (deviceMap[d] ?? 0) + 1 })
+  const countryMap: Record<string, number> = {}
+  let totalRawImps = 0
+
+  ;(rawEvents || []).forEach(row => {
+    totalRawImps++
+    const device = row.device_type || 'unknown'
+    deviceMap[device] = (deviceMap[device] || 0) + 1
+    
+    const country = row.country || 'Unknown'
+    countryMap[country] = (countryMap[country] || 0) + 1
+  })
+
   const device_breakdown = Object.entries(deviceMap).map(([device, count]) => ({
     device,
     count,
-    percentage: total_impressions > 0 ? parseFloat(((count / total_impressions) * 100).toFixed(1)) : 0,
+    percentage: totalRawImps > 0 ? parseFloat(((count / totalRawImps) * 100).toFixed(1)) : 0,
   })).sort((a, b) => b.count - a.count)
 
-  // Country breakdown
-  const countryMap: Record<string, number> = {}
-  imps.forEach((r) => { const c = r.country ?? 'Unknown'; countryMap[c] = (countryMap[c] ?? 0) + 1 })
   const country_breakdown = Object.entries(countryMap).map(([country, count]) => ({
     country,
     count,
-    percentage: total_impressions > 0 ? parseFloat(((count / total_impressions) * 100).toFixed(1)) : 0,
+    percentage: totalRawImps > 0 ? parseFloat(((count / totalRawImps) * 100).toFixed(1)) : 0,
   })).sort((a, b) => b.count - a.count).slice(0, 10)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const clientData = campaign.client as any
+  
   return NextResponse.json({
     total_impressions,
     total_clicks,
+    total_view_time: parseFloat(total_view_time.toFixed(2)),
+    avg_view_duration: total_impressions > 0 ? parseFloat((total_view_time / total_impressions).toFixed(2)) : 0,
     ctr: parseFloat(ctr.toFixed(2)),
     campaign_name: campaign.name,
     campaign_status: campaign.status,
