@@ -29,6 +29,16 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).instgrm.Embeds.process()
     }
+
+    // 3. Force center the blockquote
+    if (ref.current) {
+      const bq = ref.current.querySelector('blockquote')
+      if (bq) {
+        bq.style.margin = '0 auto'
+        bq.style.maxWidth = '540px'
+        bq.style.width = '100%'
+      }
+    }
   }, [html])
 
   if (!html && !fallbackThumbnail) return null
@@ -58,12 +68,10 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 pt-6">
-      <div
-        ref={ref}
-        className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900"
-        dangerouslySetInnerHTML={{ __html: html! }}
-      />
-    </div>
+    <div
+      ref={ref}
+      className="w-full overflow-hidden flex justify-center"
+      dangerouslySetInnerHTML={{ __html: html! }}
+    />
   )
 }

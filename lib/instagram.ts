@@ -20,6 +20,8 @@ export interface InstagramUser {
   followers_count?: number
   follows_count?: number
   profile_picture_url?: string
+  full_name?: string
+  website?: string
 }
 
 export async function fetchInstagramUser(): Promise<InstagramUser | null> {
@@ -29,7 +31,7 @@ export async function fetchInstagramUser(): Promise<InstagramUser | null> {
   try {
     // Note: Basic Display API has limited fields. 
     // We try to fetch what we can. 
-    const res = await fetch(`https://graph.instagram.com/me?fields=id,username,account_type,media_count,biography,followers_count,follows_count,profile_picture_url&access_token=${token}`)
+    const res = await fetch(`https://graph.instagram.com/me?fields=id,username,account_type,media_count,biography,followers_count,follows_count,profile_picture_url,name,website&access_token=${token}`)
     if (!res.ok) return null
     const data = await res.json()
     

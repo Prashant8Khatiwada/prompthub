@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { fetchInstagramOEmbed } from '@/lib/oembed'
 import { adminClient } from '@/lib/supabase/admin'
-import CreatorBar from '@/components/public/CreatorBar'
 import VideoEmbed from '@/components/public/VideoEmbed'
 import PromptGate from '@/components/public/PromptGate'
 import RelatedPrompts from '@/components/public/RelatedPrompts'
@@ -138,12 +137,6 @@ export default async function PublicPromptPage({ params }: Params) {
     filters.push(`category_id.eq.${prompt.category_id}`)
   }
 
-  const filterString = filters.join(',')
-  console.log(`DEBUG: Filter String: ${filterString}`)
-
-  const { count: totalCount } = await adminClient.from('ad_placements').select('*', { count: 'exact', head: true })
-  console.log(`DEBUG: Total placements in DB: ${totalCount}`)
-
   const { data: rawPlacements, error: placementError } = await adminClient
     .from('ad_placements')
     .select(`
@@ -156,13 +149,6 @@ export default async function PublicPromptPage({ params }: Params) {
     `)
     .or(filters.join(','))
 
-  if (placementError) {
-    console.error('DEBUG: Database error fetching placements:', placementError)
-  }
-
-  console.log(`DEBUG: Current Time (now): ${now}`)
-  console.log(`DEBUG: Raw Placements from DB:`, JSON.stringify(rawPlacements, null, 2))
-
   const placements = (rawPlacements ?? [])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((p: any) => ({
@@ -172,26 +158,11 @@ export default async function PublicPromptPage({ params }: Params) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((p: any) => {
       const cam = p.campaign
-      if (!cam) {
-        console.log(`DEBUG: Placement ${p.id} skipped - no campaign data`)
-        return false
-      }
-      if (cam.status !== 'active') {
-        console.log(`DEBUG: Placement ${p.id} skipped - status is ${cam.status}`)
-        return false
-      }
-      if (cam.starts_at && cam.starts_at > now) {
-        console.log(`DEBUG: Placement ${p.id} skipped - starts in future: ${cam.starts_at}`)
-        return false
-      }
-      if (cam.ends_at && cam.ends_at < now) {
-        console.log(`DEBUG: Placement ${p.id} skipped - ended at: ${cam.ends_at}`)
-        return false
-      }
+      if (!cam || cam.status !== 'active') return false
+      if (cam.starts_at && cam.starts_at > now) return false
+      if (cam.ends_at && cam.ends_at < now) return false
       return true
     })
-
-  console.log(`DEBUG: Final Active Placements count: ${placements.length}`)
 
   return (
     <main
@@ -207,71 +178,75 @@ export default async function PublicPromptPage({ params }: Params) {
       {/* Instagram Profile Header */}
       {igUser && <InstagramProfile user={igUser} creator={creator} />}
 
-      {/* Video embed / Post Section */}
-      <div className="flex flex-col gap-8 mt-8">
-        {igMedia && (
+      {/* Media Section (Post or Embed) */}
+      <div className="w-full mt-8">
+        {igMedia ? (
           <div className="max-w-2xl mx-auto px-4">
             <InstagramPost media={igMedia} />
           </div>
-        )}
-
-        <section className="max-w-2xl mx-auto px-4 pt-8">
-          {/* Title & tags */}
-          <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 mb-4 leading-tight">
-            {prompt.title}
-          </h1>
-          <div className="flex flex-wrap gap-2 mb-6">
-            <span
-              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
-              style={{ background: `${toolColor}11`, color: toolColor, border: `1px solid ${toolColor}33` }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: toolColor }} />
-              {prompt.ai_tool}
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 shadow-sm">
-              {prompt.output_type}
-            </span>
+        ) : (prompt.embed_html || prompt.video_url) ? (
+          <div className="max-w-2xl mx-auto px-4">
+            <VideoEmbed
+              html={prompt.embed_html || oEmbedHtml}
+              fallbackThumbnail={prompt.thumbnail_url}
+              url={prompt.video_url}
+            />
           </div>
-          {prompt.description && (
-            <p className="text-zinc-600 text-base leading-relaxed mb-8">{prompt.description}</p>
-          )}
-
-          {/* Ad: Above Gate */}
-          {placements.some((p: any) => p.position === 'above_gate') && (
-            <div className="mb-6">
-              <AdBanner placements={placements} position="above_gate" promptId={prompt.id} />
-            </div>
-          )}
-
-          {/* Gate */}
-          <PromptGate prompt={prompt} />
-
-          {/* Ad: Below Gate */}
-          {placements.some((p: any) => p.position === 'below_gate') && (
-            <div className="mt-6">
-              <AdBanner placements={placements} position="below_gate" promptId={prompt.id} />
-            </div>
-          )}
-        </section>
-
-        {/* Render Feed Grid with "Show More" functionality */}
-        {igFeed.length > 0 && (
-          <div className="w-full mt-8">
-            <InstagramFeed feed={igFeed} excludeId={igMedia?.id} />
-          </div>
-        )}
-
-        {!igMedia && igFeed.length === 0 && (prompt.embed_html || prompt.video_url) && (
-          <VideoEmbed
-            html={prompt.embed_html || oEmbedHtml}
-            fallbackThumbnail={prompt.thumbnail_url}
-            url={prompt.video_url}
-          />
-        )}
+        ) : null}
       </div>
+
+      <section className="max-w-2xl mx-auto px-4 pt-8">
+        {/* Title & tags */}
+        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 mb-4 leading-tight">
+          {prompt.title}
+        </h1>
+        <div className="flex flex-wrap gap-2 mb-6">
+          <span
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
+            style={{ background: `${toolColor}11`, color: toolColor, border: `1px solid ${toolColor}33` }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: toolColor }} />
+            {prompt.ai_tool}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 shadow-sm">
+            {prompt.output_type}
+          </span>
+        </div>
+        {prompt.description && (
+          <p className="text-zinc-600 text-base leading-relaxed mb-8">{prompt.description}</p>
+        )}
+
+        {/* Ad: Above Gate */}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {placements.some((p: any) => p.position === 'above_gate') && (
+          <div className="mb-6">
+            <AdBanner placements={placements} position="above_gate" promptId={prompt.id} />
+          </div>
+        )}
+
+        {/* Gate */}
+        <PromptGate prompt={prompt} />
+
+        {/* Ad: Below Gate */}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {placements.some((p: any) => p.position === 'below_gate') && (
+          <div className="mt-6">
+            <AdBanner placements={placements} position="below_gate" promptId={prompt.id} />
+          </div>
+        )}
+      </section>
+
+      {/* Render Feed Grid with "Show More" functionality */}
+      {igFeed.length > 0 && (
+        <div className="w-full mt-8">
+          <InstagramFeed feed={igFeed} excludeId={igMedia?.id} />
+        </div>
+      )}
+
 
       {/* Ad: Below Video */}
 
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {placements.some((p: any) => p.position === 'below_video') && (
         <div className="max-w-2xl mx-auto px-4 mt-8">
           <AdBanner placements={placements} position="below_video" promptId={prompt.id} />

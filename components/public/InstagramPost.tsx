@@ -17,7 +17,8 @@ export default function InstagramPost({ media }: Props) {
   const displayUrl = isVideo ? media.media_url : (media.media_url || media.thumbnail_url)
 
   return (
-    <div className="w-full max-w-[300px] mx-auto bg-white border border-zinc-100 rounded-xl overflow-hidden mb-8 shadow-sm hover:shadow-md transition-shadow">
+    <div className="w-full max-w-[540px] mx-auto bg-white border border-zinc-100 rounded-2xl overflow-hidden mb-8 shadow-xl hover:shadow-2xl transition-all duration-500">
+      <a href={media.permalink} target="_blank" rel="noopener noreferrer" className="block group">
       {/* Header */}
       <div className="flex items-center justify-between p-3">
         <div className="flex items-center gap-3">
@@ -60,14 +61,16 @@ export default function InstagramPost({ media }: Props) {
               className="w-full h-full object-cover"
             />
             <button
-              className="absolute bottom-4 right-4 w-8 h-8 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-zinc-900 border border-zinc-200 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-20"
             >
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
             </button>
-            <div className="absolute top-4 right-4 text-white/90 drop-shadow-lg">
-              <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
-                <path d="M5.888 22.58a3.46 3.46 0 0 1-1.721-.46 3.393 3.393 0 0 1-1.707-3V3.88a3.393 3.393 0 0 1 1.707-3 3.458 3.458 0 0 1 3.358.034l12.51 7.425a3.393 3.393 0 0 1 0 5.722l-12.51 7.425a3.457 3.457 0 0 1-1.637.474Z" />
-              </svg>
+            
+            {/* Center Play Button */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform group-hover:scale-110 duration-500">
+              <div className="w-20 h-20 rounded-full bg-black/20 backdrop-blur-[2px] flex items-center justify-center border border-white/30 shadow-2xl">
+                <Play className="w-10 h-10 text-white fill-current translate-x-1" />
+              </div>
             </div>
           </div>
         ) : (
@@ -138,6 +141,7 @@ export default function InstagramPost({ media }: Props) {
           Post
         </button>
       </div>
+      </a>
     </div>
   )
 }

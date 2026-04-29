@@ -11,10 +11,12 @@ interface Props {
 
 export default function InstagramProfile({ user, creator }: Props) {
   // Use creator data as fallback for missing fields in Basic Display API
-  const bio = user.biography || creator.bio || 'AI Creator | Prompt Engineer | Visual Artist 🎨'
+  const displayName = user.full_name || creator.name || user.username
+  const bio = user.biography || creator.bio
   const profilePic = user.profile_picture_url || creator.avatar_url
-  const followers = user.followers_count || 12400 // Still mock followers if none found
+  const followers = user.followers_count || 12400 
   const follows = user.follows_count || 482
+  const website = user.website || creator.instagram_url
 
   const formatCount = (count: number) => {
     if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M'
@@ -44,14 +46,21 @@ export default function InstagramProfile({ user, creator }: Props) {
         {/* Info */}
         <div className="flex-1 flex flex-col gap-5 text-center md:text-left w-full">
           <div className="flex flex-col md:flex-row items-center gap-5">
-            <h1 className="text-2xl font-light text-zinc-900 flex items-center gap-2">
-              {user.username}
-              <CheckCircle2 className="w-5 h-5 text-sky-500 fill-current" />
-            </h1>
+            <a href={`https://instagram.com/${user.username}`} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+              <h1 className="text-2xl font-light text-zinc-900 flex items-center gap-2">
+                {user.username}
+                <CheckCircle2 className="w-5 h-5 text-sky-500 fill-current" />
+              </h1>
+            </a>
             <div className="flex gap-2">
-              <button className="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-8 rounded-lg text-sm shadow-md transition-all active:scale-95">
+              <a 
+                href={`https://instagram.com/${user.username}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-8 rounded-lg text-sm shadow-md transition-all active:scale-95 inline-block"
+              >
                 Follow
-              </button>
+              </a>
               <button className="bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold py-2 px-6 rounded-lg text-sm transition-all active:scale-95">
                 Message
               </button>
@@ -74,12 +83,24 @@ export default function InstagramProfile({ user, creator }: Props) {
             </div>
           </div>
 
-          {/* Bio */}
+          {/* Bio & Details */}
           <div className="flex flex-col gap-1">
-            <span className="font-bold text-sm text-zinc-900">{user.username}</span>
-            <p className="text-sm text-zinc-600 whitespace-pre-wrap leading-relaxed max-w-md">
-              {bio}
-            </p>
+            <span className="font-bold text-sm text-zinc-900">{displayName}</span>
+            {bio && (
+              <p className="text-sm text-zinc-600 whitespace-pre-wrap leading-relaxed max-w-md">
+                {bio}
+              </p>
+            )}
+            {website && (
+              <a 
+                href={website.startsWith('http') ? website : `https://${website}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-blue-900 hover:underline flex items-center gap-1 mt-1"
+              >
+                {website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+              </a>
+            )}
           </div>
         </div>
       </div>
