@@ -9,6 +9,10 @@ import PromptGate from '@/components/public/PromptGate'
 import RelatedPrompts from '@/components/public/RelatedPrompts'
 import ViewTracker from '@/components/public/ViewTracker'
 import AdBanner from '@/components/public/AdBanner'
+import { fetchInstagramMedia, fetchInstagramUser, fetchInstagramFeed } from '@/lib/instagram'
+import InstagramPost from '@/components/public/InstagramPost'
+import InstagramProfile from '@/components/public/InstagramProfile'
+import InstagramFeed from '@/components/public/InstagramFeed'
 
 export const revalidate = 60
 
@@ -99,6 +103,15 @@ export default async function PublicPromptPage({ params }: Params) {
     ? await fetchInstagramOEmbed(prompt.video_url)
     : null
 
+  // 5b. Fetch Rich Instagram Data for native rendering
+  const igMedia = prompt.video_url
+    ? await fetchInstagramMedia(prompt.video_url)
+    : null
+
+  // 5c. Fetch User and Feed Data
+  const igUser = await fetchInstagramUser()
+  const igFeed = await fetchInstagramFeed(12)
+
   const AI_TOOL_COLORS: Record<string, string> = {
     Midjourney: '#1b6ef3',
     ChatGPT: '#10a37f',
@@ -146,24 +159,82 @@ export default async function PublicPromptPage({ params }: Params) {
   return (
     <main
       style={{ '--brand': creator.brand_color } as React.CSSProperties}
-      className="min-h-screen bg-zinc-950 text-zinc-50 pb-16"
+      className="min-h-screen bg-white text-zinc-900 pb-16"
     >
       {/* Track page view */}
       {pageId && <ViewTracker pageId={pageId} />}
 
       {/* Sticky creator header */}
-      <CreatorBar creator={creator} />
+      {/* <CreatorBar creator={creator} /> */}
 
-      {/* Video embed */}
-      {(prompt.embed_html || prompt.video_url) && (
-        <VideoEmbed
-          html={prompt.embed_html || oEmbedHtml}
-          fallbackThumbnail={prompt.thumbnail_url}
-          url={prompt.video_url}
-        />
-      )}
+      {/* Instagram Profile Header */}
+      {igUser && <InstagramProfile user={igUser} creator={creator} />}
+
+      {/* Video embed / Post Section */}
+      <div className="flex flex-col gap-8 mt-8">
+        {igMedia && (
+          <div className="max-w-2xl mx-auto px-4">
+            <InstagramPost media={igMedia} />
+          </div>
+        )}
+
+        <section className="max-w-2xl mx-auto px-4 pt-8">
+          {/* Title & tags */}
+          <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 mb-4 leading-tight">
+            {prompt.title}
+          </h1>
+          <div className="flex flex-wrap gap-2 mb-6">
+            <span
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
+              style={{ background: `${toolColor}11`, color: toolColor, border: `1px solid ${toolColor}33` }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: toolColor }} />
+              {prompt.ai_tool}
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 shadow-sm">
+              {prompt.output_type}
+            </span>
+          </div>
+          {prompt.description && (
+            <p className="text-zinc-600 text-base leading-relaxed mb-8">{prompt.description}</p>
+          )}
+
+          {/* Ad: Above Gate */}
+          {placements.some((p: any) => p.position === 'above_gate') && (
+            <div className="mb-6">
+              <AdBanner placements={placements} position="above_gate" promptId={prompt.id} />
+            </div>
+          )}
+
+          {/* Gate */}
+          <PromptGate prompt={prompt} />
+
+          {/* Ad: Below Gate */}
+          {placements.some((p: any) => p.position === 'below_gate') && (
+            <div className="mt-6">
+              <AdBanner placements={placements} position="below_gate" promptId={prompt.id} />
+            </div>
+          )}
+        </section>
+
+        {/* Render Feed Grid with "Show More" functionality */}
+        {igFeed.length > 0 && (
+          <div className="w-full mt-8">
+            <InstagramFeed feed={igFeed} excludeId={igMedia?.id} />
+          </div>
+        )}
+
+        {!igMedia && igFeed.length === 0 && (prompt.embed_html || prompt.video_url) && (
+          <VideoEmbed
+            html={prompt.embed_html || oEmbedHtml}
+            fallbackThumbnail={prompt.thumbnail_url}
+            url={prompt.video_url}
+          />
+        )}
+      </div>
 
       {/* Ad: Below Video */}
+
       {placements.some((p: any) => p.position === 'below_video') && (
         <div className="max-w-2xl mx-auto px-4 mt-8">
           <AdBanner placements={placements} position="below_video" promptId={prompt.id} />
@@ -171,44 +242,7 @@ export default async function PublicPromptPage({ params }: Params) {
       )}
 
       {/* Prompt content */}
-      <section className="max-w-2xl mx-auto px-4 pt-8">
-        {/* Title & tags */}
-        <h1 className="text-2xl font-bold tracking-tight text-white mb-3 leading-snug">
-          {prompt.title}
-        </h1>
-        <div className="flex flex-wrap gap-2 mb-4">
-          <span
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
-            style={{ background: `${toolColor}22`, color: toolColor, border: `1px solid ${toolColor}44` }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: toolColor }} />
-            {prompt.ai_tool}
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700">
-            {prompt.output_type}
-          </span>
-        </div>
-        {prompt.description && (
-          <p className="text-zinc-400 text-sm leading-relaxed mb-6">{prompt.description}</p>
-        )}
 
-        {/* Ad: Above Gate */}
-        {placements.some((p: any) => p.position === 'above_gate') && (
-          <div className="mb-6">
-            <AdBanner placements={placements} position="above_gate" promptId={prompt.id} />
-          </div>
-        )}
-
-        {/* Gate */}
-        <PromptGate prompt={prompt} />
-
-        {/* Ad: Below Gate */}
-        {placements.some((p: any) => p.position === 'below_gate') && (
-          <div className="mt-6">
-            <AdBanner placements={placements} position="below_gate" promptId={prompt.id} />
-          </div>
-        )}
-      </section>
 
       {/* Related prompts */}
       {related && related.length > 0 && (

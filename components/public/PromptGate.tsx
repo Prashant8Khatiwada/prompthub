@@ -46,13 +46,13 @@ export default function PromptGate({ prompt }: Props) {
     return (
       <div className="space-y-4">
         {/* Blurred preview */}
-        <div className="relative rounded-2xl overflow-hidden border border-zinc-800">
-          <div className="p-5 font-mono text-sm text-zinc-300 leading-relaxed blur-sm select-none pointer-events-none">
-            {prompt.content.slice(0, 120)}...
+        <div className="relative rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-50 shadow-sm">
+          <div className="p-6 font-mono text-sm text-zinc-400 leading-relaxed blur-md select-none pointer-events-none">
+            {prompt.content.slice(0, 150)}...
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent flex flex-col items-center justify-end pb-6 px-4">
-            <p className="text-white font-semibold text-base mb-1">Unlock this prompt for free</p>
-            <p className="text-zinc-400 text-sm">Enter your email to get instant access</p>
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/95 to-white/40 flex flex-col items-center justify-end pb-8 px-4">
+            <p className="text-zinc-900 font-extrabold text-lg mb-1">Unlock this prompt for free</p>
+            <p className="text-zinc-500 text-sm">Enter your email to get instant access</p>
           </div>
         </div>
 
@@ -91,13 +91,13 @@ export default function PromptGate({ prompt }: Props) {
             placeholder="your@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:border-transparent text-sm"
+            className="flex-1 px-4 py-3.5 rounded-xl bg-white border border-zinc-200 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:border-transparent text-sm shadow-sm"
             style={{ ['--tw-ring-color' as string]: 'var(--brand, #6366f1)' }}
           />
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all duration-200 active:scale-95 disabled:opacity-60 whitespace-nowrap"
+            className="px-8 py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-200 active:scale-95 disabled:opacity-60 whitespace-nowrap shadow-md hover:shadow-lg"
             style={{ background: 'var(--brand, #6366f1)' }}
           >
             {loading ? 'Unlocking…' : '🔓 Unlock Free Prompt'}
@@ -112,15 +112,15 @@ export default function PromptGate({ prompt }: Props) {
   return (
     <div className="space-y-4">
       {/* Blurred preview */}
-      <div className="relative rounded-2xl overflow-hidden border border-zinc-800">
-        <div className="p-5 font-mono text-sm text-zinc-300 leading-relaxed blur-sm select-none pointer-events-none">
-          {prompt.content.slice(0, 120)}...
+      <div className="relative rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-50 shadow-sm">
+        <div className="p-6 font-mono text-sm text-zinc-400 leading-relaxed blur-md select-none pointer-events-none">
+          {prompt.content.slice(0, 150)}...
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent flex flex-col items-center justify-end pb-6 px-4">
-          <p className="text-white font-semibold text-base mb-1">
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/95 to-white/40 flex flex-col items-center justify-end pb-8 px-4">
+          <p className="text-zinc-900 font-extrabold text-lg mb-1">
             Unlock for ${prompt.price?.toFixed(2) ?? '—'}
           </p>
-          <p className="text-zinc-400 text-sm">One-time purchase • Instant access</p>
+          <p className="text-zinc-500 text-sm">One-time purchase • Instant access</p>
         </div>
       </div>
 
@@ -156,14 +156,14 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
   }
 
   return (
-    <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
-      <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-zinc-800 bg-zinc-900/80">
-        <div className="w-3 h-3 rounded-full bg-zinc-700" />
-        <div className="w-3 h-3 rounded-full bg-zinc-700" />
-        <div className="w-3 h-3 rounded-full bg-zinc-700" />
-        <span className="ml-2 text-xs text-zinc-500">prompt.txt</span>
+    <div className="relative rounded-2xl bg-zinc-50 border border-zinc-200 overflow-hidden shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-center gap-1.5 px-4 py-3 border-b border-zinc-200 bg-white/50 backdrop-blur-sm">
+        <div className="w-3 h-3 rounded-full bg-zinc-200" />
+        <div className="w-3 h-3 rounded-full bg-zinc-200" />
+        <div className="w-3 h-3 rounded-full bg-zinc-200" />
+        <span className="ml-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">prompt.txt</span>
       </div>
-      <pre className="p-5 font-mono text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap break-words">
+      <pre className="p-6 font-mono text-sm text-zinc-800 leading-relaxed whitespace-pre-wrap break-words">
         {content}
       </pre>
     </div>
