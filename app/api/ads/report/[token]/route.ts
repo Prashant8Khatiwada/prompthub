@@ -33,22 +33,25 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   let total_impressions = 0
   let total_clicks = 0
+  let total_view_time = 0
   
   // Daily breakdown (last 30 days)
-  const dailyMap: Record<string, { impressions: number; clicks: number }> = {}
+  const dailyMap: Record<string, { impressions: number; clicks: number; view_time: number }> = {}
   for (let i = 29; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    dailyMap[d.toISOString().split('T')[0]] = { impressions: 0, clicks: 0 }
+    dailyMap[d.toISOString().split('T')[0]] = { impressions: 0, clicks: 0, view_time: 0 }
   }
 
   ;(stats || []).forEach((row) => {
     total_impressions += row.impressions || 0
     total_clicks += row.clicks || 0
+    total_view_time += Number(row.total_view_time || 0)
     const d = row.date.split('T')[0]
     if (dailyMap[d]) {
       dailyMap[d].impressions += row.impressions || 0
       dailyMap[d].clicks += row.clicks || 0
+      dailyMap[d].view_time += Number(row.total_view_time || 0)
     }
   })
 
@@ -58,7 +61,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   // 2. Fetch prompt breakdown from rollups
   const { data: promptStats } = await adminClient
     .from('campaign_prompt_stats_daily')
-    .select('prompt_id, impressions, clicks, prompts(title, slug)')
+    .select('prompt_id, impressions, clicks, total_view_time, prompts(title, slug)')
     .eq('campaign_id', campaignId)
     .gte('date', startStr)
 
@@ -71,16 +74,19 @@ export async function GET(_req: NextRequest, { params }: Params) {
         title: row.prompts?.title || 'Global Placement',
         slug: row.prompts?.slug || '',
         impressions: 0,
-        clicks: 0
+        clicks: 0,
+        view_time: 0
       }
     }
     promptMap[pId].impressions += row.impressions || 0
     promptMap[pId].clicks += row.clicks || 0
+    promptMap[pId].view_time += Number(row.total_view_time || 0)
   })
 
   const per_prompt_breakdown = Object.values(promptMap).map((v: any) => ({
     ...v,
     ctr: v.impressions > 0 ? parseFloat(((v.clicks / v.impressions) * 100).toFixed(2)) : 0,
+    avg_duration: v.impressions > 0 ? parseFloat((v.view_time / v.impressions).toFixed(2)) : 0
   })).sort((a: any, b: any) => b.clicks - a.clicks)
 
   // 3. Device & Country breakdown from analytics_events
@@ -122,6 +128,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
   return NextResponse.json({
     total_impressions,
     total_clicks,
+    total_view_time: parseFloat(total_view_time.toFixed(2)),
+    avg_view_duration: total_impressions > 0 ? parseFloat((total_view_time / total_impressions).toFixed(2)) : 0,
     ctr: parseFloat(ctr.toFixed(2)),
     campaign_name: campaign.name,
     campaign_status: campaign.status,

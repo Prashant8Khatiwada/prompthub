@@ -10,6 +10,7 @@ export type AnalyticsEventType =
   | 'pdf_download'
   | 'ad_impression'
   | 'ad_click'
+  | 'ad_view_duration'
 
 export function trackEvent({
   event_type, creator_id, prompt_id, campaign_id,

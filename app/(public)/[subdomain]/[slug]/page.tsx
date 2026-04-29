@@ -86,17 +86,8 @@ export default async function PublicPromptPage({ params }: Params) {
     .neq('id', prompt.id)
     .limit(3)
 
-  // 4. Fetch or create page record for analytics
-  let pageId: string | null = null
-  const { data: page } = await adminClient
-    .from('pages').select('id').eq('prompt_id', prompt.id).maybeSingle()
-  if (page) {
-    pageId = page.id
-  } else {
-    const { data: newPage } = await adminClient
-      .from('pages').insert({ prompt_id: prompt.id }).select('id').single()
-    pageId = newPage?.id ?? null
-  }
+  // 4. Track page view (removed dependency on non-existent 'pages' table)
+  // We now use prompt_id directly as the primary identifier for events
 
   // 5. Fetch Instagram oEmbed HTML (if video_url present)
   const oEmbedHtml = prompt.video_url
@@ -170,7 +161,7 @@ export default async function PublicPromptPage({ params }: Params) {
       className="min-h-screen bg-white text-zinc-900 pb-16"
     >
       {/* Track page view */}
-      {pageId && <ViewTracker pageId={pageId} promptId={prompt.id} creatorId={creator.id} />}
+      <ViewTracker pageId={prompt.id} promptId={prompt.id} creatorId={creator.id} />
 
       {/* Sticky creator header */}
       {/* <CreatorBar creator={creator} /> */}
