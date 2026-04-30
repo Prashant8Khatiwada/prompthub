@@ -18,6 +18,7 @@ function toSlug(title: string) {
 interface Props {
   defaultValues?: Partial<Prompt>
   promptId?: string
+  onSuccess?: () => void
 }
 
 type FieldErrors = Record<string, string[]>
@@ -25,7 +26,7 @@ type FieldErrors = Record<string, string[]>
 const inputCls = 'w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm'
 const labelCls = 'block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2'
 
-export default function PromptForm({ defaultValues, promptId }: Props) {
+export default function PromptForm({ defaultValues, promptId, onSuccess }: Props) {
   const router = useRouter()
   const isEdit = !!promptId
 
@@ -180,7 +181,11 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
       return
     }
 
-    router.push('/admin/prompts')
+    if (onSuccess) {
+      onSuccess()
+    } else {
+      router.push('/admin/prompts')
+    }
     router.refresh()
   }
 
@@ -192,24 +197,49 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
         </div>
       )}
 
-      {/* Title */}
-      <div>
-        <label className={labelCls}>Title *</label>
-        <input
-          type="text"
-          value={title}
-          onChange={e => {
-            const newTitle = e.target.value
-            setTitle(newTitle)
-            if (!slugManuallyEdited) {
-              setSlug(toSlug(newTitle))
-            }
-          }}
-          placeholder="Cinematic Neon City Reel"
-          className={inputCls}
-          required
-        />
-        {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title[0]}</p>}
+      {/* Media Integration */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <label className={labelCls}>Media Integration</label>
+          <button
+            type="button"
+            onClick={() => setIsPickerOpen(true)}
+            disabled={isAutoFilling}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold transition-all active:scale-95 shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+          >
+            {isAutoFilling ? (
+              <LoaderIcon className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            {isAutoFilling ? 'Auto-filling...' : 'Select from Instagram'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-zinc-900/30 border border-zinc-800">
+          <div className={isAutoFilling ? 'animate-pulse' : ''}>
+            <label className={labelCls}>Instagram / TikTok Reel URL</label>
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={e => setVideoUrl(e.target.value)}
+              placeholder="https://www.instagram.com/reel/..."
+              className={inputCls}
+            />
+            <p className="text-[10px] text-zinc-500 mt-1">Direct link to the Reel or Post.</p>
+          </div>
+          <div className={isAutoFilling ? 'animate-pulse' : ''}>
+            <label className={labelCls}>Manual Embed Code</label>
+            <textarea
+              value={embedHtml}
+              onChange={e => setEmbedHtml(e.target.value)}
+              placeholder="Paste <blockquote>...</blockquote> code here"
+              rows={1}
+              className={inputCls + ' resize-none'}
+            />
+            <p className="text-[10px] text-zinc-500 mt-1">Standard Instagram/TikTok embed HTML.</p>
+          </div>
+        </div>
       </div>
 
       {/* Category */}
@@ -230,6 +260,26 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
             Go to <Link href="/admin/categories" className="underline">Categories</Link> to create one first.
           </p>
         )}
+      </div>
+
+      {/* Title */}
+      <div>
+        <label className={labelCls}>Title *</label>
+        <input
+          type="text"
+          value={title}
+          onChange={e => {
+            const newTitle = e.target.value
+            setTitle(newTitle)
+            if (!slugManuallyEdited) {
+              setSlug(toSlug(newTitle))
+            }
+          }}
+          placeholder="Cinematic Neon City Reel"
+          className={inputCls}
+          required
+        />
+        {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title[0]}</p>}
       </div>
 
       {/* Description */}
@@ -371,51 +421,6 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
         {errors.slug && <p className="text-red-400 text-xs mt-1">{errors.slug[0]}</p>}
       </div>
 
-      {/* Video / Embed */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <label className={labelCls}>Media Integration</label>
-          <button
-            type="button"
-            onClick={() => setIsPickerOpen(true)}
-            disabled={isAutoFilling}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold transition-all active:scale-95 shadow-lg shadow-indigo-500/20 disabled:opacity-50"
-          >
-            {isAutoFilling ? (
-              <LoaderIcon className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="w-3.5 h-3.5" />
-            )}
-            {isAutoFilling ? 'Auto-filling...' : 'Select from Instagram'}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-zinc-900/30 border border-zinc-800">
-          <div className={isAutoFilling ? 'animate-pulse' : ''}>
-            <label className={labelCls}>Instagram / TikTok Reel URL</label>
-            <input
-              type="url"
-              value={videoUrl}
-              onChange={e => setVideoUrl(e.target.value)}
-              placeholder="https://www.instagram.com/reel/..."
-              className={inputCls}
-            />
-            <p className="text-[10px] text-zinc-500 mt-1">Direct link to the Reel or Post.</p>
-          </div>
-          <div className={isAutoFilling ? 'animate-pulse' : ''}>
-            <label className={labelCls}>Manual Embed Code</label>
-            <textarea
-              value={embedHtml}
-              onChange={e => setEmbedHtml(e.target.value)}
-              placeholder="Paste <blockquote>...</blockquote> code here"
-              rows={1}
-              className={inputCls + ' resize-none'}
-            />
-            <p className="text-[10px] text-zinc-500 mt-1">Standard Instagram/TikTok embed HTML.</p>
-          </div>
-        </div>
-      </div>
-
       {/* Thumbnail */}
       <div>
         <label className={labelCls}>Thumbnail Image</label>
@@ -440,7 +445,7 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
         </div>
       </div>
 
-      {/* Status + Submit */}
+      {/* Status + Featured */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-4 border-t border-zinc-800">
         <div className="flex items-center gap-3">
           <label className="text-sm font-semibold text-zinc-400">Status:</label>
@@ -469,23 +474,23 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
             {featured ? '★ Featured' : 'Standard'}
           </span>
         </div>
-
-        <div className="flex gap-3 sm:ml-auto">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-6 py-3 rounded-xl border border-zinc-700 text-sm font-semibold text-zinc-400 hover:text-white hover:border-zinc-600 transition-all"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={saving || uploading || uploadingPdf || categories.length === 0}
-            className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 shadow-lg shadow-indigo-500/20"
-          >
-            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Prompt'}
-          </button>
-        </div>
+      </div>
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-zinc-800">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="flex-1 px-6 py-4 rounded-2xl border border-zinc-800 bg-zinc-900 text-sm font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 transition-all active:scale-[0.98]"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={saving || uploading || uploadingPdf || categories.length === 0}
+          className="flex-[2] px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 shadow-xl shadow-indigo-500/20"
+        >
+          {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Prompt'}
+        </button>
       </div>
       <InstagramPostPicker
         isOpen={isPickerOpen}

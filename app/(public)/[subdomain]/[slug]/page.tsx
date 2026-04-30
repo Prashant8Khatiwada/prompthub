@@ -61,6 +61,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   }
 }
 
+import EnhancedPublicPromptUI from '@/components/public/EnhancedPublicPromptUI'
+
 export default async function PublicPromptPage({ params }: Params) {
   const { subdomain, slug } = await params
   const supabase = await createClient()
@@ -88,8 +90,6 @@ export default async function PublicPromptPage({ params }: Params) {
     .neq('id', prompt.id)
     .limit(3)
 
-  // 4. Track page view (removed dependency on non-existent 'pages' table)
-  // We now use prompt_id directly as the primary identifier for events
   const oEmbedHtml = prompt.video_url
     ? await fetchInstagramOEmbed(prompt.video_url)
     : null
@@ -118,7 +118,6 @@ export default async function PublicPromptPage({ params }: Params) {
   const toolColor = AI_TOOL_COLORS[prompt.ai_tool] ?? '#6366f1'
 
   // 6. Fetch active ad placements for this prompt
-  // Fetch placements directly via adminClient (instead of internal fetch to avoid baseUrl issues)
   const now = new Date().toISOString()
   const filters = [
     `prompt_id.eq.${prompt.id}`,
@@ -128,7 +127,7 @@ export default async function PublicPromptPage({ params }: Params) {
     filters.push(`category_id.eq.${prompt.category_id}`)
   }
 
-  const { data: rawPlacements, error: placementError } = await adminClient
+  const { data: rawPlacements } = await adminClient
     .from('ad_placements')
     .select(`
       id,
@@ -155,112 +154,33 @@ export default async function PublicPromptPage({ params }: Params) {
       return true
     })
 
-
-
   return (
     <main
       style={{ '--brand': creator.brand_color } as React.CSSProperties}
-      className="min-h-screen bg-white text-zinc-900 pb-16"
+      className="min-h-screen bg-zinc-950 text-white"
     >
-      {/* Track page view */}
       <ViewTracker pageId={prompt.id} promptId={prompt.id} creatorId={creator.id} />
 
-      <PublicProfileTabs
-        hasInstagram={!!igUser}
-        promptContent={
-          <>
-            {/* Instagram Profile Header (Quick view) */}
-            {igUser && (
-              <div className="bg-zinc-950">
-                <InstagramProfile
-                  user={igUser}
-                  creator={creator}
-                  activeTab="posts"
-                  onTabChange={() => { }}
-                />
-              </div>
-            )}
-
-            {/* Media Section (Post or Embed) */}
-            <div className="w-full mt-4">
-              {igMedia ? (
-                <div className="max-w-2xl mx-auto px-4">
-                  <InstagramPost media={igMedia} />
-                </div>
-              ) : (prompt.embed_html || prompt.video_url) ? (
-                <div className="max-w-2xl mx-auto px-4">
-                  <VideoEmbed
-                    html={prompt.embed_html || oEmbedHtml}
-                    fallbackThumbnail={prompt.thumbnail_url}
-                    url={prompt.video_url}
-                  />
-                </div>
-              ) : null}
-            </div>
-
-            <section className="max-w-2xl mx-auto px-4 pt-8">
-              {/* Title & tags */}
-              <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 mb-4 leading-tight">
-                {prompt.title}
-              </h1>
-              <div className="flex flex-wrap gap-2 mb-6">
-                <span
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
-                  style={{ background: `${toolColor}11`, color: toolColor, border: `1px solid ${toolColor}33` }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: toolColor }} />
-                  {prompt.ai_tool}
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 shadow-sm">
-                  {prompt.output_type}
-                </span>
-              </div>
-              {prompt.description && (
-                <p className="text-zinc-600 text-base leading-relaxed mb-8">{prompt.description}</p>
-              )}
-
-              {/* Ad: Above Gate */}
-              {placements.some((p: any) => p.position === 'above_gate') && (
-                <div className="mb-6">
-                  <AdBanner placements={placements} position="above_gate" promptId={prompt.id} creatorId={creator.id} />
-                </div>
-              )}
-
-              {/* Gate */}
-              <PromptGate prompt={prompt} />
-
-              {/* Ad: Below Gate */}
-              {placements.some((p: any) => p.position === 'below_gate') && (
-                <div className="mt-6">
-                  <AdBanner placements={placements} position="below_gate" promptId={prompt.id} creatorId={creator.id} />
-                </div>
-              )}
-            </section>
-          </>
-        }
-        instagramContent={
-          igUser && (
-            <InstagramView
-              user={igUser}
-              feed={igFeed}
-              creator={creator}
-              excludeId={igMedia?.id}
-            />
+      <EnhancedPublicPromptUI
+        creator={creator}
+        prompt={prompt}
+        igUser={igUser}
+        igMedia={igMedia}
+        igFeed={igFeed}
+        relatedData={related ?? []}
+        adAboveGate={
+          placements.some((p: any) => p.position === 'above_gate') && (
+            <AdBanner placements={placements} position="above_gate" promptId={prompt.id} creatorId={creator.id} />
           )
         }
+        adBelowGate={
+          placements.some((p: any) => p.position === 'below_gate') && (
+            <AdBanner placements={placements} position="below_gate" promptId={prompt.id} creatorId={creator.id} />
+          )
+        }
+        oEmbedHtml={oEmbedHtml}
       />
-
-      {/* Ad: Below Video */}
-      {placements.some((p: any) => p.position === 'below_video') && (
-        <div className="max-w-2xl mx-auto px-4 mt-8">
-          <AdBanner placements={placements} position="below_video" promptId={prompt.id} creatorId={creator.id} />
-        </div>
-      )}
-
-      {/* Related prompts */}
-      {related && related.length > 0 && (
-        <RelatedPrompts prompts={related} subdomain={subdomain} />
-      )}
     </main>
   )
 }
+

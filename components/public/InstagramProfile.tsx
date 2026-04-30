@@ -7,8 +7,8 @@ import { CheckCircle2, MoreHorizontal, Grid, Film, UserSquare } from 'lucide-rea
 interface Props {
   user: InstagramUser
   creator: Creator
-  activeTab: 'posts' | 'reels' | 'tagged'
-  onTabChange: (tab: 'posts' | 'reels' | 'tagged') => void
+  activeTab?: 'posts' | 'reels' | 'tagged'
+  onTabChange?: (tab: 'posts' | 'reels' | 'tagged') => void
 }
 
 export default function InstagramProfile({ user, creator, activeTab, onTabChange }: Props) {
@@ -25,12 +25,14 @@ export default function InstagramProfile({ user, creator, activeTab, onTabChange
     return count.toString()
   }
 
+  const showTabs = activeTab && onTabChange
+
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 pt-12 pb-0 bg-zinc-950 text-white">
-      <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center md:items-start mb-12">
-        {/* ... (avatar and info code remains the same) ... */}
-        <div className="relative shrink-0">
-          <div className="w-24 h-24 md:w-36 md:h-36 rounded-full bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[3px] shadow-sm">
+    <div className="w-full px-6 pt-10 pb-6 bg-zinc-950 text-white">
+      <div className="flex gap-6 md:gap-10 items-start">
+        {/* Profile Pic */}
+        <div className="relative shrink-0 mt-1">
+          <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[3px] shadow-sm">
             <div className="w-full h-full rounded-full bg-zinc-950 p-[2px]">
               <div className="w-full h-full rounded-full bg-zinc-900 overflow-hidden ring-1 ring-white/10">
                 {profilePic ? (
@@ -47,40 +49,44 @@ export default function InstagramProfile({ user, creator, activeTab, onTabChange
         </div>
 
         {/* Info */}
-        <div className="flex-1 flex flex-col gap-6 w-full">
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <h1 className="text-xl font-normal text-white flex items-center gap-2">
+        <div className="flex-1 flex flex-col gap-4 w-full">
+          {/* Header Row */}
+          <div className="flex flex-wrap items-center gap-y-3 gap-x-4">
+            <h1 className="text-xl md:text-2xl font-normal text-white flex items-center gap-2 mr-2">
               {user.username}
-              <CheckCircle2 className="w-[18px] h-[18px] text-[#0095f6] fill-current" />
+              <CheckCircle2 className="w-5 h-5 text-[#0095f6] fill-current" />
             </h1>
-            <div className="flex gap-2">
-              <button className="bg-[#0095f6] hover:bg-[#1877f2] text-white font-semibold py-1.5 px-6 rounded-lg text-sm transition-colors active:scale-95">
+            <div className="flex items-center gap-2">
+              <button className="bg-[#0095f6] hover:bg-[#1877f2] text-white font-semibold py-1.5 px-5 md:px-6 rounded-lg text-sm transition-colors active:scale-95">
                 Follow
               </button>
-              <button className="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-1.5 px-6 rounded-lg text-sm transition-colors active:scale-95">
+              <button className="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-1.5 px-5 md:px-6 rounded-lg text-sm transition-colors active:scale-95">
                 Message
               </button>
-              <button className="bg-zinc-800 hover:bg-zinc-700 text-white p-1.5 rounded-lg transition-colors">
+              <button className="bg-zinc-800 hover:bg-zinc-700 text-white p-1.5 rounded-lg transition-colors flex items-center justify-center">
                 <MoreHorizontal className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="flex justify-around md:justify-start gap-10 py-3 border-y border-zinc-900 md:border-none">
-            <div className="text-[15px]">
-              <span className="font-semibold text-white">{user.media_count}</span> <span className="text-zinc-400">posts</span>
+          {/* Stats Row */}
+          <div className="flex items-center gap-6 md:gap-10 text-[15px] mt-1">
+            <div>
+              <span className="font-semibold text-white mr-1">{user.media_count}</span>
+              <span className="text-zinc-300">posts</span>
             </div>
-            <div className="text-[15px]">
-              <span className="font-semibold text-white">{formatCount(followers)}</span> <span className="text-zinc-400">followers</span>
+            <div>
+              <span className="font-semibold text-white mr-1">{formatCount(followers)}</span>
+              <span className="text-zinc-300">followers</span>
             </div>
-            <div className="text-[15px]">
-              <span className="font-semibold text-white">{formatCount(follows)}</span> <span className="text-zinc-400">following</span>
+            <div>
+              <span className="font-semibold text-white mr-1">{formatCount(follows)}</span>
+              <span className="text-zinc-300">following</span>
             </div>
           </div>
 
-          {/* Bio & Details */}
-          <div className="flex flex-col gap-0.5 text-sm">
+          {/* Bio Section */}
+          <div className="flex flex-col gap-0.5 text-sm mt-1">
             <span className="font-semibold text-white">{displayName}</span>
             {bio && (
               <p className="text-zinc-100 whitespace-pre-wrap leading-tight max-w-md">
@@ -92,7 +98,7 @@ export default function InstagramProfile({ user, creator, activeTab, onTabChange
                 href={website.startsWith('http') ? website : `https://${website}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sky-400 font-semibold hover:underline mt-1"
+                className="text-[#e0f1ff] font-semibold hover:underline mt-1"
               >
                 {website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
               </a>
@@ -102,35 +108,38 @@ export default function InstagramProfile({ user, creator, activeTab, onTabChange
       </div>
 
       {/* Profile Tabs */}
-      <div className="border-t border-zinc-900 flex justify-center gap-12 -mx-4 md:mx-0">
-        <button 
-          onClick={() => onTabChange('posts')}
-          className={`flex items-center gap-1.5 py-4 border-t -mt-px text-xs font-bold uppercase tracking-widest transition-colors ${
-            activeTab === 'posts' ? 'border-white text-white' : 'border-transparent text-zinc-500 hover:text-zinc-400'
-          }`}
-        >
-          <Grid className="w-3.5 h-3.5" />
-          Posts
-        </button>
-        <button 
-          onClick={() => onTabChange('reels')}
-          className={`flex items-center gap-1.5 py-4 border-t -mt-px text-xs font-bold uppercase tracking-widest transition-colors ${
-            activeTab === 'reels' ? 'border-white text-white' : 'border-transparent text-zinc-500 hover:text-zinc-400'
-          }`}
-        >
-          <Film className="w-3.5 h-3.5" />
-          Reels
-        </button>
-        <button 
-          onClick={() => onTabChange('tagged')}
-          className={`flex items-center gap-1.5 py-4 border-t -mt-px text-xs font-bold uppercase tracking-widest transition-colors ${
-            activeTab === 'tagged' ? 'border-white text-white' : 'border-transparent text-zinc-500 hover:text-zinc-400'
-          }`}
-        >
-          <UserSquare className="w-3.5 h-3.5" />
-          Tagged
-        </button>
-      </div>
+      {showTabs && (
+        <div className="border-t border-zinc-800 flex justify-center gap-12 mt-8 -mx-6 md:mx-0 px-6 md:px-0">
+          <button 
+            onClick={() => onTabChange('posts')}
+            className={`flex items-center gap-1.5 py-4 border-t -mt-px text-xs font-bold uppercase tracking-widest transition-colors ${
+              activeTab === 'posts' ? 'border-white text-white' : 'border-transparent text-zinc-500 hover:text-zinc-400'
+            }`}
+          >
+            <Grid className="w-3.5 h-3.5" />
+            Posts
+          </button>
+          <button 
+            onClick={() => onTabChange('reels')}
+            className={`flex items-center gap-1.5 py-4 border-t -mt-px text-xs font-bold uppercase tracking-widest transition-colors ${
+              activeTab === 'reels' ? 'border-white text-white' : 'border-transparent text-zinc-500 hover:text-zinc-400'
+            }`}
+          >
+            <Film className="w-3.5 h-3.5" />
+            Reels
+          </button>
+          <button 
+            onClick={() => onTabChange('tagged')}
+            className={`flex items-center gap-1.5 py-4 border-t -mt-px text-xs font-bold uppercase tracking-widest transition-colors ${
+              activeTab === 'tagged' ? 'border-white text-white' : 'border-transparent text-zinc-500 hover:text-zinc-400'
+            }`}
+          >
+            <UserSquare className="w-3.5 h-3.5" />
+            Tagged
+          </button>
+        </div>
+      )}
     </div>
   )
 }
+

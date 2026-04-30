@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import type { Prompt } from '@/types'
 
@@ -8,6 +8,7 @@ import type { Prompt } from '@/types'
 const PdfViewer = dynamic(() => import('./PdfViewer'), { ssr: false })
 import CopyButton from './CopyButton'
 import { trackEmailSubmit } from '@/lib/analytics'
+import { Download, FileText } from 'lucide-react'
 
 interface Props {
   prompt: Prompt
@@ -27,7 +28,6 @@ export default function PromptGate({ prompt }: Props) {
     return (
       <div className="space-y-4">
         <PromptContent prompt={prompt} content={prompt.content} />
-        <CopyButton content={prompt.content} promptId={prompt.id} slug={prompt.slug} />
       </div>
     )
   }
@@ -38,7 +38,6 @@ export default function PromptGate({ prompt }: Props) {
       return (
         <div className="space-y-4 animate-in slide-in-from-bottom-4 fade-in duration-500">
           <PromptContent prompt={prompt} content={unlockedContent} />
-          <CopyButton content={unlockedContent} promptId={prompt.id} slug={prompt.slug} />
         </div>
       )
     }
@@ -146,24 +145,162 @@ export default function PromptGate({ prompt }: Props) {
   )
 }
 
-function PromptContent({ prompt, content }: { prompt: Prompt; content: string }) {
-  if (prompt.content_type === 'pdf' && prompt.pdf_url) {
-    return (
-      <div className="mt-8 border-t border-zinc-800/50 pt-8">
-        <PdfViewer url={prompt.pdf_url} />
+function PdfPlaceholder({ prompt }: { prompt: Prompt }) {
+  const [fileSize, setFileSize] = useState<string | null>(null)
+
+  const filename = prompt.pdf_url
+    ? decodeURIComponent(prompt.pdf_url.split('/').pop()?.split('?')[0] ?? `${prompt.title}.pdf`)
+    : `${prompt.title}.pdf`
+
+  useEffect(() => {
+    if (!prompt.pdf_url) return
+    fetch(prompt.pdf_url, { method: 'HEAD' })
+      .then((res: Response) => {
+        const bytes = parseInt(res.headers.get('content-length') ?? '0', 10)
+        if (bytes > 0) {
+          setFileSize(bytes >= 1048576
+            ? `${(bytes / 1048576).toFixed(1)} MB`
+            : `${Math.round(bytes / 1024)} KB`)
+        }
+      })
+      .catch(() => null)
+  }, [prompt.pdf_url])
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-zinc-700/60">
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/80 backdrop-blur-sm">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-red-500/70" />
+          <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
+          <div className="w-3 h-3 rounded-full bg-green-500/70" />
+          <span className="ml-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+            prompt.pdf
+          </span>
+        </div>
+        <a
+          href={prompt.pdf_url || '#'}
+          download
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-bold transition-all active:scale-95 shadow"
+          style={{ background: 'var(--brand, #6366f1)' }}
+        >
+          <Download className="w-3 h-3" />
+          Download PDF
+        </a>
       </div>
-    )
+
+      {/* Body */}
+      <div
+        className="relative px-6 py-12 flex flex-col items-center justify-center text-center"
+        style={{
+          background: 'linear-gradient(135deg, #18181b 0%, #1e1e2a 50%, #18181b 100%)',
+        }}
+      >
+        {/* Decorative blur blob */}
+        <div
+          className="absolute inset-0 opacity-20 blur-3xl pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 50%, var(--brand, #6366f1) 0%, transparent 70%)',
+          }}
+        />
+
+        {/* PDF Icon Card */}
+        <div className="relative mb-6">
+          <div
+            className="w-20 h-24 rounded-xl flex flex-col items-end justify-start shadow-2xl overflow-hidden border border-zinc-700/60"
+            style={{ background: 'linear-gradient(145deg, #27272a, #1c1c22)' }}
+          >
+            {/* Corner fold */}
+            <div
+              className="w-6 h-6 rounded-bl-lg"
+              style={{
+                background: 'linear-gradient(225deg, #3f3f46 50%, transparent 50%)',
+              }}
+            />
+            {/* PDF label */}
+            <div className="flex-1 w-full flex items-center justify-center">
+              <span
+                className="text-xs font-extrabold tracking-widest uppercase"
+                style={{ color: 'var(--brand, #6366f1)' }}
+              >
+                PDF
+              </span>
+            </div>
+            {/* Bottom stripe */}
+            <div
+              className="w-full h-1.5 opacity-70"
+              style={{ background: 'var(--brand, #6366f1)' }}
+            />
+          </div>
+          {/* Glow under icon */}
+          <div
+            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 h-4 blur-xl opacity-50 rounded-full"
+            style={{ background: 'var(--brand, #6366f1)' }}
+          />
+        </div>
+
+        {/* File Info */}
+        <h3 className="relative text-zinc-100 font-bold text-base leading-tight max-w-[220px] line-clamp-2 mb-1">
+          {filename}
+        </h3>
+        <div className="relative flex items-center gap-2 text-xs text-zinc-500 mb-8">
+          <span>PDF Document</span>
+          {fileSize && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-zinc-700 inline-block" />
+              <span>{fileSize}</span>
+            </>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="relative flex gap-3 flex-wrap justify-center">
+          <a
+            href={prompt.pdf_url || '#'}
+            download
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all active:scale-95 shadow-lg"
+            style={{ background: 'var(--brand, #6366f1)' }}
+          >
+            <Download className="w-4 h-4" />
+            Download
+          </a>
+          <a
+            href={prompt.pdf_url || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-semibold transition-colors border border-zinc-700"
+          >
+            <FileText className="w-4 h-4" />
+            View
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PromptContent({ prompt, content }: { prompt: Prompt; content: string }) {
+  const isPdf = prompt.content_type === 'pdf'
+
+  if (isPdf) {
+    return <PdfPlaceholder prompt={prompt} />
   }
 
   return (
-    <div className="relative rounded-2xl bg-zinc-50 border border-zinc-200 overflow-hidden shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-center gap-1.5 px-4 py-3 border-b border-zinc-200 bg-white/50 backdrop-blur-sm">
-        <div className="w-3 h-3 rounded-full bg-zinc-200" />
-        <div className="w-3 h-3 rounded-full bg-zinc-200" />
-        <div className="w-3 h-3 rounded-full bg-zinc-200" />
-        <span className="ml-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">prompt.txt</span>
+    <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl transition-shadow hover:shadow-md">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-zinc-800" />
+          <div className="w-3 h-3 rounded-full bg-zinc-800" />
+          <div className="w-3 h-3 rounded-full bg-zinc-800" />
+          <span className="ml-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+            prompt.txt
+          </span>
+        </div>
+        <CopyButton content={content} promptId={prompt.id} slug={prompt.slug} />
       </div>
-      <pre className="p-6 font-mono text-sm text-zinc-800 leading-relaxed whitespace-pre-wrap break-words">
+      
+      <pre className="p-6 font-mono text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap break-words">
         {content}
       </pre>
     </div>
