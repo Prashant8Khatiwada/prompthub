@@ -86,7 +86,15 @@ export default function EnhancedPublicPromptUI({
     setIsLoading(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     // Update URL without reload
-    window.history.pushState(null, '', `/${creator.subdomain}/${clickedPrompt.slug}`)
+    const newPath = (() => {
+      const hostname = window.location.hostname
+      const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN?.replace(/^https?:\/\//, '') || 'prompthub.app'
+      if (hostname === baseDomain || hostname === 'localhost' || hostname === '127.0.0.1') {
+        return `/${creator.subdomain}/${clickedPrompt.slug}`
+      }
+      return `/${clickedPrompt.slug}`
+    })()
+    window.history.pushState(null, '', newPath)
     
     try {
       const { data, error } = await supabase
