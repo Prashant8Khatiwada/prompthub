@@ -12,12 +12,17 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/admin/settings?error=no_code', request.url))
   }
 
-  const host = request.headers.get('host')
-  const protocol = host?.includes('localhost') || host?.includes('127.0.0.1') ? 'http' : 'https'
+  // Must match the redirect_uri from the connect route exactly
+  // Priority 1: x-forwarded-host (real public domain set by reverse proxy)
+  // Priority 2: INSTAGRAM_REDIRECT_URI env var
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
   
   const clientId = process.env.INSTAGRAM_APP_ID
   const clientSecret = process.env.INSTAGRAM_APP_SECRET
-  const redirectUri = host ? `${protocol}://${host}/api/auth/instagram/callback` : process.env.INSTAGRAM_REDIRECT_URI
+  const redirectUri = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}/api/auth/instagram/callback`
+    : process.env.INSTAGRAM_REDIRECT_URI
 
   try {
     // 1. Exchange code for User Access Token via Graph API

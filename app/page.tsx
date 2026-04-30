@@ -66,6 +66,12 @@ export default async function LandingPage() {
           >
             Explore
           </Link>
+          <Link
+            href="/login"
+            className="rounded-full bg-white px-8 py-3 text-sm font-black text-black hover:bg-zinc-200 transition-all active:scale-95 shadow-xl shadow-white/5 uppercase tracking-widest"
+          >
+            Login
+          </Link>
         </div>
       </nav>
 

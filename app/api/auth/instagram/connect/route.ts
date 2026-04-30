@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
-  const host = request.headers.get('host')
-  const protocol = host?.includes('localhost') || host?.includes('127.0.0.1') ? 'http' : 'https'
-  
   const clientId = process.env.INSTAGRAM_APP_ID
-  // Dynamically detect redirect URI, falling back to env if needed
-  const redirectUri = host ? `${protocol}://${host}/api/auth/instagram/callback` : process.env.INSTAGRAM_REDIRECT_URI
+
+  // Priority 1: x-forwarded-host is set by the reverse proxy (Nginx/Traefik)
+  //             with the real public domain (e.g. zip.fotosfolio.com)
+  // Priority 2: INSTAGRAM_REDIRECT_URI env var (hardcoded production URL)
+  // Never use raw `host` header — behind a proxy it resolves to localhost:3000
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+  const redirectUri = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}/api/auth/instagram/callback`
+    : process.env.INSTAGRAM_REDIRECT_URI
 
   if (!clientId || !redirectUri) {
     return NextResponse.json({ error: 'Instagram credentials not configured on server' }, { status: 500 })
