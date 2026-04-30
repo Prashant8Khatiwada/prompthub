@@ -28,8 +28,8 @@ export default function InstagramProfile({ user, creator, activeTab, onTabChange
   const showTabs = activeTab && onTabChange
 
   return (
-    <div className="w-full px-6 pt-10 pb-6 bg-zinc-950 text-white">
-      <div className="flex gap-6 md:gap-10 items-start">
+    <div className="w-full px-4 md:px-6 pt-6 md:pt-10 pb-6 bg-zinc-950 text-white">
+      <div className="flex gap-4 md:gap-10 items-start">
         {/* Profile Pic */}
         <div className="relative shrink-0 mt-1">
           <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[3px] shadow-sm">
@@ -70,18 +70,18 @@ export default function InstagramProfile({ user, creator, activeTab, onTabChange
           </div>
 
           {/* Stats Row */}
-          <div className="flex items-center gap-6 md:gap-10 text-[15px] mt-1">
-            <div>
-              <span className="font-semibold text-white mr-1">{user.media_count}</span>
-              <span className="text-zinc-300">posts</span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 md:gap-x-10 text-sm md:text-[15px] mt-1">
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-white">{user.media_count}</span>
+              <span className="text-zinc-400">posts</span>
             </div>
-            <div>
-              <span className="font-semibold text-white mr-1">{formatCount(followers)}</span>
-              <span className="text-zinc-300">followers</span>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-white">{formatCount(followers)}</span>
+              <span className="text-zinc-400">followers</span>
             </div>
-            <div>
-              <span className="font-semibold text-white mr-1">{formatCount(follows)}</span>
-              <span className="text-zinc-300">following</span>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-white">{formatCount(follows)}</span>
+              <span className="text-zinc-400">following</span>
             </div>
           </div>
 

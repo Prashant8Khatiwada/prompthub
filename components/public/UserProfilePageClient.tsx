@@ -6,6 +6,7 @@ import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
 import type { Creator, Category, Prompt } from '@/types'
 import InstagramProfile from './InstagramProfile'
 import { Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, LayoutGrid } from 'lucide-react'
+import AdBanner, { AdPlacementData } from './AdBanner'
 
 interface PromptWithCategory extends Prompt {
   categories?: { name: string } | null
@@ -17,6 +18,7 @@ interface Props {
   igFeed: InstagramMedia[]
   categories: Category[]
   prompts: PromptWithCategory[]
+  adPlacements?: AdPlacementData[]
 }
 
 const AI_TOOL_COLORS: Record<string, string> = {
@@ -45,7 +47,7 @@ const GATE_LABELS: Record<string, { label: string; color: string }> = {
   payment: { label: 'Paid', color: '#6366f1' },
 }
 
-export default function UserProfilePageClient({ creator, igUser, categories, prompts }: Props) {
+export default function UserProfilePageClient({ creator, igUser, categories, prompts, adPlacements = [] }: Props) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   // Map category id → category
@@ -152,6 +154,13 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
           </div>
           <div className="flex-1 h-px bg-white/5" />
         </div>
+
+        {/* ─── Creator Page Ad Placement ─── */}
+        {adPlacements.some(p => p.position === 'creator_page') && (
+          <div className="mb-8">
+            <AdBanner placements={adPlacements} position="creator_page" creatorId={creator.id} />
+          </div>
+        )}
 
         {/* ─── Category Filter Pills ─── */}
         {activeCategoryIds.length > 0 && (

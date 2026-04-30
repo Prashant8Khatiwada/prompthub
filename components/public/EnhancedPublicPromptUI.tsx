@@ -24,6 +24,8 @@ import InstagramPost from './InstagramPost'
 import InstagramFeed from './InstagramFeed'
 import PromptGate from './PromptGate'
 import RelatedPrompts from './RelatedPrompts'
+import AdPopup from './AdPopup'
+import type { AdPlacementData } from './AdBanner'
 import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
 import type { Creator, Prompt } from '@/types'
 
@@ -45,8 +47,9 @@ interface Props {
   igMedia: InstagramMedia | null
   igFeed: InstagramMedia[]
   relatedData: RelatedPromptType[]
-  adAboveGate?: React.ReactNode
-  adBelowGate?: React.ReactNode
+  adAbovePrompt?: React.ReactNode
+  adBelowPrompt?: React.ReactNode
+  adPopupPlacements?: AdPlacementData[]
   oEmbedHtml?: string | null
 }
 
@@ -69,8 +72,9 @@ export default function EnhancedPublicPromptUI({
   igMedia,
   igFeed,
   relatedData,
-  adAboveGate,
-  adBelowGate,
+  adAbovePrompt,
+  adBelowPrompt,
+  adPopupPlacements,
   oEmbedHtml
 }: Props) {
   const [activeTab, setActiveTab] = useState<'prompt' | 'profile'>('prompt')
@@ -149,8 +153,9 @@ export default function EnhancedPublicPromptUI({
           <div className="relative">
             {activeTab === 'prompt' ? (
               <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 transition-opacity ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
-                {/* Prompt Section First */}
                 <div className="px-6 py-10 md:px-12 text-white">
+                  {adAbovePrompt && <div className="mb-8">{adAbovePrompt}</div>}
+                  
                   <h1 className="text-3xl font-extrabold tracking-tight text-white mb-4 leading-tight">
                     {currentPrompt.title}
                   </h1>
@@ -173,11 +178,15 @@ export default function EnhancedPublicPromptUI({
                   {/* Gate */}
                   <PromptGate prompt={currentPrompt} key={currentPrompt.id} />
                   
-                  {adAboveGate && <div className="mt-8">{adAboveGate}</div>}
+                  {adBelowPrompt && <div className="mt-8">{adBelowPrompt}</div>}
                 </div>
 
+                {adPopupPlacements && adPopupPlacements.length > 0 && (
+                  <AdPopup placements={adPopupPlacements} promptId={currentPrompt.id} creatorId={creator.id} />
+                )}
+
                 {/* Related Prompts Section */}
-                <div className="px-6 pb-12 bg-zinc-950/30 pt-8 border-t border-zinc-800">
+                <div className="px-4 sm:px-6 pb-12 bg-zinc-950/30 pt-8 border-t border-zinc-800">
                   <div className="max-w-2xl mx-auto">
                     {relatedData && relatedData.length > 0 && (
                       <RelatedPrompts 

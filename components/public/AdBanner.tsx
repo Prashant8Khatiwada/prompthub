@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { AdPlacementPosition } from '@/types'
 
 export interface AdPlacementData {
   id: string
-  position: 'below_video' | 'above_gate' | 'below_gate'
+  position: AdPlacementPosition
   is_global: boolean
   prompt_id: string | null
   campaign: {
@@ -23,8 +24,8 @@ export interface AdPlacementData {
 
 interface Props {
   placements: AdPlacementData[]
-  position: 'below_video' | 'above_gate' | 'below_gate'
-  promptId: string
+  position: AdPlacementPosition
+  promptId?: string
   creatorId?: string
 }
 

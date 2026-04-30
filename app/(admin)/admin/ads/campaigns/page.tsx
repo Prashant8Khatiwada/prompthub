@@ -12,7 +12,7 @@ export default async function AdCampaignsPage() {
   // Fetch campaigns
   const { data: campaigns } = await supabase
     .from('ad_campaigns')
-    .select('*, client:ad_clients(id, name)')
+    .select('*, client:ad_clients(id, name), ad_placements(*)')
     .eq('creator_id', user!.id)
     .order('created_at', { ascending: false })
 
@@ -23,7 +23,11 @@ export default async function AdCampaignsPage() {
     .eq('creator_id', user!.id)
     .order('name')
 
-  // Fetch counts
+  // Fetch prompts and categories for the modal form
+  const [{ data: prompts }, { data: categories }] = await Promise.all([
+    supabase.from('prompts').select('id, title, slug').eq('creator_id', user!.id).eq('status', 'published'),
+    supabase.from('categories').select('id, name').order('name')
+  ])
   const ids = (campaigns ?? []).map((c) => c.id)
   const [{ data: imps }, { data: clicks }] = await Promise.all([
     supabase.from('ad_impressions').select('campaign_id').in('campaign_id', ids),
@@ -48,18 +52,14 @@ export default async function AdCampaignsPage() {
           <h1 className="text-3xl font-bold text-white tracking-tight">Ad Campaigns</h1>
           <p className="text-zinc-500 text-sm mt-1">Manage and track your advertising placements.</p>
         </div>
-        <Link
-          href="/admin/ads/campaigns/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-5 py-3 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-indigo-500/20"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-          </svg>
-          New Campaign
-        </Link>
       </div>
 
-      <AdCampaignsTable campaigns={enriched as AdCampaign[]} clients={clients ?? []} />
+      <AdCampaignsTable 
+        campaigns={enriched as AdCampaign[]} 
+        clients={clients ?? []} 
+        prompts={prompts ?? []}
+        categories={categories ?? []}
+      />
     </div>
   )
 }
