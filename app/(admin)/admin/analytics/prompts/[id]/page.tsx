@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
 import RefreshStatsButton from '@/components/admin/RefreshStatsButton'
 import { PromptAnalyticsResponse } from '@/lib/analytics/types'
@@ -58,8 +59,9 @@ export default function PromptAnalyticsPage() {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       <div>
-        <Link href="/admin/analytics" className="text-zinc-500 hover:text-white transition-colors text-sm font-semibold flex items-center gap-2 mb-6">
-          ← Back to Analytics
+        <Link href="/admin/analytics" className="text-zinc-500 hover:text-white transition-colors text-sm font-semibold flex items-center gap-2 mb-6 group">
+          <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
+          Back to Analytics
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="flex flex-col gap-2">
@@ -212,9 +214,15 @@ export default function PromptAnalyticsPage() {
             </thead>
             <tbody className="divide-y divide-zinc-800">
               {(ads || []).map((a) => (
-                <tr key={a.campaign_id} className="hover:bg-zinc-800/30">
+                <tr key={a.campaign_id} className="hover:bg-zinc-800/30 group">
                   <td className="px-8 py-4 text-white font-medium">
-                    {a.campaign_name}
+                    <Link 
+                      href={`/admin/analytics/campaigns/${a.campaign_id}`}
+                      className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      {a.campaign_name}
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
+                    </Link>
                   </td>
                   <td className="px-8 py-4 text-right text-zinc-400 font-mono">{a.impressions.toLocaleString()}</td>
                   <td className="px-8 py-4 text-right text-zinc-400 font-mono">{a.clicks.toLocaleString()}</td>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
 import RefreshStatsButton from '@/components/admin/RefreshStatsButton'
 import { CampaignAnalyticsResponse } from '@/lib/analytics/types'
@@ -71,8 +72,9 @@ export default function CampaignAnalyticsPage() {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       <div>
-        <Link href="/admin/analytics" className="text-zinc-500 hover:text-white transition-colors text-sm font-semibold flex items-center gap-2 mb-6">
-          ← Back to Analytics
+        <Link href="/admin/analytics" className="text-zinc-500 hover:text-white transition-colors text-sm font-semibold flex items-center gap-2 mb-6 group">
+          <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
+          Back to Analytics
         </Link>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="flex flex-col gap-2">
