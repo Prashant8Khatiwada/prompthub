@@ -1,34 +1,46 @@
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
 import { encrypt } from '@/lib/crypto'
 
-export async function GET(request: Request) {
+// Behind a reverse proxy the internal request.url is http://127.0.0.1:3000/...
+// Use x-forwarded-* headers to reconstruct the real public base URL.
+function getBaseUrl(request: NextRequest): string {
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`
+  }
+  // Fallback: use configured base domain
+  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'zip.fotosfolio.com'
+  return `https://${baseDomain}`
+}
+
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const errorParam = searchParams.get('error')
+  const baseUrl = getBaseUrl(request)
 
   if (errorParam) {
-    return NextResponse.redirect(new URL(`/admin/settings?error=${encodeURIComponent(errorParam)}`, request.url))
+    return NextResponse.redirect(`${baseUrl}/admin/settings?error=${encodeURIComponent(errorParam)}`)
   }
 
   if (!code) {
-    return NextResponse.redirect(new URL('/admin/settings?error=no_code', request.url))
+    return NextResponse.redirect(`${baseUrl}/admin/settings?error=no_code`)
   }
 
-  // Instagram Login for Business uses its own Client ID + Secret
-  const clientId = process.env.INSTAGRAM_CLIENT_ID        // 1844374976242880
-  const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET // Instagram App Secret
-  const redirectUri = process.env.INSTAGRAM_REDIRECT_URI  // https://zip.fotosfolio.com/api/auth/instagram/callback
+  const clientId = process.env.INSTAGRAM_CLIENT_ID
+  const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET
+  const redirectUri = process.env.INSTAGRAM_REDIRECT_URI
 
   if (!clientId || !clientSecret || !redirectUri) {
-    return NextResponse.redirect(new URL('/admin/settings?error=instagram_not_configured', request.url))
+    return NextResponse.redirect(`${baseUrl}/admin/settings?error=instagram_not_configured`)
   }
 
   try {
     // Step 1: Exchange code for short-lived token
-    // Instagram Login uses a POST to api.instagram.com, NOT a GET to graph.facebook.com
     const tokenRes = await fetch('https://api.instagram.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -49,7 +61,7 @@ export async function GET(request: Request) {
     const shortLivedToken = tokenData.access_token
     const instagramUserId = String(tokenData.user_id)
 
-    // Step 2: Exchange short-lived token for a long-lived token (60 days)
+    // Step 2: Exchange for long-lived token (60 days)
     const longLivedRes = await fetch(
       `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_id=${clientId}&client_secret=${clientSecret}&access_token=${shortLivedToken}`
     )
@@ -59,7 +71,7 @@ export async function GET(request: Request) {
     const longLivedToken = longLivedData.access_token
     const expiresAt = new Date(Date.now() + (longLivedData.expires_in || 5184000) * 1000)
 
-    // Step 3: Fetch Instagram username directly — no Facebook Pages lookup needed
+    // Step 3: Fetch Instagram username
     const userRes = await fetch(
       `https://graph.instagram.com/me?fields=id,username&access_token=${longLivedToken}`
     )
@@ -74,7 +86,7 @@ export async function GET(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.redirect(new URL('/login?error=session_expired', request.url))
+      return NextResponse.redirect(`${baseUrl}/login?error=session_expired`)
     }
 
     // Step 5: Encrypt and store the long-lived token in the database
@@ -94,11 +106,11 @@ export async function GET(request: Request) {
 
     if (dbError) throw dbError
 
-    return NextResponse.redirect(new URL('/admin/settings?instagram=connected', request.url))
+    return NextResponse.redirect(`${baseUrl}/admin/settings?instagram=connected`)
   } catch (error: any) {
     console.error('Instagram Business Auth Error:', error)
     return NextResponse.redirect(
-      new URL(`/admin/settings?error=${encodeURIComponent(error.message)}`, request.url)
+      `${baseUrl}/admin/settings?error=${encodeURIComponent(error.message)}`
     )
   }
 }
