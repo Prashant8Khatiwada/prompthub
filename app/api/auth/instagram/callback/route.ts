@@ -90,7 +90,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 5: Encrypt and store the long-lived token in the database
-    const { encrypted, iv } = encrypt(longLivedToken)
+    const encryption = encrypt(longLivedToken)
+    if (!encryption) {
+      throw new Error('TOKEN_ENCRYPTION_KEY is not set on the server')
+    }
+    const { encrypted, iv } = encryption
 
     const { error: dbError } = await adminClient
       .from('creator_instagram_tokens')

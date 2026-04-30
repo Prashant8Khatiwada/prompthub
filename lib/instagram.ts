@@ -45,6 +45,8 @@ async function getCreatorToken(creatorId: string) {
 
   try {
     const token = decrypt(data.encrypted_token, data.iv)
+    if (!token) return null
+    
     console.log(`[Instagram] Token decrypted successfully for IG ID: ${data.instagram_user_id}`)
     return { token, igId: data.instagram_user_id }
   } catch (e) {
