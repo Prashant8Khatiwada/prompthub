@@ -27,14 +27,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 1. If it's the main domain (zip.fotosfolio.com)
+  // 1. If it's the main domain (zip.fotosfolio.com), let Next.js handle all routes normally
   if (isMainDomain) {
-    // If accessing root, rewrite to home
-    if (path === '/') {
-      console.log('[Middleware] Rewriting main domain root to /home')
-      return NextResponse.rewrite(new URL('/home', request.url))
-    }
-    // For other paths on main domain, just continue
     return NextResponse.next()
   }
 
