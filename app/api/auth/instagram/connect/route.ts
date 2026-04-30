@@ -8,12 +8,12 @@ export async function GET() {
     return NextResponse.json({ error: 'Instagram credentials not configured on server' }, { status: 500 })
   }
 
-  // Build the Facebook OAuth URL for Instagram Professional accounts
+  // Build the Facebook OAuth URL for Instagram Professional accounts to manage accounts
   // Required scopes for Business/Creator accounts to access media and analytics
   const scopes = [
     'instagram_business_basic',
-    'instagram_manage_media',
     'instagram_basic',
+    'instagram_manage_insights',
     'pages_show_list',
     'pages_read_engagement'
   ].join(',')
