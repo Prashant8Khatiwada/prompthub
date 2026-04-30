@@ -32,7 +32,7 @@ export default function RelatedPrompts({ prompts, subdomain, onPromptClick }: Pr
       <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-6 text-center">
         More from {subdomain}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
         {prompts.map((p) => (
           <Link
             key={p.id}

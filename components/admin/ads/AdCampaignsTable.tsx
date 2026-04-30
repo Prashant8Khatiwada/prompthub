@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { AdCampaign } from '@/types'
+import AdCampaignForm from './AdCampaignForm'
+import { X, Plus, Edit2, BarChart2, Copy, Pause, Play, Trash2 } from 'lucide-react'
+import Link from 'next/link'
 
 const STATUS_STYLES: Record<string, string> = {
   active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -29,9 +31,11 @@ function formatDate(iso: string | null) {
 interface Props {
   campaigns: AdCampaign[]
   clients: { id: string; name: string }[]
+  prompts: { id: string; title: string; slug: string }[]
+  categories: { id: string; name: string }[]
 }
 
-export default function AdCampaignsTable({ campaigns: initial, clients }: Props) {
+export default function AdCampaignsTable({ campaigns: initial, clients, prompts, categories }: Props) {
   const router = useRouter()
   const [campaigns, setCampaigns] = useState(initial)
   const [, startTransition] = useTransition()
@@ -39,6 +43,10 @@ export default function AdCampaignsTable({ campaigns: initial, clients }: Props)
   const [clientFilter, setClientFilter] = useState<string>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingCampaign, setEditingCampaign] = useState<AdCampaign | null>(null)
 
   const filtered = campaigns.filter(c => {
     if (activeTab !== 'all' && c.status !== activeTab) return false
@@ -82,9 +90,59 @@ export default function AdCampaignsTable({ campaigns: initial, clients }: Props)
         <div className="w-16 h-16 rounded-2xl bg-zinc-800 flex items-center justify-center text-3xl mb-4">📣</div>
         <p className="text-white font-bold text-lg mb-2">No campaigns yet</p>
         <p className="text-zinc-500 text-sm mb-6">Create your first ad campaign to start monetizing your pages.</p>
-        <Link href="/admin/ads/campaigns/new" className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-6 py-3 text-sm font-bold text-white transition-all">
+        <button
+          onClick={() => { setEditingCampaign(null); setIsModalOpen(true); }}
+          className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-6 py-3 text-sm font-bold text-white transition-all"
+        >
           + New Campaign
-        </Link>
+        </button>
+
+        {isModalOpen && renderModal()}
+      </div>
+    )
+  }
+
+  function renderModal() {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="relative w-full max-w-4xl bg-zinc-950 rounded-[32px] shadow-2xl border border-zinc-800 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+          <div className="px-8 py-6 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50">
+            <div>
+              <h2 className="text-2xl font-bold text-white tracking-tight">
+                {editingCampaign ? 'Edit Campaign' : 'Create New Campaign'}
+              </h2>
+              <p className="text-zinc-500 text-xs mt-0.5">
+                {editingCampaign ? 'Update campaign details and placements.' : 'Set up a new advertising campaign.'}
+              </p>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <AdCampaignForm
+              campaignId={editingCampaign?.id}
+              defaultValues={editingCampaign ?? undefined}
+              clients={clients}
+              prompts={prompts}
+              categories={categories}
+              onSuccess={() => {
+                setIsModalOpen(false)
+                startTransition(() => {
+                  router.refresh()
+                  // In a real app we might refetch or the server action would handle this
+                  // For now, let's just close and refresh.
+                  window.location.reload()
+                })
+              }}
+              onCancel={() => setIsModalOpen(false)}
+            />
+          </div>
+        </div>
       </div>
     )
   }
@@ -99,11 +157,10 @@ export default function AdCampaignsTable({ campaigns: initial, clients }: Props)
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
-                activeTab === tab
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${activeTab === tab
                   ? 'bg-indigo-600 text-white'
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-              }`}
+                }`}
             >
               {tab}
             </button>
@@ -125,6 +182,14 @@ export default function AdCampaignsTable({ campaigns: initial, clients }: Props)
         )}
 
         <p className="text-xs text-zinc-500 sm:ml-auto">{filtered.length} campaign{filtered.length !== 1 ? 's' : ''}</p>
+
+        <button
+          onClick={() => { setEditingCampaign(null); setIsModalOpen(true); }}
+          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-all active:scale-95 shadow-lg shadow-indigo-500/20"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          New Campaign
+        </button>
       </div>
 
       {/* Table */}
@@ -179,43 +244,46 @@ export default function AdCampaignsTable({ campaigns: initial, clients }: Props)
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center justify-end gap-1.5">
-                      <Link
-                        href={`/admin/ads/campaigns/${c.id}`}
-                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all"
+                      <button
+                        onClick={() => { setEditingCampaign(c); setIsModalOpen(true); }}
+                        className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+                        title="Edit Campaign"
                       >
-                        Edit
-                      </Link>
+                        <Edit2 className="w-4 h-4" />
+                      </button>
                       <Link
                         href={`/ads/report/${c.report_token}`}
                         target="_blank"
-                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all"
+                        className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+                        title="View Report"
                       >
-                        Report
+                        <BarChart2 className="w-4 h-4" />
                       </Link>
                       <button
                         onClick={() => copyReportLink(c.report_token)}
                         title="Copy report link"
-                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all"
+                        className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
                       >
-                        Copy Link
+                        <Copy className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleTogglePause(c)}
                         disabled={togglingId === c.id || (c.status !== 'active' && c.status !== 'paused')}
-                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
-                          c.status === 'active'
-                            ? 'text-amber-400 border-amber-500/30 hover:bg-amber-600/10'
-                            : 'text-emerald-400 border-emerald-500/30 hover:bg-emerald-600/10'
-                        }`}
+                        className={`p-2 rounded-lg transition-all disabled:opacity-50 ${c.status === 'active'
+                            ? 'text-amber-400 hover:bg-amber-600/10'
+                            : 'text-emerald-400 hover:bg-emerald-600/10'
+                          }`}
+                        title={c.status === 'active' ? 'Pause' : 'Resume'}
                       >
-                        {togglingId === c.id ? '…' : c.status === 'active' ? 'Pause' : 'Resume'}
+                        {togglingId === c.id ? <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin rounded-full" /> : c.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                       </button>
                       <button
                         onClick={() => handleDelete(c.id, c.name)}
                         disabled={deletingId === c.id}
-                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all disabled:opacity-50"
+                        className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                        title="Delete Campaign"
                       >
-                        Delete
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -230,6 +298,8 @@ export default function AdCampaignsTable({ campaigns: initial, clients }: Props)
           </div>
         )}
       </div>
+
+      {isModalOpen && renderModal()}
     </div>
   )
 }

@@ -169,16 +169,17 @@ export default async function PublicPromptPage({ params }: Params) {
         igMedia={igMedia}
         igFeed={igFeed}
         relatedData={related ?? []}
-        adAboveGate={
-          placements.some((p: any) => p.position === 'above_gate') && (
-            <AdBanner placements={placements} position="above_gate" promptId={prompt.id} creatorId={creator.id} />
+        adAbovePrompt={
+          placements.some((p: any) => p.position === 'above_prompt') && (
+            <AdBanner placements={placements} position="above_prompt" promptId={prompt.id} creatorId={creator.id} />
           )
         }
-        adBelowGate={
-          placements.some((p: any) => p.position === 'below_gate') && (
-            <AdBanner placements={placements} position="below_gate" promptId={prompt.id} creatorId={creator.id} />
+        adBelowPrompt={
+          placements.some((p: any) => p.position === 'below_prompt') && (
+            <AdBanner placements={placements} position="below_prompt" promptId={prompt.id} creatorId={creator.id} />
           )
         }
+        adPopupPlacements={placements.filter((p: any) => p.position === 'popup')}
         oEmbedHtml={oEmbedHtml}
       />
     </main>
