@@ -12,9 +12,12 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/admin/settings?error=no_code', request.url))
   }
 
+  const host = request.headers.get('host')
+  const protocol = host?.includes('localhost') || host?.includes('127.0.0.1') ? 'http' : 'https'
+  
   const clientId = process.env.INSTAGRAM_APP_ID
   const clientSecret = process.env.INSTAGRAM_APP_SECRET
-  const redirectUri = process.env.INSTAGRAM_REDIRECT_URI
+  const redirectUri = host ? `${protocol}://${host}/api/auth/instagram/callback` : process.env.INSTAGRAM_REDIRECT_URI
 
   try {
     // 1. Exchange code for User Access Token via Graph API
@@ -48,7 +51,7 @@ export async function GET(request: Request) {
     const pageWithIG = pagesData.data?.find((p: any) => p.instagram_business_account)
     
     if (!pageWithIG) {
-      throw new Error('No Instagram Business/Creator account found linked to your Facebook Pages. Please ensure your Instagram is professional and linked to a FB Page.')
+      throw new Error('No Instagram Business/Creator account found. Please ensure your Instagram account is a Professional (Business or Creator) account. If using Facebook Login, it must also be linked to a Facebook Page.')
     }
 
     const igAccount = pageWithIG.instagram_business_account
@@ -61,7 +64,7 @@ export async function GET(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.redirect(new URL('/login?error=session_expired', request.url))
     }
 
     const { encrypted, iv } = encrypt(longLivedToken)

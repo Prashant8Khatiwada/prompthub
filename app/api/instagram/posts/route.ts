@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
     // 3. Fetch media from Instagram using the specific Business ID
     const igId = tokenData.instagram_user_id
-    const igUrl = new URL(`https://graph.facebook.com/v22.0/${igId}/media`)
+    const igUrl = new URL(`https://graph.facebook.com/v19.0/${igId}/media`)
     igUrl.searchParams.set('fields', 'id,media_type,media_url,thumbnail_url,caption,permalink,timestamp,like_count,comments_count')
     igUrl.searchParams.set('access_token', token)
     igUrl.searchParams.set('limit', '12')
