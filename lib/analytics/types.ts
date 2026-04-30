@@ -178,3 +178,46 @@ export interface CampaignAnalyticsResponse {
     country: string
   }[]
 }
+export interface AdReportResponse {
+  total_impressions: number
+  total_clicks: number
+  total_unique_impressions: number
+  total_unique_clicks: number
+  frequency: number
+  total_prompt_views: number
+  total_view_time: number
+  avg_view_duration: number
+  ctr: number
+  campaign_name: string
+  campaign_status: string
+  client_name: string | null
+  starts_at: string
+  ends_at: string | null
+  daily_breakdown: {
+    date: string
+    impressions: number
+    clicks: number
+    view_time: number
+  }[]
+  per_prompt_breakdown: {
+    prompt_id: string
+    title: string
+    slug: string
+    impressions: number
+    clicks: number
+    view_time: number
+    ctr: number
+    avg_duration: number
+    views: number
+  }[]
+  device_breakdown: {
+    device: string
+    count: number
+    percentage: number
+  }[]
+  country_breakdown: {
+    country: string
+    count: number
+    percentage: number
+  }[]
+}
