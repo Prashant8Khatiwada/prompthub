@@ -120,6 +120,12 @@ export default function PromptTable({ prompts: initial }: Props) {
               <td className="px-4 py-4">
                 <div className="flex items-center justify-end gap-2">
                   <Link
+                    href={`/admin/prompts/${p.id}/view`}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-400 hover:text-white hover:bg-indigo-600/10 border border-transparent hover:border-indigo-500/20 transition-all"
+                  >
+                    View
+                  </Link>
+                  <Link
                     href={`/admin/prompts/${p.id}`}
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all"
                   >
