@@ -130,8 +130,8 @@ export async function GET(req: NextRequest) {
 
   const funnel = {
     views: curr.total_views,
-    gate_attempts: curr.email_captures,
-    successful_unlocks: curr.total_unlocks,
+    email_submissions: curr.email_captures,
+    prompt_unlocks: curr.total_unlocks,
     copies: curr.total_copies,
   }
 
@@ -151,33 +151,62 @@ export async function GET(req: NextRequest) {
   })
   const daily_views = Object.entries(dailyMap).map(([date, v]) => ({ date, ...v }))
 
-  // 3. Top Prompts
   const { data: promptStatsData } = await supabase
     .from('prompt_stats_daily')
     .select('prompt_id, views, unique_views, copies, email_captures, email_unlocks, payment_unlocks, revenue, conversion_rate, prompts(title, slug, gate_type)')
     .eq('creator_id', user.id)
     .gte('date', currentStartStr)
 
+  // 3b. Fetch today's raw prompt events to make "Top Prompts" real-time
+  const { data: todayPromptEvents } = await supabase
+    .from('analytics_events')
+    .select('prompt_id, event_type, session_id, value, prompts(title, slug, gate_type)')
+    .eq('creator_id', user.id)
+    .gte('created_at', todayStartStr)
+
   const promptMap: Record<string, Omit<TopPromptData, 'conv_rate'>> = {}
-    ; (promptStatsData || []).forEach(row => {
-      const promptObj = (Array.isArray(row.prompts) ? row.prompts[0] : row.prompts) as unknown as JoinedPrompt | null
-      if (!promptMap[row.prompt_id]) {
-        promptMap[row.prompt_id] = {
-          id: row.prompt_id,
-          title: promptObj?.title || 'Unknown',
-          slug: promptObj?.slug || '',
-          gate_type: promptObj?.gate_type || 'open',
-          views: 0, unique_views: 0, copies: 0,
-          conversions: 0, revenue: 0
-        }
+  
+  // First, add historical data
+  ;(promptStatsData || []).forEach(row => {
+    const promptObj = (Array.isArray(row.prompts) ? row.prompts[0] : row.prompts) as unknown as JoinedPrompt | null
+    if (!promptMap[row.prompt_id]) {
+      promptMap[row.prompt_id] = {
+        id: row.prompt_id,
+        title: promptObj?.title || 'Unknown',
+        slug: promptObj?.slug || '',
+        gate_type: promptObj?.gate_type || 'open',
+        views: 0, unique_views: 0, copies: 0,
+        conversions: 0, revenue: 0
       }
-      const p = promptMap[row.prompt_id]
-      p.views += row.views || 0
-      p.unique_views += row.unique_views || 0
-      p.copies += row.copies || 0
-      p.conversions += (row.email_captures || 0) + (row.email_unlocks || 0) + (row.payment_unlocks || 0)
-      p.revenue += Number(row.revenue || 0)
-    })
+    }
+    const p = promptMap[row.prompt_id]
+    p.views += row.views || 0
+    p.unique_views += row.unique_views || 0
+    p.copies += row.copies || 0
+    p.conversions += (row.email_captures || 0) + (row.email_unlocks || 0) + (row.payment_unlocks || 0)
+    p.revenue += Number(row.revenue || 0)
+  })
+
+  // Then, add today's live data
+  ;(todayPromptEvents || []).forEach(row => {
+    const promptObj = (Array.isArray(row.prompts) ? row.prompts[0] : row.prompts) as unknown as JoinedPrompt | null
+    if (!promptMap[row.prompt_id]) {
+      promptMap[row.prompt_id] = {
+        id: row.prompt_id,
+        title: promptObj?.title || 'Unknown',
+        slug: promptObj?.slug || '',
+        gate_type: promptObj?.gate_type || 'open',
+        views: 0, unique_views: 0, copies: 0,
+        conversions: 0, revenue: 0
+      }
+    }
+    const p = promptMap[row.prompt_id]
+    if (row.event_type === 'prompt_view') p.views++
+    if (row.event_type === 'prompt_copy') p.copies++
+    if (row.event_type === 'email_capture') p.conversions++
+    if (row.event_type === 'email_unlock' || row.event_type === 'payment_unlock') p.conversions++
+    if (row.value) p.revenue += Number(row.value)
+  })
 
   const top_prompts: TopPromptData[] = Object.values(promptMap).map((p) => ({
     ...p,

@@ -81,8 +81,8 @@ export default function AnalyticsPage() {
           </div>
           <div className="space-y-6 mt-4">
             <FunnelStep label="Total Views" value={data.funnel.views} max={data.funnel.views} color="bg-indigo-500" />
-            <FunnelStep label="Gate Attempts" value={data.funnel.gate_attempts} max={data.funnel.views} color="bg-emerald-500" />
-            <FunnelStep label="Successful Unlocks" value={data.funnel.successful_unlocks} max={data.funnel.views} color="bg-amber-500" />
+            <FunnelStep label="Email Submissions" value={data.funnel.email_submissions} max={data.funnel.views} color="bg-emerald-500" />
+            <FunnelStep label="Prompt Unlocks" value={data.funnel.prompt_unlocks} max={data.funnel.views} color="bg-amber-500" />
             <FunnelStep label="Copies" value={data.funnel.copies} max={data.funnel.views} color="bg-purple-500" />
           </div>
         </section>

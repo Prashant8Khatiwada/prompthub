@@ -32,7 +32,7 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
     .from('events')
     .select('page_id, type')
     .in('page_id', pageIds)
-    .eq('type', 'copy')
+    .in('type', ['copy', 'prompt_copy'])
 
   // 5. Fetch email captures
   const { data: recentCaptures } = await supabase
@@ -141,7 +141,8 @@ export const trackCopy = (promptId: string) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       prompt_id: promptId,
-      type: 'prompt_copy',
+      page_id: promptId, // Compatibility with old 'events' table
+      type: 'copy',      // Use 'copy' for old system, backend will map to 'prompt_copy' for new
       session_id: sessionStorage.getItem('ph_sid'),
     }),
   }).catch(() => {})
@@ -153,6 +154,7 @@ export const trackEmailSubmit = (promptId: string) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       prompt_id: promptId,
+      page_id: promptId,
       type: 'email_capture',
       session_id: sessionStorage.getItem('ph_sid'),
     }),

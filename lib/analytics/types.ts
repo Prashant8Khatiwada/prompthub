@@ -11,8 +11,8 @@ export interface AnalyticsSummary {
 
 export interface AnalyticsFunnel {
   views: number
-  gate_attempts: number
-  successful_unlocks: number
+  email_submissions: number
+  prompt_unlocks: number
   copies: number
 }
 
@@ -93,8 +93,8 @@ export interface PromptAnalyticsResponse {
   funnel: {
     views: number
     engaged: number
-    gate_attempts: number
-    successful_unlocks: number
+    email_submissions: number
+    prompt_unlocks: number
     copies: number
   }
   traffic_sources: TrafficSourceData[]
