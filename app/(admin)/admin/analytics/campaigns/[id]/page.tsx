@@ -176,11 +176,14 @@ export default function CampaignAnalyticsPage() {
           <h2 className="text-lg font-bold text-white">Daily Performance</h2>
         </div>
         {/* We use a bar chart for impressions and we can optionally map clicks too, or just map clicks for clarity */}
-        <AnalyticsChart type="bar" data={daily?.map((d) => ({
-          date: d.date,
-          impressions: d.impressions,
-          clicks: d.clicks
-        })) || []} />
+        <AnalyticsChart 
+          type="bar" 
+          data={daily || []} 
+          series={[
+            { key: 'impressions', color: '#6366f1', name: 'Ad Impressions' },
+            { key: 'clicks', color: '#10b981', name: 'Ad Clicks' }
+          ]}
+        />
       </section>
 
       <section className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
