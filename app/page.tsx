@@ -288,7 +288,7 @@ export default async function LandingPage() {
           <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
             <span className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">© 2024 PromptHub Platform. All Rights Reserved.</span>
             <div className="flex gap-10 text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">
-              <a href="#" className="hover:text-white transition-colors">Terms & Conditions</a>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link>
               <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy policy</Link>
             </div>
           </div>

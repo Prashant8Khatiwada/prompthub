@@ -86,7 +86,7 @@ export default function LoginPage() {
         </button>
 
         <p className="text-center text-zinc-500 text-xs">
-          By signing in, you agree to our Terms of Service
+          By signing in, you agree to our <Link href="/terms" className="text-zinc-400 hover:text-white underline underline-offset-4 decoration-zinc-800">Terms of Service</Link>
         </p>
       </form>
     </div>
