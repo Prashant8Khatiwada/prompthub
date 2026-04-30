@@ -12,7 +12,8 @@ export async function middleware(request: NextRequest) {
   const hostWithoutPort = host.split(':')[0]
   
   // Use the production base domain
-  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'zip.fotosfolio.com'
+  const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'zip.fotosfolio.com'
+  const baseDomain = envBaseDomain.replace(/^https?:\/\//, '')
   const isMainDomain = hostWithoutPort === baseDomain
 
   console.log(`[Middleware] Host: ${hostWithoutPort}, BaseDomain: ${baseDomain}, MainDomain: ${isMainDomain}, Path: ${path}`)
@@ -36,6 +37,8 @@ export async function middleware(request: NextRequest) {
   // We assume everything else is a creator subdomain
   const subdomain = hostWithoutPort.replace(`.${baseDomain}`, '')
   
+  console.log(`[Middleware] Extracted Subdomain: ${subdomain}, HostWithoutPort: ${hostWithoutPort}, BaseDomain: ${baseDomain}`)
+
   if (subdomain && subdomain !== hostWithoutPort) {
     console.log(`[Middleware] Subdomain detected: ${subdomain}, Rewriting to /[subdomain]${path}`)
     return NextResponse.rewrite(new URL(`/${subdomain}${path}`, request.url))

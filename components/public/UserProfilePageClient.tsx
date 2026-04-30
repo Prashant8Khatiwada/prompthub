@@ -68,8 +68,18 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
 
   const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'prompthub.app'
 
-  const promptUrl = (slug: string) =>
-    `https://${creator.subdomain}.${baseDomain}/${slug}`
+  const promptUrl = (slug: string) => {
+    // If we're on localhost, use path-based routing for easier testing
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return `/${creator.subdomain}/${slug}`
+      }
+    }
+    
+    const cleanBaseDomain = baseDomain.replace(/^https?:\/\//, '')
+    return `https://${creator.subdomain}.${cleanBaseDomain}/${slug}`
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">

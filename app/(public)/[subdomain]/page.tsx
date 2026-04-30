@@ -24,7 +24,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   if (!creator) return { title: 'Creator Not Found' }
 
-  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'prompthub.app'
+  const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'prompthub.app'
+  const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
 
   return {
     title: `${creator.name} – PromptHub`,

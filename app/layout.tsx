@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 export const metadata: Metadata = {
   title: { default: 'PromptHub', template: '%s | PromptHub' },
   description: 'The branded prompt-delivery platform for AI content creators.',
-  metadataBase: new URL(`https://${process.env.NEXT_PUBLIC_BASE_DOMAIN || 'localhost:3000'}`),
+  metadataBase: new URL(`https://${(process.env.NEXT_PUBLIC_BASE_DOMAIN || 'localhost:3000').replace(/^https?:\/\//, '')}`),
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
