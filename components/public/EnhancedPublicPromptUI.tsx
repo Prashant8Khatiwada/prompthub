@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { LayoutGrid } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -80,7 +80,25 @@ export default function EnhancedPublicPromptUI({
   const [activeTab, setActiveTab] = useState<'prompt' | 'profile'>('prompt')
   const [currentPrompt, setCurrentPrompt] = useState<Prompt>(initialPrompt)
   const [isLoading, setIsLoading] = useState(false)
+  const [showDebug, setShowDebug] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    // Enable debug mode if ?debug=true is in URL
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('debug') === 'true') {
+        setShowDebug(true)
+        console.log('--- DEBUG INFO ---')
+        console.log('Creator:', creator)
+        console.log('Initial Prompt:', initialPrompt)
+        console.log('Current Prompt:', currentPrompt)
+        console.log('IG User:', igUser)
+        console.log('IG Media:', igMedia)
+        console.log('Ad Placements:', { adAbovePrompt: !!adAbovePrompt, adBelowPrompt: !!adBelowPrompt })
+      }
+    }
+  }, [creator, initialPrompt, currentPrompt, igUser, igMedia, adAbovePrompt, adBelowPrompt])
 
   const handlePromptClick = async (clickedPrompt: RelatedPromptType) => {
     setIsLoading(true)
@@ -163,6 +181,23 @@ export default function EnhancedPublicPromptUI({
               <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 transition-opacity ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
                 <div className="px-6 py-10 md:px-12 text-white">
                   {adAbovePrompt && <div className="mb-8">{adAbovePrompt}</div>}
+
+                  {/* Embedding Section */}
+                  {(igMedia || oEmbedHtml || currentPrompt.video_url) && (
+                    <div className="mb-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                      {igMedia ? (
+                        <div className="flex justify-center">
+                          <InstagramPost media={igMedia} />
+                        </div>
+                      ) : (
+                        <VideoEmbed 
+                          html={oEmbedHtml} 
+                          url={currentPrompt.video_url || ''} 
+                          fallbackThumbnail={currentPrompt.thumbnail_url}
+                        />
+                      )}
+                    </div>
+                  )}
                   
                   <h1 className="text-3xl font-extrabold tracking-tight text-white mb-4 leading-tight">
                     {currentPrompt.title}
@@ -220,6 +255,42 @@ export default function EnhancedPublicPromptUI({
         </div>
 
       </div>
+      {showDebug && (
+        <div className="fixed bottom-0 left-0 right-0 bg-black/90 border-t border-red-500/50 p-6 z-[9999] text-[10px] font-mono overflow-auto max-h-[40vh] shadow-2xl backdrop-blur-md">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-red-400 font-bold text-xs uppercase tracking-widest">Debug Console</h3>
+            <button onClick={() => setShowDebug(false)} className="text-zinc-500 hover:text-white">Close</button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-zinc-500 mb-1 border-b border-zinc-800 pb-1">Prompt Metadata</p>
+              <pre className="text-zinc-300">
+                {JSON.stringify({
+                  id: currentPrompt.id,
+                  title: currentPrompt.title,
+                  gate_type: currentPrompt.gate_type,
+                  has_content: !!currentPrompt.content,
+                  content_type: currentPrompt.content_type,
+                  video_url: currentPrompt.video_url,
+                  thumbnail_url: currentPrompt.thumbnail_url
+                }, null, 2)}
+              </pre>
+            </div>
+            <div>
+              <p className="text-zinc-500 mb-1 border-b border-zinc-800 pb-1">Render Context</p>
+              <pre className="text-zinc-300">
+                {JSON.stringify({
+                  activeTab,
+                  isLoading,
+                  hasIgUser: !!igUser,
+                  hasIgMedia: !!igMedia,
+                  hasOEmbed: !!oEmbedHtml
+                }, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

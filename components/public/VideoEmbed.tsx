@@ -14,43 +14,79 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
   useEffect(() => {
     if (!html || !ref.current) return
 
-    // 1. Load the script if not present
-    if (!document.getElementById('instagram-embed-script')) {
-      const script = document.createElement('script')
-      script.id = 'instagram-embed-script'
-      script.src = 'https://www.instagram.com/embed.js'
-      script.async = true
-      document.body.appendChild(script)
+    // Force center any blockquotes
+    const bq = ref.current.querySelector('blockquote')
+    if (bq) {
+      bq.style.margin = '0 auto'
+      bq.style.maxWidth = '540px'
+      bq.style.width = '100%'
     }
 
-    // 2. If script is already loaded, tell Instagram to process the new HTML
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((window as any).instgrm) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).instgrm.Embeds.process()
-    }
+    // If the HTML is an Instagram blockquote (like from oEmbed or user paste),
+    // we MUST manually load the script because dangerouslySetInnerHTML ignores <script> tags.
+    if (html.includes('instagram-media')) {
+      const processInstgrm = () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((window as any).instgrm) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (window as any).instgrm.Embeds.process()
+        }
+      }
 
-    // 3. Force center the blockquote
-    if (ref.current) {
-      const bq = ref.current.querySelector('blockquote')
-      if (bq) {
-        bq.style.margin = '0 auto'
-        bq.style.maxWidth = '540px'
-        bq.style.width = '100%'
+      if (!document.getElementById('instagram-embed-script')) {
+        const script = document.createElement('script')
+        script.id = 'instagram-embed-script'
+        script.src = 'https://www.instagram.com/embed.js'
+        script.async = true
+        script.onload = processInstgrm
+        document.body.appendChild(script)
+      } else {
+        setTimeout(processInstgrm, 100)
       }
     }
   }, [html])
 
-  if (!html && !fallbackThumbnail) return null
-
-  if (!html && fallbackThumbnail) {
+  // 1. If we have actual HTML (e.g. valid oEmbed), render it directly
+  if (html) {
     return (
-      <div className="w-full max-w-2xl mx-auto px-4 pt-6">
+      <div
+        ref={ref}
+        className="w-full overflow-hidden flex justify-center"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    )
+  }
+
+  // 2. If it's an Instagram URL but oEmbed failed, use a direct iframe embed
+  const isInstagram = url?.includes('instagram.com')
+  if (isInstagram && url) {
+    // Ensure URL ends with /embed
+    const cleanUrl = url.split('?')[0].replace(/\/$/, '')
+    const embedUrl = `${cleanUrl}/embed/captioned`
+
+    return (
+      <div className="w-full max-w-2xl mx-auto flex justify-center">
+        <iframe
+          src={embedUrl}
+          className="w-full max-w-[400px] min-h-[600px] rounded-xl border border-zinc-800 shadow-2xl bg-zinc-950"
+          frameBorder="0"
+          scrolling="no"
+          allowTransparency={true}
+          allow="encrypted-media; picture-in-picture"
+        />
+      </div>
+    )
+  }
+
+  // 3. Absolute fallback: Just show the thumbnail
+  if (fallbackThumbnail) {
+    return (
+      <div className="w-full max-w-2xl mx-auto flex justify-center">
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="block rounded-2xl overflow-hidden relative aspect-video bg-zinc-900 border border-zinc-800 group"
+          className="block rounded-2xl overflow-hidden relative aspect-video w-full max-w-[540px] bg-zinc-900 border border-zinc-800 group"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={fallbackThumbnail} alt="Video thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -61,17 +97,11 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
               </svg>
             </div>
           </div>
-          <p className="absolute bottom-3 right-3 text-xs text-white/60 bg-black/40 px-2 py-1 rounded-full">Watch on Instagram</p>
+          <p className="absolute bottom-3 right-3 text-xs text-white/60 bg-black/40 px-2 py-1 rounded-full">Watch Video</p>
         </a>
       </div>
     )
   }
 
-  return (
-    <div
-      ref={ref}
-      className="w-full overflow-hidden flex justify-center"
-      dangerouslySetInnerHTML={{ __html: html! }}
-    />
-  )
+  return null
 }

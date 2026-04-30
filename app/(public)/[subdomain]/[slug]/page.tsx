@@ -74,13 +74,19 @@ export default async function PublicPromptPage({ params }: Params) {
   if (!creator) notFound()
 
   // 2. Fetch published prompt
-  const { data: prompt } = await supabase
+  const { data: prompt, error: promptError } = await supabase
     .from('prompts').select('*')
     .eq('creator_id', creator.id)
     .eq('slug', slug)
     .eq('status', 'published')
     .single()
-  if (!prompt) notFound()
+
+  if (promptError || !prompt) {
+    console.error('PROMPT FETCH ERROR:', { subdomain, slug, error: promptError })
+    notFound()
+  }
+
+  console.log('PROMPT FETCHED:', { id: prompt.id, title: prompt.title, gate_type: prompt.gate_type })
 
   // 3. Fetch related prompts (up to 3, excluding current)
   const { data: related } = await supabase
@@ -91,12 +97,15 @@ export default async function PublicPromptPage({ params }: Params) {
     .neq('id', prompt.id)
     .limit(3)
 
-  const oEmbedHtml = prompt.video_url
-    ? await fetchInstagramOEmbed(prompt.video_url)
-    : null
+  const isRawHtml = !!prompt.embed_html || prompt.video_url?.trim().startsWith('<')
+  const oEmbedHtml = prompt.embed_html || (prompt.video_url?.trim().startsWith('<') 
+    ? prompt.video_url 
+    : (prompt.video_url ? await fetchInstagramOEmbed(prompt.video_url) : null))
+
+  console.log({ oEmbedHtml, videoUrl: prompt.video_url, isRawHtml })
 
   // 5b. Fetch Rich Instagram Data for native rendering
-  const igMedia = prompt.video_url
+  const igMedia = (prompt.video_url && !isRawHtml)
     ? await fetchInstagramMedia(prompt.video_url, creator.id)
     : null
 
@@ -154,6 +163,8 @@ export default async function PublicPromptPage({ params }: Params) {
       if (cam.ends_at && cam.ends_at < now) return false
       return true
     })
+
+  console.log('PLACEMENTS LOADED:', placements.length)
 
   return (
     <main
