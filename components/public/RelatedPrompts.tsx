@@ -33,18 +33,31 @@ export default function RelatedPrompts({ prompts, subdomain, onPromptClick }: Pr
         More from {subdomain}
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
-        {prompts.map((p) => (
-          <Link
-            key={p.id}
-            href={`/${subdomain}/${p.slug}`}
-            onClick={(e) => {
-              if (onPromptClick) {
-                e.preventDefault()
-                onPromptClick(p)
+        {prompts.map((p) => {
+          const href = (() => {
+            if (typeof window !== 'undefined') {
+              const hostname = window.location.hostname
+              const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN?.replace(/^https?:\/\//, '') || 'prompthub.app'
+              if (hostname === baseDomain || hostname === 'localhost' || hostname === '127.0.0.1') {
+                return `/${subdomain}/${p.slug}`
               }
-            }}
-            className="group flex flex-col gap-3 transition-all duration-300"
-          >
+              return `/${p.slug}`
+            }
+            return `/${subdomain}/${p.slug}`
+          })()
+
+          return (
+            <Link
+              key={p.id}
+              href={href}
+              onClick={(e) => {
+                if (onPromptClick) {
+                  e.preventDefault()
+                  onPromptClick(p)
+                }
+              }}
+              className="group flex flex-col gap-3 transition-all duration-300"
+            >
             {/* Thumbnail */}
             <div className="aspect-[4/5] bg-zinc-900 relative rounded-xl overflow-hidden border border-zinc-800 shadow-sm group-hover:shadow-md transition-all group-hover:-translate-y-1">
               {p.thumbnail_url ? (
@@ -73,7 +86,8 @@ export default function RelatedPrompts({ prompts, subdomain, onPromptClick }: Pr
               </div>
             </div>
           </Link>
-        ))}
+        )
+      })}
       </div>
     </section>
   )
