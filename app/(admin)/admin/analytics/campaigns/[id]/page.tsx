@@ -13,6 +13,7 @@ export default function CampaignAnalyticsPage() {
   const id = params?.id as string
 
   const [range, setRange] = useState('7d')
+  const [month, setMonth] = useState('')
   const [data, setData] = useState<CampaignAnalyticsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -21,7 +22,7 @@ export default function CampaignAnalyticsPage() {
   useEffect(() => {
     if (!id) return
     let isMounted = true
-    fetch(`/api/analytics/campaigns/${id}?range=${range}`)
+    fetch(`/api/analytics/campaigns/${id}?range=${range}&month=${month}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load data')
         return res.json()
@@ -40,11 +41,30 @@ export default function CampaignAnalyticsPage() {
         }
       })
     return () => { isMounted = false }
-  }, [id, range])
+  }, [id, range, month])
 
   function handleRangeChange(r: string) {
     setLoading(true)
     setRange(r)
+    setMonth('') // Clear month when a range preset is clicked
+  }
+
+  function handleMonthChange(m: string) {
+    setLoading(true)
+    setMonth(m)
+    setRange('') // Clear range preset when a month is selected
+  }
+
+  // Generate last 12 months for dropdown
+  const months = []
+  const date = new Date()
+  for (let i = 0; i < 12; i++) {
+    const m = date.getMonth() + 1
+    const y = date.getFullYear()
+    const value = `${y}-${m.toString().padStart(2, '0')}`
+    const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    months.push({ value, label })
+    date.setMonth(date.getMonth() - 1)
   }
 
   function handleCopyReportLink() {
@@ -100,15 +120,26 @@ export default function CampaignAnalyticsPage() {
             </button>
             <RefreshStatsButton />
 
+            <select
+              value={month}
+              onChange={(e) => handleMonthChange(e.target.value)}
+              className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors"
+            >
+              <option value="">Select Month</option>
+              {months.map((m) => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 flex gap-1">
-              {['7d', '14d', '30d'].map((r) => (
+              {['7d', '14d', '30d', '90d', 'all'].map((r) => (
                 <button
                   key={r}
                   onClick={() => handleRangeChange(r)}
                   className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${range === r ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                     }`}
                 >
-                  {r.toUpperCase()}
+                  {r === 'all' ? 'All Time' : r.toUpperCase()}
                 </button>
               ))}
             </div>

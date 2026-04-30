@@ -47,18 +47,35 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const { searchParams } = new URL(req.url)
   const rangeParam = searchParams.get('range') || '7d'
-  const days = rangeParam === '30d' ? 30 : rangeParam === '14d' ? 14 : 7
+  const monthParam = searchParams.get('month') // e.g. "2024-03"
 
-  const today = new Date()
-  const currentPeriodStart = new Date(today)
-  currentPeriodStart.setDate(today.getDate() - days)
+  let currentPeriodStart: Date
+  const currentPeriodEnd = monthParam
+    ? new Date(Date.UTC(Number(monthParam.split('-')[0]), Number(monthParam.split('-')[1]), 0, 23, 59, 59))
+    : new Date()
+  const isAllTime = rangeParam === 'all'
+  let days = 7
+
+  if (monthParam) {
+    const [year, month] = monthParam.split('-').map(Number)
+    currentPeriodStart = new Date(Date.UTC(year, month - 1, 1))
+  } else if (isAllTime) {
+    currentPeriodStart = new Date(0) // Beginning of time
+  } else {
+    days = rangeParam === '90d' ? 90 : rangeParam === '30d' ? 30 : rangeParam === '14d' ? 14 : 7
+    currentPeriodStart = new Date()
+    currentPeriodStart.setDate(currentPeriodStart.getDate() - days)
+  }
 
   const previousPeriodStart = new Date(currentPeriodStart)
-  previousPeriodStart.setDate(currentPeriodStart.getDate() - days)
+  if (!isAllTime && !monthParam) {
+    previousPeriodStart.setDate(currentPeriodStart.getDate() - days)
+  }
 
   const currentStartStr = currentPeriodStart.toISOString()
+  const currentEndStr = currentPeriodEnd.toISOString()
   const prevStartStr = previousPeriodStart.toISOString()
-  const todayStr = today.toISOString()
+  const todayStr = new Date().toISOString()
 
   // 1b. Fetch all prompt IDs associated with this campaign
   const { data: placements } = await supabase
@@ -89,24 +106,29 @@ export async function GET(req: NextRequest, { params }: Params) {
   todayStart.setUTCHours(0, 0, 0, 0)
   const todayStartStr = todayStart.toISOString()
 
+  // Only include today's live events if the current period includes today
+  const includesToday = currentPeriodEnd >= todayStart
+
   const [{ data: currentStats }, { data: prevStats }, { data: todayEvents }] = await Promise.all([
     supabase
       .from('campaign_stats_daily')
       .select('*')
       .eq('campaign_id', campaignId)
       .gte('date', currentStartStr)
-      .lt('date', todayStartStr),
+      .lte('date', currentEndStr),
     supabase
       .from('campaign_stats_daily')
       .select('*')
       .eq('campaign_id', campaignId)
       .gte('date', prevStartStr)
       .lt('date', currentStartStr),
-    supabase
-      .from('analytics_events')
-      .select('event_type, session_id')
-      .eq('campaign_id', campaignId)
-      .gte('created_at', todayStartStr)
+    includesToday ? 
+      supabase
+        .from('analytics_events')
+        .select('event_type, session_id')
+        .eq('campaign_id', campaignId)
+        .gte('created_at', todayStartStr) : 
+      Promise.resolve({ data: [] })
   ])
 
   const todayRaw = (todayEvents || []).reduce((acc, row) => {
@@ -129,7 +151,8 @@ export async function GET(req: NextRequest, { params }: Params) {
     unique_clicks: todayRaw.unique_clicks.size
   }
 
-  const combinedStats: CampaignStatsRow[] = [...((currentStats) || []), todayStatsRow]
+  // Only add today's live data to stats if we are looking at the current period
+  const combinedStats: CampaignStatsRow[] = includesToday ? [...((currentStats) || []), todayStatsRow] : (currentStats || [])
 
   const aggregateStats = (data: CampaignStatsRow[]) => data.reduce((acc, row) => ({
     impressions: acc.impressions + (row.impressions || 0),
@@ -184,9 +207,11 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 
   // 3. Daily performance chart data
+  const chartDays = isAllTime ? 30 : (monthParam ? 31 : days) // Limit chart to 30 days for all-time
   const dailyMap: Record<string, { impressions: number, clicks: number }> = {}
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today)
+  
+  for (let i = chartDays - 1; i >= 0; i--) {
+    const d = new Date(currentPeriodEnd)
     d.setDate(d.getDate() - i)
     dailyMap[d.toISOString().split('T')[0]] = { impressions: 0, clicks: 0 }
   }
@@ -205,6 +230,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     .select('prompt_id, impressions, clicks, prompts(title, slug)')
     .eq('campaign_id', campaignId)
     .gte('date', currentStartStr)
+    .lte('date', currentEndStr)
 
   const placementMap: Record<string, { prompt_id: string, prompt_title: string, prompt_slug: string, impressions: number, clicks: number, views: number }> = {}
     ; (placementData || []).forEach(row => {
@@ -243,6 +269,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     .select('event_type, created_at, device_type, country, prompt_id')
     .eq('campaign_id', campaignId)
     .gte('created_at', currentStartStr)
+    .lte('created_at', currentEndStr)
 
   const deviceMap: Record<string, number> = {}
   const countryMap: Record<string, number> = {}

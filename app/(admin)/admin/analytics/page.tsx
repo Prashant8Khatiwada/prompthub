@@ -8,12 +8,29 @@ import { AnalyticsOverviewResponse, TopPromptData, TopCampaignData } from '@/lib
 
 export default function AnalyticsPage() {
   const [range, setRange] = useState('7d')
+  const [month, setMonth] = useState('')
+  const [search, setSearch] = useState('')
+  const [gateType, setGateType] = useState('')
+  const [categoryId, setCategoryId] = useState('')
+  const [categories, setCategories] = useState<{ id: string, name: string }[]>([])
   const [data, setData] = useState<AnalyticsOverviewResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    fetch('/api/categories').then(res => res.json()).then(setCategories)
+  }, [])
+
+  useEffect(() => {
     let isMounted = true
-    fetch(`/api/analytics/overview?range=${range}`)
+    const params = new URLSearchParams({
+      range,
+      month,
+      search,
+      gate_type: gateType,
+      category_id: categoryId
+    })
+    
+    fetch(`/api/analytics/overview?${params.toString()}`)
       .then(res => res.json())
       .then(json => {
         if (isMounted) {
@@ -22,11 +39,30 @@ export default function AnalyticsPage() {
         }
       })
     return () => { isMounted = false }
-  }, [range])
+  }, [range, month, search, gateType, categoryId])
 
   function handleRangeChange(r: string) {
     setLoading(true)
     setRange(r)
+    setMonth('')
+  }
+
+  function handleMonthChange(m: string) {
+    setLoading(true)
+    setMonth(m)
+    setRange('')
+  }
+
+  // Generate last 12 months for dropdown
+  const months = []
+  const date = new Date()
+  for (let i = 0; i < 12; i++) {
+    const m = date.getMonth() + 1
+    const y = date.getFullYear()
+    const value = `${y}-${m.toString().padStart(2, '0')}`
+    const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    months.push({ value, label })
+    date.setMonth(date.getMonth() - 1)
   }
 
   if (!data) {
@@ -40,22 +76,64 @@ export default function AnalyticsPage() {
           <h1 className="text-3xl font-bold text-white tracking-tight">Analytics Overview</h1>
           <p className="text-zinc-500 text-sm">Track your prompt performance and audience growth.</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <RefreshStatsButton />
+          
+          <input 
+            type="text" 
+            placeholder="Search prompts..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500 transition-colors w-full sm:w-48"
+          />
+
+          <select
+            value={gateType}
+            onChange={(e) => setGateType(e.target.value)}
+            className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors"
+          >
+            <option value="">All Gates</option>
+            <option value="open">Open</option>
+            <option value="email">Email</option>
+            <option value="payment">Payment</option>
+          </select>
+
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors max-w-[150px]"
+          >
+            <option value="">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={month}
+            onChange={(e) => handleMonthChange(e.target.value)}
+            className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors"
+          >
+            <option value="">Select Month</option>
+            {months.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 flex gap-1">
-          {['7d', '14d', '30d'].map((r) => (
-            <button
-              key={r}
-              onClick={() => handleRangeChange(r)}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                range === r ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-              }`}
-            >
-              {r.toUpperCase()}
-            </button>
-          ))}
+            {['7d', '14d', '30d', '90d', 'all'].map((r) => (
+              <button
+                key={r}
+                onClick={() => handleRangeChange(r)}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                  range === r ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                }`}
+              >
+                {r === 'all' ? 'All Time' : r.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
     </div>
 
       {loading && <div className="opacity-50 pointer-events-none transition-opacity">Updating...</div>}
