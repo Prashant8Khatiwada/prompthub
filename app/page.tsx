@@ -231,7 +231,7 @@ export default async function LandingPage() {
                   <p className="text-indigo-400 font-bold text-xs uppercase tracking-widest mt-1">@{c.handle}</p>
                 </div>
                 <p className="text-sm text-zinc-500 leading-relaxed line-clamp-3">{c.bio || "Leading AI content creator pushing the boundaries of digital art and cinematic generation."}</p>
-                <Link href={`/browse`} className="inline-block text-[10px] font-black uppercase tracking-[0.2em] text-white border-b border-indigo-500 pb-1">
+                <Link href={`/${c.subdomain}`} className="inline-block text-[10px] font-black uppercase tracking-[0.2em] text-white border-b border-indigo-500 pb-1">
                   View All Prompts
                 </Link>
               </div>
