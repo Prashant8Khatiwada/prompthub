@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   try {
     // 1. Exchange code for User Access Token via Graph API
     const tokenRes = await fetch(
-      `https://graph.facebook.com/v22.0/oauth/access_token?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri!)}&client_secret=${clientSecret}&code=${code}`
+      `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri!)}&client_secret=${clientSecret}&code=${code}`
     )
 
     const tokenData = await tokenRes.json()
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
     // 2. Exchange for Long-Lived Token (60 days)
     const refreshRes = await fetch(
-      `https://graph.facebook.com/v22.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${clientId}&client_secret=${clientSecret}&fb_exchange_token=${shortLivedToken}`
+      `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${clientId}&client_secret=${clientSecret}&fb_exchange_token=${shortLivedToken}`
     )
     const refreshData = await refreshRes.json()
     if (refreshData.error) throw new Error(refreshData.error.message)
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 
     // 3. Find the Instagram Business Account linked to the user's Pages
     // First, get the Pages
-    const pagesRes = await fetch(`https://graph.facebook.com/v22.0/me/accounts?fields=instagram_business_account{id,username,profile_picture_url},name&access_token=${longLivedToken}`)
+    const pagesRes = await fetch(`https://graph.facebook.com/v19.0/me/accounts?fields=instagram_business_account{id,username,profile_picture_url},name&access_token=${longLivedToken}`)
     const pagesData = await pagesRes.json()
     
     if (pagesData.error) throw new Error(pagesData.error.message)
