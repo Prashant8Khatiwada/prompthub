@@ -60,6 +60,30 @@ export async function GET(req: NextRequest, { params }: Params) {
   const prevStartStr = previousPeriodStart.toISOString()
   const todayStr = today.toISOString()
 
+  // 1b. Fetch all prompt IDs associated with this campaign
+  const { data: placements } = await supabase
+    .from('ad_placements')
+    .select('prompt_id, is_global, category_id')
+    .eq('campaign_id', campaignId)
+
+  let promptIdsToQuery: string[] = []
+  const directIds = (placements || []).map(p => p.prompt_id).filter(Boolean) as string[]
+  
+  if (placements?.some(p => p.is_global)) {
+    // If global, fetch all published prompts for this creator
+    const { data: allPrompts } = await supabase.from('prompts').select('id').eq('creator_id', user.id).eq('status', 'published')
+    promptIdsToQuery = (allPrompts || []).map(p => p.id)
+  } else if (placements?.some(p => p.category_id)) {
+    // If category-based, fetch all prompts in those categories
+    const catIds = placements.map(p => p.category_id).filter(Boolean)
+    const { data: catPrompts } = await supabase.from('prompts').select('id').in('category_id', catIds).eq('status', 'published')
+    promptIdsToQuery = Array.from(new Set([...directIds, ...(catPrompts || []).map(p => p.id)]))
+  } else {
+    promptIdsToQuery = directIds
+  }
+
+  const campaignPromptIds = promptIdsToQuery
+
   // 2. Fetch daily stats
   const todayStart = new Date()
   todayStart.setUTCHours(0, 0, 0, 0)
@@ -119,6 +143,34 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const calcChange = (c: number, p: number) => p === 0 ? (c > 0 ? 100 : 0) : ((c - p) / p) * 100
 
+  // 2b. Fetch Prompt Views for context (Total traffic of the pages)
+  const [{ data: promptViewsData }, { data: liveViewsData }] = await Promise.all([
+    supabase
+      .from('prompt_stats_daily')
+      .select('prompt_id, views')
+      .in('prompt_id', campaignPromptIds)
+      .gte('date', currentStartStr),
+    supabase
+      .from('analytics_events')
+      .select('prompt_id')
+      .eq('event_type', 'prompt_view')
+      .in('prompt_id', campaignPromptIds)
+      .gte('created_at', todayStartStr)
+  ])
+  
+  // Aggregate views per prompt for breakdown
+  const promptViewsMap: Record<string, number> = {}
+  ;(promptViewsData || []).forEach(row => {
+    promptViewsMap[row.prompt_id] = (promptViewsMap[row.prompt_id] || 0) + (row.views || 0)
+  })
+  ;(liveViewsData || []).forEach(row => {
+    if (row.prompt_id) {
+      promptViewsMap[row.prompt_id] = (promptViewsMap[row.prompt_id] || 0) + 1
+    }
+  })
+
+  const totalPromptViews = Object.values(promptViewsMap).reduce((sum, v) => sum + v, 0)
+
   const summary = {
     impressions: curr.impressions, impressions_change_pct: calcChange(curr.impressions, prev.impressions),
     unique_impressions: curr.unique_impressions, unique_impressions_change_pct: calcChange(curr.unique_impressions, prev.unique_impressions),
@@ -127,7 +179,8 @@ export async function GET(req: NextRequest, { params }: Params) {
     ctr: curr.impressions > 0 ? (curr.clicks / curr.impressions) * 100 : 0,
     ctr_change_pct: calcChange(curr.impressions > 0 ? (curr.clicks / curr.impressions) * 100 : 0, prev.impressions > 0 ? (prev.clicks / prev.impressions) * 100 : 0),
     frequency: curr.unique_impressions > 0 ? curr.impressions / curr.unique_impressions : 0,
-    frequency_change_pct: calcChange(curr.unique_impressions > 0 ? curr.impressions / curr.unique_impressions : 0, prev.unique_impressions > 0 ? prev.impressions / prev.unique_impressions : 0)
+    frequency_change_pct: calcChange(curr.unique_impressions > 0 ? curr.impressions / curr.unique_impressions : 0, prev.unique_impressions > 0 ? prev.impressions / prev.unique_impressions : 0),
+    total_prompt_views: totalPromptViews // Contextual views
   }
 
   // 3. Daily performance chart data
@@ -153,7 +206,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     .eq('campaign_id', campaignId)
     .gte('date', currentStartStr)
 
-  const placementMap: Record<string, { prompt_id: string, prompt_title: string, prompt_slug: string, impressions: number, clicks: number }> = {}
+  const placementMap: Record<string, { prompt_id: string, prompt_title: string, prompt_slug: string, impressions: number, clicks: number, views: number }> = {}
     ; (placementData || []).forEach(row => {
       const pId = row.prompt_id || 'unknown'
       const promptObj = (Array.isArray(row.prompts) ? row.prompts[0] : row.prompts) as unknown as JoinedPrompt | null
@@ -164,12 +217,20 @@ export async function GET(req: NextRequest, { params }: Params) {
           prompt_title: promptObj?.title || 'Global Placement (All Prompts)',
           prompt_slug: promptObj?.slug || '',
           impressions: 0,
-          clicks: 0
+          clicks: 0,
+          views: 0
         }
       }
       placementMap[pId].impressions += row.impressions || 0
       placementMap[pId].clicks += row.clicks || 0
     })
+
+  // Add contextual views to each placement
+  Object.keys(placementMap).forEach(pId => {
+    if (promptViewsMap[pId]) {
+      placementMap[pId].views = promptViewsMap[pId]
+    }
+  })
 
   const placement_breakdown = Object.values(placementMap).map((p) => ({
     ...p,

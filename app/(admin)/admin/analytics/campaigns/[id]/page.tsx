@@ -119,13 +119,52 @@ export default function CampaignAnalyticsPage() {
       {loading && <div className="opacity-50 pointer-events-none transition-opacity">Updating...</div>}
 
       <div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <SummaryCard title="Impressions" value={summary?.impressions || 0} change={summary?.impressions_change_pct || 0} />
-          <SummaryCard title="Unique Imps" value={summary?.unique_impressions || 0} change={summary?.unique_impressions_change_pct || 0} />
-          <SummaryCard title="Clicks" value={summary?.clicks || 0} change={summary?.clicks_change_pct || 0} />
-          <SummaryCard title="Unique Clicks" value={summary?.unique_clicks || 0} change={summary?.unique_clicks_change_pct || 0} />
-          <SummaryCard title="CTR" value={`${(summary?.ctr || 0).toFixed(2)}%`} change={summary?.ctr_change_pct || 0} />
-          <SummaryCard title="Frequency" value={`${(summary?.frequency || 0).toFixed(2)}x`} change={summary?.frequency_change_pct || 0} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <SummaryCard 
+            title="Ad Impressions" 
+            value={summary.impressions} 
+            change={summary.impressions_change_pct} 
+            description="Total times the ad was seen"
+          />
+          <SummaryCard 
+            title="Clicks" 
+            value={summary.clicks} 
+            change={summary.clicks_change_pct} 
+            description="Total times people clicked"
+          />
+          <SummaryCard 
+            title="CTR" 
+            value={`${summary.ctr.toFixed(2)}%`} 
+            change={summary.ctr_change_pct} 
+            description="Click-through rate (Clicks/Impressions)"
+          />
+          <SummaryCard 
+            title="Frequency" 
+            value={`${summary.frequency.toFixed(2)}x`} 
+            change={summary.frequency_change_pct} 
+            description="Avg. times each person saw the ad"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+          <SummaryCard 
+            title="Total Page Views" 
+            value={summary.total_prompt_views} 
+            change={0} 
+            description="Total traffic on prompts running this ad"
+          />
+          <SummaryCard 
+            title="Ad Fill Rate" 
+            value={`${(summary.total_prompt_views > 0 ? (summary.impressions / summary.total_prompt_views) * 100 : 0).toFixed(1)}%`} 
+            change={0} 
+            description="% of page views that showed the ad"
+          />
+          <SummaryCard 
+            title="Revenue (Est.)" 
+            value="$0.00" 
+            change={0} 
+            description="Estimated ad earnings"
+          />
         </div>
         <div className="mt-3 text-right text-xs text-zinc-500 font-semibold">
           Industry average CTR for display ads: <span className="text-zinc-300">0.5% – 2.0%</span>
@@ -153,7 +192,8 @@ export default function CampaignAnalyticsPage() {
             <thead>
               <tr className="bg-zinc-900/50">
                 <th className="text-left px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Prompt</th>
-                <th className="text-right px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Impressions</th>
+                <th className="text-right px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Page Views</th>
+                <th className="text-right px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Ad Imps</th>
                 <th className="text-right px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Clicks</th>
                 <th className="text-right px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">CTR</th>
               </tr>
@@ -165,11 +205,12 @@ export default function CampaignAnalyticsPage() {
                     <div className="font-semibold text-white truncate max-w-[250px]">{p.prompt_title}</div>
                     {p.prompt_slug && (
                       <Link href={`/admin/analytics/prompts/${p.prompt_id}`} className="text-xs text-indigo-400 hover:text-indigo-300">
-                        View Prompt ↗
+                        View Details ↗
                       </Link>
                     )}
                   </td>
-                  <td className="px-8 py-4 text-right text-zinc-400 font-mono">{p.impressions.toLocaleString()}</td>
+                  <td className="px-8 py-4 text-right text-zinc-400 font-mono">{p.views.toLocaleString()}</td>
+                  <td className="px-8 py-4 text-right text-indigo-400/80 font-mono font-bold">{p.impressions.toLocaleString()}</td>
                   <td className="px-8 py-4 text-right text-zinc-400 font-mono">{p.clicks.toLocaleString()}</td>
                   <td className={`px-8 py-4 text-right font-mono font-bold ${p.ctr > 5 ? 'text-emerald-400' : p.ctr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>
                     {p.ctr.toFixed(2)}%
@@ -177,7 +218,7 @@ export default function CampaignAnalyticsPage() {
                 </tr>
               ))}
               {(!placement_breakdown || placement_breakdown.length === 0) && (
-                <tr><td colSpan={4} className="px-8 py-10 text-center text-zinc-500">No placements recorded yet.</td></tr>
+                <tr><td colSpan={5} className="px-8 py-10 text-center text-zinc-500">No placements recorded yet.</td></tr>
               )}
             </tbody>
           </table>
@@ -301,15 +342,22 @@ export default function CampaignAnalyticsPage() {
   )
 }
 
-function SummaryCard({ title, value, change }: { title: string, value: string | number, change: number }) {
+function SummaryCard({ title, value, change, description }: { title: string, value: string | number, change: number, description?: string }) {
   const isPositive = change >= 0
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-xl">
-      <div className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-2">{title}</div>
-      <div className="text-3xl font-bold text-white mb-2">{typeof value === 'number' ? value.toLocaleString() : value}</div>
-      <div className={`text-xs font-bold flex items-center gap-1 ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
-        {isPositive ? '↗' : '↘'} {Math.abs(change).toFixed(1)}% <span className="text-zinc-600 font-normal">vs previous</span>
+    <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+      <div>
+        <div className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-1 flex items-center justify-between">
+          {title}
+        </div>
+        {description && <div className="text-[10px] text-zinc-600 mb-4 font-medium">{description}</div>}
+        <div className="text-3xl font-bold text-white mb-2">{typeof value === 'number' ? value.toLocaleString() : value}</div>
       </div>
+      {change !== 0 && (
+        <div className={`text-xs font-bold flex items-center gap-1 ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+          {isPositive ? '↗' : '↘'} {Math.abs(change).toFixed(1)}% <span className="text-zinc-600 font-normal">vs previous</span>
+        </div>
+      )}
     </div>
   )
 }

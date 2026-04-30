@@ -140,6 +140,7 @@ export interface CampaignAnalyticsResponse {
     ctr_change_pct: number
     frequency: number
     frequency_change_pct: number
+    total_prompt_views: number
   }
   daily: {
     date: string
@@ -151,6 +152,7 @@ export interface CampaignAnalyticsResponse {
     prompt_title: string
     prompt_slug: string
     impressions: number
+    views: number
     clicks: number
     ctr: number
   }[]
