@@ -148,8 +148,8 @@ export async function GET(req: NextRequest, { params }: Params) {
   const funnel = {
     views: curr.views,
     engaged: curr.copies + curr.email_captures + curr.unlocks, // Rough proxy for engagement
-    gate_attempts: curr.email_captures,
-    successful_unlocks: curr.unlocks,
+    email_submissions: curr.email_captures,
+    prompt_unlocks: curr.unlocks,
     copies: curr.copies
   }
 

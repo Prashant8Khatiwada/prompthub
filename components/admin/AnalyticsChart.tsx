@@ -5,13 +5,20 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts'
 
-interface Props {
-  type: 'line' | 'bar'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any[]
+interface Series {
+  key: string
+  color: string
+  name: string
 }
 
-export default function AnalyticsChart({ type, data }: Props) {
+interface Props {
+  type: 'line' | 'bar'
+  data: Record<string, string | number>[]
+  xAxisKey?: string
+  series?: Series[]
+}
+
+export default function AnalyticsChart({ type, data, xAxisKey = 'date', series }: Props) {
   if (!data || data.length === 0) {
     return (
       <div className="h-[250px] flex items-center justify-center border border-dashed border-zinc-800 rounded-xl text-zinc-500 text-sm">
@@ -20,20 +27,32 @@ export default function AnalyticsChart({ type, data }: Props) {
     )
   }
 
+  // Default series for backward compatibility
+  const defaultLineSeries = [{ key: 'views', color: '#6366f1', name: 'Views' }]
+  const defaultBarSeries = [
+    { key: 'copies', color: '#6366f1', name: 'Prompt Copies' },
+    { key: 'email_captures', color: '#10b981', name: 'Email Captures' }
+  ]
+
+  const activeSeries = series || (type === 'line' ? defaultLineSeries : defaultBarSeries)
+
   if (type === 'line') {
     return (
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
           <XAxis
-            dataKey="date"
+            dataKey={xAxisKey}
             stroke="#71717a"
             fontSize={12}
             tickLine={false}
             axisLine={false}
             tickFormatter={(str) => {
-              const date = new Date(str)
-              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              if (xAxisKey === 'date') {
+                const date = new Date(str)
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              }
+              return str.length > 10 ? str.substring(0, 10) + '...' : str
             }}
           />
           <YAxis stroke="#71717a" fontSize={12} tickLine={false} axisLine={false} />
@@ -41,14 +60,19 @@ export default function AnalyticsChart({ type, data }: Props) {
             contentStyle={{ backgroundColor: '#09090b', border: '1px solid #27272a', borderRadius: '12px' }}
             itemStyle={{ fontSize: '12px' }}
           />
-          <Line
-            type="monotone"
-            dataKey="views"
-            stroke="#6366f1"
-            strokeWidth={3}
-            dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#09090b' }}
-            activeDot={{ r: 6, strokeWidth: 0 }}
-          />
+          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
+          {activeSeries.map((s) => (
+            <Line
+              key={s.key}
+              type="monotone"
+              dataKey={s.key}
+              name={s.name}
+              stroke={s.color}
+              strokeWidth={3}
+              dot={{ r: 4, fill: s.color, strokeWidth: 2, stroke: '#09090b' }}
+              activeDot={{ r: 6, strokeWidth: 0 }}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     )
@@ -59,12 +83,18 @@ export default function AnalyticsChart({ type, data }: Props) {
       <BarChart data={data} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
         <XAxis
-          dataKey="title"
+          dataKey={xAxisKey}
           stroke="#71717a"
           fontSize={10}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(str) => str.length > 10 ? str.substring(0, 10) + '...' : str}
+          tickFormatter={(str) => {
+            if (xAxisKey === 'date') {
+              const date = new Date(str)
+              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            }
+            return str.length > 10 ? str.substring(0, 10) + '...' : str
+          }}
         />
         <YAxis stroke="#71717a" fontSize={12} tickLine={false} axisLine={false} />
         <Tooltip
@@ -72,8 +102,16 @@ export default function AnalyticsChart({ type, data }: Props) {
           itemStyle={{ fontSize: '12px' }}
         />
         <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
-        <Bar dataKey="copies" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={20} name="Prompt Copies" />
-        <Bar dataKey="email_captures" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} name="Email Captures" />
+        {activeSeries.map((s) => (
+          <Bar 
+            key={s.key} 
+            dataKey={s.key} 
+            name={s.name} 
+            fill={s.color} 
+            radius={[4, 4, 0, 0]} 
+            barSize={20} 
+          />
+        ))}
       </BarChart>
     </ResponsiveContainer>
   )

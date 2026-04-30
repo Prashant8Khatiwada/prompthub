@@ -3,6 +3,17 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { 
+  Eye, 
+  Edit2, 
+  Trash2, 
+  Cloud, 
+  CloudOff, 
+  MoreHorizontal, 
+  ExternalLink,
+  ChevronDown,
+  Globe
+} from 'lucide-react'
 import type { Prompt } from '@/types'
 
 interface PromptWithCategory extends Prompt {
@@ -13,6 +24,7 @@ interface PromptWithCategory extends Prompt {
 
 interface Props {
   prompts: PromptWithCategory[]
+  subdomain: string
 }
 
 const GATE_STYLES: Record<string, string> = {
@@ -30,12 +42,15 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-export default function PromptTable({ prompts: initial }: Props) {
+export default function PromptTable({ prompts: initial, subdomain }: Props) {
   const router = useRouter()
   const [prompts, setPrompts] = useState(initial)
   const [isPending, startTransition] = useTransition()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
+
+  const siteUrl = (slug: string) => `/${subdomain}/${slug}`
 
   async function handleToggleStatus(p: PromptWithCategory) {
     setTogglingId(p.id)
@@ -85,6 +100,7 @@ export default function PromptTable({ prompts: initial }: Props) {
             <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden lg:table-cell">Tool</th>
             <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Gate</th>
             <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</th>
+            <th className="text-center px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Link</th>
             <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden xl:table-cell">Created</th>
             <th className="px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-right">Actions</th>
           </tr>
@@ -114,35 +130,82 @@ export default function PromptTable({ prompts: initial }: Props) {
                   {p.status}
                 </span>
               </td>
+              <td className="px-4 py-4 text-center">
+                <a 
+                  href={siteUrl(p.slug)} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-zinc-900/50 text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-zinc-800/50 hover:border-indigo-500/20 transition-all"
+                  title="View Published Prompt"
+                >
+                  <ExternalLink size={16} />
+                </a>
+              </td>
               <td className="px-4 py-4 hidden xl:table-cell">
                 <span className="text-xs text-zinc-500">{formatDate(p.created_at)}</span>
               </td>
               <td className="px-4 py-4">
                 <div className="flex items-center justify-end gap-2">
                   <Link
-                    href={`/admin/prompts/${p.id}`}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all"
+                    href={`/admin/prompts/${p.id}/view`}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg text-indigo-400 hover:text-white hover:bg-indigo-600/10 border border-transparent hover:border-indigo-500/20 transition-all"
+                    title="View"
                   >
-                    Edit
+                    <Eye size={18} />
                   </Link>
-                  <button
-                    onClick={() => handleToggleStatus(p)}
-                    disabled={togglingId === p.id || isPending}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
-                      p.status === 'published'
-                        ? 'text-zinc-400 hover:text-white border-transparent hover:border-zinc-700 hover:bg-zinc-800'
-                        : 'text-indigo-400 border-indigo-500/30 hover:bg-indigo-600/10'
-                    }`}
-                  >
-                    {togglingId === p.id ? '…' : p.status === 'published' ? 'Unpublish' : 'Publish'}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(p.id, p.title)}
-                    disabled={deletingId === p.id}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all disabled:opacity-50"
-                  >
-                    Delete
-                  </button>
+                  
+                  <div className="relative">
+                    <button
+                      onClick={() => setOpenDropdownId(openDropdownId === p.id ? null : p.id)}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all"
+                    >
+                      <MoreHorizontal size={18} />
+                    </button>
+
+                    {openDropdownId === p.id && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-10" 
+                          onClick={() => setOpenDropdownId(null)}
+                        />
+                        <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-20 py-1 overflow-hidden animate-in fade-in zoom-in duration-200">
+                          <Link
+                            href={`/admin/prompts/${p.id}`}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
+                          >
+                            <Edit2 size={16} />
+                            <span>Edit Prompt</span>
+                          </Link>
+                          
+                          <button
+                            onClick={() => {
+                              handleToggleStatus(p)
+                              setOpenDropdownId(null)
+                            }}
+                            disabled={togglingId === p.id || isPending}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                          >
+                            {p.status === 'published' ? <CloudOff size={16} /> : <Cloud size={16} />}
+                            <span>{p.status === 'published' ? 'Unpublish' : 'Publish'}</span>
+                          </button>
+
+                          <div className="h-px bg-zinc-800 my-1" />
+
+                          <button
+                            onClick={() => {
+                              handleDelete(p.id, p.title)
+                              setOpenDropdownId(null)
+                            }}
+                            disabled={deletingId === p.id}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 size={16} />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </td>
             </tr>

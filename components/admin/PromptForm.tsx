@@ -35,7 +35,9 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
   const [categories, setCategories] = useState<Category[]>([])
   const [description, setDescription] = useState(defaultValues?.description ?? '')
   const [content, setContent] = useState(defaultValues?.content ?? '')
-  const [aiTool, setAiTool] = useState<typeof AI_TOOLS[number]>(defaultValues?.ai_tool ?? 'Midjourney')
+  const [aiTools, setAiTools] = useState<string[]>(
+    defaultValues?.ai_tool ? defaultValues.ai_tool.split(',').map(t => t.trim()) : ['Midjourney']
+  )
   const [outputType, setOutputType] = useState<typeof OUTPUT_TYPES[number]>(defaultValues?.output_type ?? 'image')
   const [gateType, setGateType] = useState<typeof GATE_TYPES[number]>(defaultValues?.gate_type ?? 'open')
   const [price, setPrice] = useState<string>(defaultValues?.price?.toString() ?? '')
@@ -150,7 +152,7 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
       content: contentType === 'prompt' ? content : (content || 'PDF Document'),
       content_type: contentType,
       pdf_url: contentType === 'pdf' ? pdfUrl : null,
-      ai_tool: aiTool,
+      ai_tool: aiTools.join(', '),
       output_type: outputType,
       gate_type: gateType,
       price: gateType === 'payment' ? parseFloat(price) : null,
@@ -355,9 +357,35 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
       {/* AI Tool + Output Type row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
-          <label className={labelCls}>AI Tool *</label>
-          <select value={aiTool} onChange={e => setAiTool(e.target.value as typeof AI_TOOLS[number])} className={inputCls}>
-            {AI_TOOLS.map(t => <option key={t} value={t}>{t}</option>)}
+          <label className={labelCls}>AI Tools *</label>
+          <div className="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+            {aiTools.map(tool => (
+              <span key={tool} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs font-bold">
+                {tool}
+                <button 
+                  type="button" 
+                  onClick={() => setAiTools(prev => prev.length > 1 ? prev.filter(t => t !== tool) : prev)}
+                  className="hover:text-white transition-colors"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+          <select 
+            value="" 
+            onChange={e => {
+              const val = e.target.value
+              if (val && !aiTools.includes(val)) {
+                setAiTools(prev => [...prev, val])
+              }
+            }} 
+            className={inputCls}
+          >
+            <option value="" disabled>+ Add AI Tool</option>
+            {AI_TOOLS.map(t => (
+              <option key={t} value={t} disabled={aiTools.includes(t)}>{t}</option>
+            ))}
           </select>
         </div>
         <div>

@@ -3,6 +3,7 @@ import path from 'path'
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Suggestion: Enable Turbopack by running 'next dev --turbo' for faster development builds.
   turbopack: {
     root: path.resolve(__dirname),
   },

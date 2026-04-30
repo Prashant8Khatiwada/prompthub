@@ -1,0 +1,15 @@
+{
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/dist/**": true
+  },
+  "search.exclude": {
+    "node_modules": true,
+    ".next": true,
+    "dist": true
+  },
+  "typescript.tsserver.maxTsServerMemory": 1024,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "extensions.autoUpdate": false
+}

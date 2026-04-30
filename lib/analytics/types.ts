@@ -11,8 +11,8 @@ export interface AnalyticsSummary {
 
 export interface AnalyticsFunnel {
   views: number
-  gate_attempts: number
-  successful_unlocks: number
+  email_submissions: number
+  prompt_unlocks: number
   copies: number
 }
 
@@ -93,8 +93,8 @@ export interface PromptAnalyticsResponse {
   funnel: {
     views: number
     engaged: number
-    gate_attempts: number
-    successful_unlocks: number
+    email_submissions: number
+    prompt_unlocks: number
     copies: number
   }
   traffic_sources: TrafficSourceData[]
@@ -140,6 +140,7 @@ export interface CampaignAnalyticsResponse {
     ctr_change_pct: number
     frequency: number
     frequency_change_pct: number
+    total_prompt_views: number
   }
   daily: {
     date: string
@@ -151,6 +152,7 @@ export interface CampaignAnalyticsResponse {
     prompt_title: string
     prompt_slug: string
     impressions: number
+    views: number
     clicks: number
     ctr: number
   }[]

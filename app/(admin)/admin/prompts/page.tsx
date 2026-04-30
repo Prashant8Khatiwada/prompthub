@@ -8,6 +8,12 @@ export default async function AdminPromptsPage() {
   const supabase = createClient(cookieStore)
   const { data: { user } } = await supabase.auth.getUser()
 
+  const { data: creator } = await supabase
+    .from('creators')
+    .select('subdomain')
+    .eq('id', user!.id)
+    .single()
+
   const { data: prompts } = await supabase
     .from('prompts')
     .select('*, categories(name)')
@@ -22,7 +28,7 @@ export default async function AdminPromptsPage() {
       <PromptsHeader published={published} drafts={drafts} />
 
       {/* Table */}
-      <PromptTable prompts={prompts ?? []} />
+      <PromptTable prompts={prompts ?? []} subdomain={creator?.subdomain ?? ''} />
     </div>
   )
 }

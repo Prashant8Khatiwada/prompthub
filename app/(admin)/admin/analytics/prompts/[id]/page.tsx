@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
 import RefreshStatsButton from '@/components/admin/RefreshStatsButton'
 import { PromptAnalyticsResponse } from '@/lib/analytics/types'
@@ -58,8 +59,9 @@ export default function PromptAnalyticsPage() {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       <div>
-        <Link href="/admin/analytics" className="text-zinc-500 hover:text-white transition-colors text-sm font-semibold flex items-center gap-2 mb-6">
-          ← Back to Analytics
+        <Link href="/admin/analytics" className="text-zinc-500 hover:text-white transition-colors text-sm font-semibold flex items-center gap-2 mb-6 group">
+          <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
+          Back to Analytics
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="flex flex-col gap-2">
@@ -103,12 +105,15 @@ export default function PromptAnalyticsPage() {
 
       {loading && <div className="opacity-50 pointer-events-none transition-opacity">Updating...</div>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <SummaryCard title="Views" value={summary?.views || 0} change={summary?.views_change_pct || 0} />
-        <SummaryCard title="Unique Views" value={summary?.unique_views || 0} change={summary?.unique_views_change_pct || 0} />
         <SummaryCard title="Copies" value={summary?.copies || 0} change={summary?.copies_change_pct || 0} />
-        <SummaryCard title="Email Captures" value={summary?.email_captures || 0} change={summary?.email_captures_change_pct || 0} />
-        <SummaryCard title="Unlocks" value={summary?.unlocks || 0} change={summary?.unlocks_change_pct || 0} />
+        {prompt?.gate_type !== 'open' && (
+          <>
+            <SummaryCard title="Email Captures" value={summary?.email_captures || 0} change={summary?.email_captures_change_pct || 0} />
+            <SummaryCard title="Unlocks" value={summary?.unlocks || 0} change={summary?.unlocks_change_pct || 0} />
+          </>
+        )}
         <SummaryCard title="Revenue" value={`$${(summary?.revenue || 0).toFixed(2)}`} change={summary?.revenue_change_pct || 0} />
       </div>
 
@@ -126,8 +131,15 @@ export default function PromptAnalyticsPage() {
           </div>
           <div className="space-y-6 mt-4">
             <FunnelStep label="Views" value={funnel?.views || 0} max={funnel?.views || 1} color="bg-indigo-500" />
-            <FunnelStep label="Gate Attempts" value={funnel?.gate_attempts || 0} max={funnel?.views || 1} color="bg-emerald-500" />
-            <FunnelStep label="Successful Unlocks" value={funnel?.successful_unlocks || 0} max={funnel?.views || 1} color="bg-amber-500" />
+            
+            {prompt?.gate_type === 'email' && (
+              <FunnelStep label="Email Submissions" value={funnel?.email_submissions || 0} max={funnel?.views || 1} color="bg-emerald-500" />
+            )}
+            
+            {(prompt?.gate_type === 'email' || prompt?.gate_type === 'payment') && (
+              <FunnelStep label="Prompt Unlocks" value={funnel?.prompt_unlocks || 0} max={funnel?.views || 1} color="bg-amber-500" />
+            )}
+            
             <FunnelStep label="Copies" value={funnel?.copies || 0} max={funnel?.views || 1} color="bg-purple-500" />
           </div>
         </section>
@@ -202,9 +214,15 @@ export default function PromptAnalyticsPage() {
             </thead>
             <tbody className="divide-y divide-zinc-800">
               {(ads || []).map((a) => (
-                <tr key={a.campaign_id} className="hover:bg-zinc-800/30">
+                <tr key={a.campaign_id} className="hover:bg-zinc-800/30 group">
                   <td className="px-8 py-4 text-white font-medium">
-                    {a.campaign_name}
+                    <Link 
+                      href={`/admin/analytics/campaigns/${a.campaign_id}`}
+                      className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      {a.campaign_name}
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
+                    </Link>
                   </td>
                   <td className="px-8 py-4 text-right text-zinc-400 font-mono">{a.impressions.toLocaleString()}</td>
                   <td className="px-8 py-4 text-right text-zinc-400 font-mono">{a.clicks.toLocaleString()}</td>
@@ -221,37 +239,38 @@ export default function PromptAnalyticsPage() {
         </div>
       </section>
 
-      <section className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
-        <div className="flex items-center justify-between px-8 py-6 border-b border-zinc-800">
-          <h2 className="text-lg font-bold text-white">Recent Email Captures</h2>
-          {/* Export button would go here in the future */}
-        </div>
-        <div className="overflow-x-auto h-[400px]">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-zinc-900">
-              <tr className="bg-zinc-900/50">
-                <th className="text-left px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Email</th>
-                <th className="text-left px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Source</th>
-                <th className="text-right px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Captured At</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800">
-              {(email_captures || []).map((c, i) => (
-                <tr key={i} className="hover:bg-zinc-800/30">
-                  <td className="px-8 py-4 text-white font-medium">{c.email}</td>
-                  <td className="px-8 py-4 text-zinc-500">{c.source}</td>
-                  <td className="px-8 py-4 text-right text-zinc-400 font-mono">
-                    {new Date(c.captured_at).toLocaleString()}
-                  </td>
+      {prompt?.gate_type !== 'open' && (
+        <section className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
+          <div className="flex items-center justify-between px-8 py-6 border-b border-zinc-800">
+            <h2 className="text-lg font-bold text-white">Recent Email Captures</h2>
+          </div>
+          <div className="overflow-x-auto h-[400px]">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-zinc-900">
+                <tr className="bg-zinc-900/50">
+                  <th className="text-left px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Email</th>
+                  <th className="text-left px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Source</th>
+                  <th className="text-right px-8 py-4 text-xs font-semibold text-zinc-500 uppercase">Captured At</th>
                 </tr>
-              ))}
-              {(!email_captures || email_captures.length === 0) && (
-                <tr><td colSpan={3} className="px-8 py-10 text-center text-zinc-500">No emails captured yet.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {(email_captures || []).map((c, i) => (
+                  <tr key={i} className="hover:bg-zinc-800/30">
+                    <td className="px-8 py-4 text-white font-medium">{c.email}</td>
+                    <td className="px-8 py-4 text-zinc-500">{c.source}</td>
+                    <td className="px-8 py-4 text-right text-zinc-400 font-mono">
+                      {new Date(c.captured_at).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+                {(!email_captures || email_captures.length === 0) && (
+                  <tr><td colSpan={3} className="px-8 py-10 text-center text-zinc-500">No emails captured yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   )
 }
