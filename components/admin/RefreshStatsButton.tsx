@@ -8,12 +8,11 @@ export default function RefreshStatsButton() {
   const router = useRouter()
 
   async function handleSync() {
+    if (isSyncing) return
     setIsSyncing(true)
     try {
-      // We call a proxy route that handles the CRON_SECRET on the server
       const res = await fetch('/api/analytics/sync', { method: 'POST' })
       if (res.ok) {
-        // Refresh the page data
         router.refresh()
       }
     } catch (err) {
@@ -27,10 +26,10 @@ export default function RefreshStatsButton() {
     <button
       onClick={handleSync}
       disabled={isSyncing}
-      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-all disabled:opacity-50 active:scale-95 shadow-sm"
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-all disabled:opacity-50 active:scale-95 shadow-sm border border-zinc-800"
     >
       <svg 
-        className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} 
+        className={`w-4 h-4 ${isSyncing ? 'animate-spin text-indigo-400' : 'text-zinc-400'}`} 
         fill="none" 
         stroke="currentColor" 
         viewBox="0 0 24 24"

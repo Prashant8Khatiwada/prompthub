@@ -1,12 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { CampaignAnalyticsResponse } from '@/lib/analytics/types'
+
+interface CampaignStatsRow {
+  date: string
+  impressions: number
+  unique_impressions: number
+  clicks: number
+  unique_clicks: number
+}
+
+interface JoinedPrompt {
+  title: string
+  slug: string
+}
+
+interface JoinedClient {
+  name: string
+}
 
 interface Params { params: Promise<{ id: string }> }
 
 export async function GET(req: NextRequest, { params }: Params) {
   const { id: campaignId } = await params
-  
+
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
   const { data: { user } } = await supabase.auth.getUser()
@@ -34,7 +52,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   const today = new Date()
   const currentPeriodStart = new Date(today)
   currentPeriodStart.setDate(today.getDate() - days)
-  
+
   const previousPeriodStart = new Date(currentPeriodStart)
   previousPeriodStart.setDate(currentPeriodStart.getDate() - days)
 
@@ -43,30 +61,61 @@ export async function GET(req: NextRequest, { params }: Params) {
   const todayStr = today.toISOString()
 
   // 2. Fetch daily stats
-  const [{ data: currentStats }, { data: prevStats }] = await Promise.all([
+  const todayStart = new Date()
+  todayStart.setUTCHours(0, 0, 0, 0)
+  const todayStartStr = todayStart.toISOString()
+
+  const [{ data: currentStats }, { data: prevStats }, { data: todayEvents }] = await Promise.all([
     supabase
       .from('campaign_stats_daily')
       .select('*')
       .eq('campaign_id', campaignId)
       .gte('date', currentStartStr)
-      .lte('date', todayStr),
+      .lt('date', todayStartStr),
     supabase
       .from('campaign_stats_daily')
       .select('*')
       .eq('campaign_id', campaignId)
       .gte('date', prevStartStr)
-      .lt('date', currentStartStr)
+      .lt('date', currentStartStr),
+    supabase
+      .from('analytics_events')
+      .select('event_type, session_id')
+      .eq('campaign_id', campaignId)
+      .gte('created_at', todayStartStr)
   ])
 
-  const aggregateStats = (data: any[]) => data.reduce((acc, row) => ({
+  const todayRaw = (todayEvents || []).reduce((acc, row) => {
+    if (row.event_type === 'ad_impression') {
+      acc.impressions++
+      acc.unique_imps.add(row.session_id)
+    }
+    if (row.event_type === 'ad_click') {
+      acc.clicks++
+      acc.unique_clicks.add(row.session_id)
+    }
+    return acc
+  }, { impressions: 0, clicks: 0, unique_imps: new Set<string>(), unique_clicks: new Set<string>() } as { impressions: number, clicks: number, unique_imps: Set<string>, unique_clicks: Set<string> })
+
+  const todayStatsRow: CampaignStatsRow = {
+    date: todayStartStr,
+    impressions: todayRaw.impressions,
+    unique_impressions: todayRaw.unique_imps.size,
+    clicks: todayRaw.clicks,
+    unique_clicks: todayRaw.unique_clicks.size
+  }
+
+  const combinedStats: CampaignStatsRow[] = [...((currentStats) || []), todayStatsRow]
+
+  const aggregateStats = (data: CampaignStatsRow[]) => data.reduce((acc, row) => ({
     impressions: acc.impressions + (row.impressions || 0),
     unique_impressions: acc.unique_impressions + (row.unique_impressions || 0),
     clicks: acc.clicks + (row.clicks || 0),
     unique_clicks: acc.unique_clicks + (row.unique_clicks || 0)
   }), { impressions: 0, unique_impressions: 0, clicks: 0, unique_clicks: 0 })
 
-  const curr = aggregateStats(currentStats || [])
-  const prev = aggregateStats(prevStats || [])
+  const curr = aggregateStats(combinedStats)
+  const prev = aggregateStats((prevStats) || [])
 
   const calcChange = (c: number, p: number) => p === 0 ? (c > 0 ? 100 : 0) : ((c - p) / p) * 100
 
@@ -88,7 +137,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     d.setDate(d.getDate() - i)
     dailyMap[d.toISOString().split('T')[0]] = { impressions: 0, clicks: 0 }
   }
-  (currentStats || []).forEach(row => {
+  (combinedStats).forEach(row => {
     const d = row.date.split('T')[0]
     if (dailyMap[d]) {
       dailyMap[d].impressions += row.impressions || 0
@@ -104,28 +153,28 @@ export async function GET(req: NextRequest, { params }: Params) {
     .eq('campaign_id', campaignId)
     .gte('date', currentStartStr)
 
-  const placementMap: Record<string, any> = {}
-  ;(placementData || []).forEach(row => {
-    const pId = row.prompt_id || 'unknown'
-    const promptObj = Array.isArray(row.prompts) ? row.prompts[0] : row.prompts
+  const placementMap: Record<string, { prompt_id: string, prompt_title: string, prompt_slug: string, impressions: number, clicks: number }> = {}
+    ; (placementData || []).forEach(row => {
+      const pId = row.prompt_id || 'unknown'
+      const promptObj = (Array.isArray(row.prompts) ? row.prompts[0] : row.prompts) as unknown as JoinedPrompt | null
 
-    if (!placementMap[pId]) {
-      placementMap[pId] = {
-        prompt_id: pId,
-        prompt_title: (promptObj as any)?.title || 'Global Placement (All Prompts)',
-        prompt_slug: (promptObj as any)?.slug || '',
-        impressions: 0,
-        clicks: 0
+      if (!placementMap[pId]) {
+        placementMap[pId] = {
+          prompt_id: pId,
+          prompt_title: promptObj?.title || 'Global Placement (All Prompts)',
+          prompt_slug: promptObj?.slug || '',
+          impressions: 0,
+          clicks: 0
+        }
       }
-    }
-    placementMap[pId].impressions += row.impressions || 0
-    placementMap[pId].clicks += row.clicks || 0
-  })
+      placementMap[pId].impressions += row.impressions || 0
+      placementMap[pId].clicks += row.clicks || 0
+    })
 
-  const placement_breakdown = Object.values(placementMap).map((p: any) => ({
+  const placement_breakdown = Object.values(placementMap).map((p) => ({
     ...p,
     ctr: p.impressions > 0 ? (p.clicks / p.impressions) * 100 : 0
-  })).sort((a: any, b: any) => b.clicks - a.clicks)
+  })).sort((a, b) => b.clicks - a.clicks)
 
   // 5. Raw events for Device, Country, Hourly Heatmap, Timeline
   const { data: rawEvents } = await supabase
@@ -139,40 +188,40 @@ export async function GET(req: NextRequest, { params }: Params) {
   const hourlyMap: Record<string, number> = {}
   let totalImpressionsRaw = 0
 
-  const clicksList: any[] = []
+  const clicksList: { timestamp: string, prompt_id: string | null, device: string, country: string }[] = []
 
-  ;(rawEvents || []).forEach(row => {
-    const isImp = row.event_type === 'ad_impression'
-    const isClick = row.event_type === 'ad_click'
+    ; (rawEvents || []).forEach(row => {
+      const isImp = row.event_type === 'ad_impression'
+      const isClick = row.event_type === 'ad_click'
 
-    if (isImp) {
-      totalImpressionsRaw++
-      // Device
-      const device = row.device_type || 'unknown'
-      deviceMap[device] = (deviceMap[device] || 0) + 1
+      if (isImp) {
+        totalImpressionsRaw++
+        // Device
+        const device = row.device_type || 'unknown'
+        deviceMap[device] = (deviceMap[device] || 0) + 1
 
-      // Country
-      const country = row.country || 'Unknown'
-      countryMap[country] = (countryMap[country] || 0) + 1
-    }
+        // Country
+        const country = row.country || 'Unknown'
+        countryMap[country] = (countryMap[country] || 0) + 1
+      }
 
-    if (isClick) {
-      // Heatmap
-      const dateObj = new Date(row.created_at)
-      const dayOfWeek = dateObj.getUTCDay() // 0-6
-      const hourOfDay = dateObj.getUTCHours() // 0-23
-      const key = `${dayOfWeek}-${hourOfDay}`
-      hourlyMap[key] = (hourlyMap[key] || 0) + 1
+      if (isClick) {
+        // Heatmap
+        const dateObj = new Date(row.created_at)
+        const dayOfWeek = dateObj.getUTCDay() // 0-6
+        const hourOfDay = dateObj.getUTCHours() // 0-23
+        const key = `${dayOfWeek}-${hourOfDay}`
+        hourlyMap[key] = (hourlyMap[key] || 0) + 1
 
-      // Timeline
-      clicksList.push({
-        timestamp: row.created_at,
-        prompt_id: row.prompt_id,
-        device: row.device_type || 'unknown',
-        country: row.country || 'Unknown'
-      })
-    }
-  })
+        // Timeline
+        clicksList.push({
+          timestamp: row.created_at,
+          prompt_id: row.prompt_id,
+          device: row.device_type || 'unknown',
+          country: row.country || 'Unknown'
+        })
+      }
+    })
 
   const device_breakdown = Object.entries(deviceMap).map(([device, count]) => ({
     device,
@@ -214,7 +263,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   return NextResponse.json({
     campaign: {
       ...campaign,
-      client_name: (campaign.client as any)?.name || 'Direct'
+      client_name: (campaign.client as unknown as JoinedClient)?.name || 'Direct'
     },
     summary,
     daily,

@@ -5,13 +5,14 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
 import RefreshStatsButton from '@/components/admin/RefreshStatsButton'
+import { PromptAnalyticsResponse } from '@/lib/analytics/types'
 
 export default function PromptAnalyticsPage() {
   const params = useParams()
   const id = params?.id as string
 
   const [range, setRange] = useState('7d')
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<PromptAnalyticsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -48,11 +49,11 @@ export default function PromptAnalyticsPage() {
     return <div className="p-10 text-center text-red-400 font-bold">{error}</div>
   }
 
-  if (!data && loading) {
+  if (!data) {
     return <div className="p-10 text-center text-zinc-500">Loading prompt analytics...</div>
   }
 
-  const { prompt, summary, daily, funnel, traffic_sources, device_breakdown, ads, email_captures } = data || {}
+  const { prompt, summary, daily, funnel, traffic_sources, device_breakdown, ads, email_captures } = data
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -116,7 +117,7 @@ export default function PromptAnalyticsPage() {
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-lg font-bold text-white">Daily Performance</h2>
           </div>
-          <AnalyticsChart type="line" data={daily?.map((d: any) => ({ date: d.date, views: d.views, conversions: d.conversions })) || []} />
+          <AnalyticsChart type="line" data={daily?.map((d) => ({ date: d.date, views: d.views, conversions: d.conversions })) || []} />
         </section>
 
         <section className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-xl">
@@ -147,7 +148,7 @@ export default function PromptAnalyticsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800">
-                {(traffic_sources || []).map((t: any, i: number) => (
+                {(traffic_sources || []).map((t, i) => (
                   <tr key={i} className="hover:bg-zinc-800/30">
                     <td className="px-8 py-4 text-white truncate max-w-[200px]">{t.source}</td>
                     <td className="px-8 py-4 text-right text-zinc-400 font-mono">{t.sessions.toLocaleString()}</td>
@@ -167,7 +168,7 @@ export default function PromptAnalyticsPage() {
             <h2 className="text-lg font-bold text-white">Device Breakdown</h2>
           </div>
           <div className="p-8 space-y-6">
-            {(device_breakdown || []).map((d: any, i: number) => (
+            {(device_breakdown || []).map((d, i) => (
               <div key={i}>
                 <div className="flex justify-between text-sm font-semibold mb-2 capitalize">
                   <span className="text-zinc-300">{d.device}</span>
@@ -200,7 +201,7 @@ export default function PromptAnalyticsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {(ads || []).map((a: any) => (
+              {(ads || []).map((a) => (
                 <tr key={a.campaign_id} className="hover:bg-zinc-800/30">
                   <td className="px-8 py-4 text-white font-medium">
                     {a.campaign_name}
@@ -235,7 +236,7 @@ export default function PromptAnalyticsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {(email_captures || []).map((c: any, i: number) => (
+              {(email_captures || []).map((c, i) => (
                 <tr key={i} className="hover:bg-zinc-800/30">
                   <td className="px-8 py-4 text-white font-medium">{c.email}</td>
                   <td className="px-8 py-4 text-zinc-500">{c.source}</td>
