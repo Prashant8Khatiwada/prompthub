@@ -7,63 +7,68 @@ import { encrypt } from '@/lib/crypto'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
-  
+  const errorParam = searchParams.get('error')
+
+  if (errorParam) {
+    return NextResponse.redirect(new URL(`/admin/settings?error=${encodeURIComponent(errorParam)}`, request.url))
+  }
+
   if (!code) {
     return NextResponse.redirect(new URL('/admin/settings?error=no_code', request.url))
   }
 
-  // Must match the redirect_uri from the connect route exactly
-  // Priority 1: x-forwarded-host (real public domain set by reverse proxy)
-  // Priority 2: INSTAGRAM_REDIRECT_URI env var
-  const forwardedHost = request.headers.get('x-forwarded-host')
-  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
-  
-  const clientId = process.env.INSTAGRAM_APP_ID
-  const clientSecret = process.env.INSTAGRAM_APP_SECRET
-  const redirectUri = forwardedHost
-    ? `${forwardedProto}://${forwardedHost}/api/auth/instagram/callback`
-    : process.env.INSTAGRAM_REDIRECT_URI
+  // Instagram Login for Business uses its own Client ID + Secret
+  const clientId = process.env.INSTAGRAM_CLIENT_ID        // 1844374976242880
+  const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET // Instagram App Secret
+  const redirectUri = process.env.INSTAGRAM_REDIRECT_URI  // https://zip.fotosfolio.com/api/auth/instagram/callback
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    return NextResponse.redirect(new URL('/admin/settings?error=instagram_not_configured', request.url))
+  }
 
   try {
-    // 1. Exchange code for User Access Token via Graph API
-    const tokenRes = await fetch(
-      `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri!)}&client_secret=${clientSecret}&code=${code}`
-    )
+    // Step 1: Exchange code for short-lived token
+    // Instagram Login uses a POST to api.instagram.com, NOT a GET to graph.facebook.com
+    const tokenRes = await fetch('https://api.instagram.com/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'authorization_code',
+        redirect_uri: redirectUri,
+        code,
+      }),
+    })
 
     const tokenData = await tokenRes.json()
-    if (tokenData.error) throw new Error(tokenData.error.message)
-
-    const shortLivedToken = tokenData.access_token
-
-    // 2. Exchange for Long-Lived Token (60 days)
-    const refreshRes = await fetch(
-      `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${clientId}&client_secret=${clientSecret}&fb_exchange_token=${shortLivedToken}`
-    )
-    const refreshData = await refreshRes.json()
-    if (refreshData.error) throw new Error(refreshData.error.message)
-
-    const longLivedToken = refreshData.access_token
-    const expiresAt = new Date(Date.now() + (refreshData.expires_in || 5184000) * 1000)
-
-    // 3. Find the Instagram Business Account linked to the user's Pages
-    // First, get the Pages
-    const pagesRes = await fetch(`https://graph.facebook.com/v19.0/me/accounts?fields=instagram_business_account{id,username,profile_picture_url},name&access_token=${longLivedToken}`)
-    const pagesData = await pagesRes.json()
-    
-    if (pagesData.error) throw new Error(pagesData.error.message)
-    
-    // Find a page that has a linked Instagram Business Account
-    const pageWithIG = pagesData.data?.find((p: any) => p.instagram_business_account)
-    
-    if (!pageWithIG) {
-      throw new Error('No Instagram Business/Creator account found. Please ensure your Instagram account is a Professional (Business or Creator) account. If using Facebook Login, it must also be linked to a Facebook Page.')
+    if (tokenData.error_type || tokenData.error_message) {
+      throw new Error(tokenData.error_message || 'Token exchange failed')
     }
 
-    const igAccount = pageWithIG.instagram_business_account
-    const instagramBusinessId = igAccount.id
-    const username = igAccount.username
+    const shortLivedToken = tokenData.access_token
+    const instagramUserId = String(tokenData.user_id)
 
-    // 4. Encrypt and store in DB
+    // Step 2: Exchange short-lived token for a long-lived token (60 days)
+    const longLivedRes = await fetch(
+      `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_id=${clientId}&client_secret=${clientSecret}&access_token=${shortLivedToken}`
+    )
+    const longLivedData = await longLivedRes.json()
+    if (longLivedData.error) throw new Error(longLivedData.error.message)
+
+    const longLivedToken = longLivedData.access_token
+    const expiresAt = new Date(Date.now() + (longLivedData.expires_in || 5184000) * 1000)
+
+    // Step 3: Fetch Instagram username directly — no Facebook Pages lookup needed
+    const userRes = await fetch(
+      `https://graph.instagram.com/me?fields=id,username&access_token=${longLivedToken}`
+    )
+    const userData = await userRes.json()
+    if (userData.error) throw new Error(userData.error.message)
+
+    const username = userData.username
+
+    // Step 4: Get authenticated PromptHub user from session cookie
     const cookieStore = await cookies()
     const supabase = createClient(cookieStore)
     const { data: { user } } = await supabase.auth.getUser()
@@ -72,6 +77,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL('/login?error=session_expired', request.url))
     }
 
+    // Step 5: Encrypt and store the long-lived token in the database
     const { encrypted, iv } = encrypt(longLivedToken)
 
     const { error: dbError } = await adminClient
@@ -79,9 +85,9 @@ export async function GET(request: Request) {
       .upsert({
         creator_id: user.id,
         encrypted_token: encrypted,
-        iv: iv,
-        instagram_user_id: String(instagramBusinessId),
-        username: username,
+        iv,
+        instagram_user_id: instagramUserId,
+        username,
         expires_at: expiresAt.toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -91,6 +97,8 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/admin/settings?instagram=connected', request.url))
   } catch (error: any) {
     console.error('Instagram Business Auth Error:', error)
-    return NextResponse.redirect(new URL(`/admin/settings?error=${encodeURIComponent(error.message)}`, request.url))
+    return NextResponse.redirect(
+      new URL(`/admin/settings?error=${encodeURIComponent(error.message)}`, request.url)
+    )
   }
 }
