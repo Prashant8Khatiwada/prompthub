@@ -111,6 +111,7 @@ export async function GET(request: NextRequest) {
     if (dbError) throw dbError
 
     return NextResponse.redirect(`${baseUrl}/admin/settings?instagram=connected`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Instagram Business Auth Error:', error)
     return NextResponse.redirect(
