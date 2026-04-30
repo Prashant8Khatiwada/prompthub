@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
+import RefreshStatsButton from '@/components/admin/RefreshStatsButton'
+import { CampaignAnalyticsResponse } from '@/lib/analytics/types'
 
 export default function CampaignAnalyticsPage() {
   const params = useParams()
   const id = params?.id as string
 
   const [range, setRange] = useState('7d')
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<CampaignAnalyticsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
@@ -57,14 +59,14 @@ export default function CampaignAnalyticsPage() {
     return <div className="p-10 text-center text-red-400 font-bold">{error}</div>
   }
 
-  if (!data && loading) {
+  if (!data) {
     return <div className="p-10 text-center text-zinc-500">Loading campaign analytics...</div>
   }
 
-  const { campaign, summary, daily, placement_breakdown, device_breakdown, country_breakdown, hourly_heatmap, click_timeline } = data || {}
+  const { campaign, summary, daily, placement_breakdown, device_breakdown, country_breakdown, hourly_heatmap, click_timeline } = data
 
   // Find max clicks for heatmap scaling
-  const maxHeatmapClicks = hourly_heatmap ? Math.max(...hourly_heatmap.map((h: any) => h.clicks)) : 0
+  const maxHeatmapClicks = hourly_heatmap ? Math.max(...hourly_heatmap.map((h) => h.clicks)) : 0
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -77,11 +79,10 @@ export default function CampaignAnalyticsPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold text-white tracking-tight">{campaign?.name}</h1>
               {campaign?.status && (
-                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border ${
-                  campaign.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                  campaign.status === 'paused' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                  'bg-zinc-800 text-zinc-400 border-zinc-700'
-                }`}>
+                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border ${campaign.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                    campaign.status === 'paused' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                      'bg-zinc-800 text-zinc-400 border-zinc-700'
+                  }`}>
                   {campaign.status}
                 </span>
               )}
@@ -95,14 +96,15 @@ export default function CampaignAnalyticsPage() {
             >
               {copied ? 'Copied!' : 'Share Report Link'}
             </button>
+            <RefreshStatsButton />
+
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 flex gap-1">
               {['7d', '14d', '30d'].map((r) => (
                 <button
                   key={r}
                   onClick={() => handleRangeChange(r)}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                    range === r ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                  }`}
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${range === r ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    }`}
                 >
                   {r.toUpperCase()}
                 </button>
@@ -133,10 +135,10 @@ export default function CampaignAnalyticsPage() {
           <h2 className="text-lg font-bold text-white">Daily Performance</h2>
         </div>
         {/* We use a bar chart for impressions and we can optionally map clicks too, or just map clicks for clarity */}
-        <AnalyticsChart type="bar" data={daily?.map((d: any) => ({ 
-          date: d.date, 
-          impressions: d.impressions, 
-          clicks: d.clicks 
+        <AnalyticsChart type="bar" data={daily?.map((d) => ({
+          date: d.date,
+          impressions: d.impressions,
+          clicks: d.clicks
         })) || []} />
       </section>
 
@@ -155,7 +157,7 @@ export default function CampaignAnalyticsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {(placement_breakdown || []).map((p: any) => (
+              {(placement_breakdown || []).map((p) => (
                 <tr key={p.prompt_id} className="hover:bg-zinc-800/30">
                   <td className="px-8 py-4">
                     <div className="font-semibold text-white truncate max-w-[250px]">{p.prompt_title}</div>
@@ -186,7 +188,7 @@ export default function CampaignAnalyticsPage() {
             <h2 className="text-lg font-bold text-white">Device Split</h2>
           </div>
           <div className="p-8 space-y-6">
-            {(device_breakdown || []).map((d: any, i: number) => (
+            {(device_breakdown || []).map((d, i) => (
               <div key={i}>
                 <div className="flex justify-between text-sm font-semibold mb-2 capitalize">
                   <span className="text-zinc-300">{d.device}</span>
@@ -208,7 +210,7 @@ export default function CampaignAnalyticsPage() {
             <h2 className="text-lg font-bold text-white">Top Countries</h2>
           </div>
           <div className="p-8 space-y-4">
-            {(country_breakdown || []).map((c: any, i: number) => (
+            {(country_breakdown || []).map((c, i) => (
               <div key={i} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-zinc-600 font-mono text-xs">{i + 1}.</span>
@@ -238,17 +240,17 @@ export default function CampaignAnalyticsPage() {
                   {i % 4 === 0 ? i : ''}
                 </div>
               ))}
-              
+
               {/* Heatmap rows */}
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((dayName, dayIndex) => (
                 <div key={dayIndex} className="contents">
                   <div className="text-[10px] text-zinc-500 font-mono text-right pr-2 self-center">{dayName}</div>
                   {Array.from({ length: 24 }).map((_, hourIndex) => {
-                    const cellData = hourly_heatmap?.find((h: any) => h.day === dayIndex && h.hour === hourIndex)
+                    const cellData = hourly_heatmap?.find((h) => h.day === dayIndex && h.hour === hourIndex)
                     const clicks = cellData?.clicks || 0
                     const opacity = maxHeatmapClicks > 0 ? clicks / maxHeatmapClicks : 0
                     return (
-                      <div 
+                      <div
                         key={hourIndex}
                         title={`${clicks} clicks`}
                         className="aspect-square rounded-sm bg-indigo-500"
@@ -278,7 +280,7 @@ export default function CampaignAnalyticsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {(click_timeline || []).map((c: any, i: number) => (
+              {(click_timeline || []).map((c, i) => (
                 <tr key={i} className="hover:bg-zinc-800/30">
                   <td className="px-8 py-4 text-zinc-400 font-mono">{new Date(c.timestamp).toUTCString()}</td>
                   <td className="px-8 py-4 text-white">{c.prompt_title}</td>
