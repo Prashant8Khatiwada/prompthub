@@ -3,67 +3,137 @@
 import React from 'react'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
 import { AdReportResponse } from '@/lib/analytics/types'
+import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 
 interface AdReportContentProps {
   stats: AdReportResponse
 }
 
 export default function AdReportContent({ stats }: AdReportContentProps) {
-  const summary = {
-    impressions: stats.total_impressions,
-    unique_impressions: stats.total_unique_impressions,
-    clicks: stats.total_clicks,
-    unique_clicks: stats.total_unique_clicks,
-    ctr: stats.ctr,
-    frequency: stats.frequency,
-    total_prompt_views: stats.total_prompt_views,
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const router = useRouter()
+  const currentRange = searchParams.get('range') || '30d'
+  const currentMonth = searchParams.get('month') || ''
+
+  const setRange = (range: string) => {
+    const params = new URLSearchParams(searchParams)
+    params.set('range', range)
+    params.delete('month')
+    router.push(`${pathname}?${params.toString()}`)
   }
 
-  const fillRate = summary.total_prompt_views > 0 
-    ? (summary.impressions / summary.total_prompt_views) * 100 
+  const setMonth = (month: string) => {
+    const params = new URLSearchParams(searchParams)
+    if (month) {
+      params.set('month', month)
+      params.delete('range')
+    } else {
+      params.delete('month')
+      params.set('range', '30d')
+    }
+    router.push(`${pathname}?${params.toString()}`)
+  }
+
+  const months = []
+  const startMonth = new Date(2024, 0, 1) // Start from Jan 2024
+  const now = new Date()
+  const m = new Date(now.getFullYear(), now.getMonth(), 1)
+  while (m >= startMonth) {
+    months.push({
+      label: m.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      value: `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`
+    })
+    m.setMonth(m.getMonth() - 1)
+  }
+
+  const summary = {
+    impressions: stats?.total_impressions ?? 0,
+    unique_impressions: stats?.total_unique_impressions ?? 0,
+    clicks: stats?.total_clicks ?? 0,
+    unique_clicks: stats?.total_unique_clicks ?? 0,
+    ctr: stats?.ctr ?? 0,
+    frequency: stats?.frequency ?? 0,
+    total_prompt_views: stats?.total_prompt_views ?? 0,
+  }
+
+  const fillRate = summary.total_prompt_views > 0
+    ? (summary.impressions / summary.total_prompt_views) * 100
     : 0
 
   return (
     <div className="space-y-12">
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4">
+        <div className="flex items-center bg-zinc-900/50 border border-zinc-800 p-1 rounded-xl backdrop-blur-md">
+          {['7d', '14d', '30d', '90d', 'all'].map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${currentRange === r && !currentMonth
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                }`}
+            >
+              {r.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Select Month</span>
+          <select
+            value={currentMonth}
+            onChange={(e) => setMonth(e.target.value)}
+            className="bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-2 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-indigo-500/20 backdrop-blur-md appearance-none min-w-[180px] cursor-pointer"
+          >
+            <option value="">Choose Month...</option>
+            {months.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
-        <SummaryCard 
-          title="Impressions" 
-          value={summary.impressions.toLocaleString()} 
+        <SummaryCard
+          title="Impressions"
+          value={summary.impressions.toLocaleString()}
           description="Total ad views"
         />
-        <SummaryCard 
-          title="Clicks" 
-          value={summary.clicks.toLocaleString()} 
+        <SummaryCard
+          title="Clicks"
+          value={summary.clicks.toLocaleString()}
           description="Total ad interactions"
           highlight
         />
-        <SummaryCard 
-          title="CTR" 
-          value={`${summary.ctr.toFixed(2)}%`} 
+        <SummaryCard
+          title="CTR"
+          value={`${(summary.ctr || 0).toFixed(2)}%`}
           description="Click-through rate"
         />
-        <SummaryCard 
-          title="Frequency" 
-          value={`${summary.frequency.toFixed(2)}x`} 
+        <SummaryCard
+          title="Frequency"
+          value={`${(summary.frequency || 0).toFixed(2)}x`}
           description="Avg. views per person"
         />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <SummaryCard 
-          title="Total Page Views" 
-          value={summary.total_prompt_views.toLocaleString()} 
+        <SummaryCard
+          title="Total Page Views"
+          value={summary.total_prompt_views.toLocaleString()}
           description="Traffic on pages with this ad"
         />
-        <SummaryCard 
-          title="Ad Fill Rate" 
-          value={`${fillRate.toFixed(1)}%`} 
+        <SummaryCard
+          title="Ad Fill Rate"
+          value={`${(fillRate || 0).toFixed(1)}%`}
           description="% of page views showing ad"
         />
-        <SummaryCard 
-          title="Active Since" 
-          value={stats.starts_at ? new Date(stats.starts_at).toLocaleDateString() : '—'} 
+        <SummaryCard
+          title="Active Since"
+          value={stats.starts_at ? new Date(stats.starts_at).toLocaleDateString() : '—'}
           description="Campaign start date"
         />
       </div>
@@ -87,9 +157,9 @@ export default function AdReportContent({ stats }: AdReportContentProps) {
           </div>
         </div>
         <div className="h-[350px] w-full">
-          <AnalyticsChart 
+          <AnalyticsChart
             type="line"
-            data={stats.daily_breakdown}
+            data={stats?.daily_breakdown ?? []}
             series={[
               { key: 'impressions', name: 'Impressions', color: '#6366f1' },
               { key: 'clicks', name: 'Clicks', color: '#10b981' }
@@ -118,7 +188,7 @@ export default function AdReportContent({ stats }: AdReportContentProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800">
-                  {stats.per_prompt_breakdown.map((p) => (
+                  {(stats?.per_prompt_breakdown ?? []).map((p) => (
                     <tr key={p.prompt_id} className="hover:bg-white/[0.02] transition-colors group">
                       <td className="px-8 py-5">
                         <div className="font-bold text-zinc-200 group-hover:text-white transition-colors">{p.title}</div>
@@ -145,16 +215,16 @@ export default function AdReportContent({ stats }: AdReportContentProps) {
           <section className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 backdrop-blur-sm">
             <h2 className="text-lg font-bold text-white mb-6 tracking-tight">Device Mix</h2>
             <div className="space-y-6">
-              {stats.device_breakdown.map((d) => (
+              {(stats?.device_breakdown ?? []).map((d) => (
                 <div key={d.device} className="group">
                   <div className="flex justify-between text-sm font-bold mb-2 tracking-tight">
                     <span className="text-zinc-400 group-hover:text-zinc-200 transition-colors capitalize">{d.device}</span>
                     <span className="text-white font-mono">{d.percentage}%</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-zinc-800/50 overflow-hidden">
-                    <div 
-                      className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(99,102,241,0.4)]" 
-                      style={{ width: `${d.percentage}%` }} 
+                    <div
+                      className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(99,102,241,0.4)]"
+                      style={{ width: `${d.percentage}%` }}
                     />
                   </div>
                 </div>
@@ -165,7 +235,7 @@ export default function AdReportContent({ stats }: AdReportContentProps) {
           <section className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 backdrop-blur-sm">
             <h2 className="text-lg font-bold text-white mb-6 tracking-tight">Top Regions</h2>
             <div className="space-y-5">
-              {stats.country_breakdown.map((c, i: number) => (
+              {(stats?.country_breakdown ?? []).map((c, i: number) => (
                 <div key={c.country} className="flex items-center justify-between group">
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] font-bold text-zinc-700 w-4">{i + 1}.</span>
@@ -182,13 +252,12 @@ export default function AdReportContent({ stats }: AdReportContentProps) {
   )
 }
 
-function SummaryCard({ title, value, description, highlight = false }: { title: string, value: any, description: string, highlight?: boolean }) {
+function SummaryCard({ title, value, description, highlight = false }: { title: string, value: string | number, description: string, highlight?: boolean }) {
   return (
-    <div className={`p-8 rounded-3xl border transition-all hover:scale-[1.02] duration-300 ${
-      highlight 
-        ? 'bg-indigo-600/10 border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.05)]' 
+    <div className={`p-8 rounded-3xl border transition-all hover:scale-[1.02] duration-300 ${highlight
+        ? 'bg-indigo-600/10 border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.05)]'
         : 'bg-zinc-900/50 border-zinc-800/50'
-    }`}>
+      }`}>
       <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3">{title}</p>
       <div className="flex items-baseline gap-2">
         <p className={`text-4xl font-black tracking-tight ${highlight ? 'text-indigo-400' : 'text-white'}`}>{value}</p>

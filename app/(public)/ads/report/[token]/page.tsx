@@ -3,7 +3,13 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import AdReportContent from '@/components/public/AdReportContent'
 
-interface Params { params: Promise<{ token: string }> }
+interface Params { 
+  params: Promise<{ token: string }> 
+  searchParams: Promise<{ 
+    range?: string
+    month?: string
+  }>
+}
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { token } = await params
@@ -22,11 +28,16 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   }
 }
 
-export default async function AdReportPage({ params }: Params) {
+export default async function AdReportPage({ params, searchParams }: Params) {
   const { token } = await params
+  const { range = '30d', month } = await searchParams
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
 
-  const res = await fetch(`${baseUrl}/api/ads/report/${token}`, {
+  const apiUrl = new URL(`${baseUrl}/api/ads/report/${token}`)
+  apiUrl.searchParams.set('range', range)
+  if (month) apiUrl.searchParams.set('month', month)
+
+  const res = await fetch(apiUrl.toString(), {
     next: { revalidate: 60 } // Revalidate every minute
   })
 
