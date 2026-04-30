@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Link as LinkIcon } from 'lucide-react'
+import { Link as LinkIcon, Sparkles, Loader2 as LoaderIcon } from 'lucide-react'
 import type { Prompt, Category } from '@/types'
+import InstagramPostPicker, { type InstagramPost } from './InstagramPostPicker'
 
 const AI_TOOLS = ['Midjourney', 'Claude', 'ChatGPT', 'Gemini', 'Runway', 'Pika', 'Kling', 'Veo', 'Other'] as const
 const OUTPUT_TYPES = ['image', 'video', 'text', 'code', 'audio'] as const
@@ -51,6 +52,8 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [serverError, setServerError] = useState<string | null>(null)
+  const [isPickerOpen, setIsPickerOpen] = useState(false)
+  const [isAutoFilling, setIsAutoFilling] = useState(false)
 
   useEffect(() => {
     async function fetchCategories() {
@@ -96,6 +99,39 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
       if (content === '') setContent('See attached PDF for instructions.')
     } else {
       setServerError(data.error ?? 'Upload failed')
+    }
+  }
+
+  async function handlePostSelect(post: InstagramPost) {
+    setIsPickerOpen(false)
+    setIsAutoFilling(true)
+
+    // 1. Set basic info
+    setVideoUrl(post.permalink)
+    setThumbnailUrl(post.media_type === 'VIDEO' ? (post.thumbnail_url || post.media_url) : post.media_url)
+
+    // 2. Set title if empty or from caption
+    if (post.caption) {
+      const firstLine = post.caption.split('\n')[0].trim().substring(0, 60)
+      if (title === '' || title === 'Untitled Prompt') {
+        setTitle(firstLine)
+        if (!slugManuallyEdited) {
+          setSlug(toSlug(firstLine))
+        }
+      }
+    }
+
+    // 3. Fetch oEmbed
+    try {
+      const res = await fetch(`/api/instagram/oembed?url=${encodeURIComponent(post.permalink)}`)
+      const data = await res.json()
+      if (data.html) {
+        setEmbedHtml(data.html)
+      }
+    } catch (err) {
+      console.error('Failed to fetch oEmbed', err)
+    } finally {
+      setIsAutoFilling(false)
     }
   }
 
@@ -336,28 +372,47 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
       </div>
 
       {/* Video / Embed */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className={labelCls}>Instagram / TikTok Reel URL</label>
-          <input
-            type="url"
-            value={videoUrl}
-            onChange={e => setVideoUrl(e.target.value)}
-            placeholder="https://www.instagram.com/reel/..."
-            className={inputCls}
-          />
-          <p className="text-[10px] text-zinc-500 mt-1">Use this if you have an API Key in Settings.</p>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <label className={labelCls}>Media Integration</label>
+          <button
+            type="button"
+            onClick={() => setIsPickerOpen(true)}
+            disabled={isAutoFilling}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold transition-all active:scale-95 shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+          >
+            {isAutoFilling ? (
+              <LoaderIcon className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            {isAutoFilling ? 'Auto-filling...' : 'Select from Instagram'}
+          </button>
         </div>
-        <div>
-          <label className={labelCls}>OR: Manual Embed Code</label>
-          <textarea
-            value={embedHtml}
-            onChange={e => setEmbedHtml(e.target.value)}
-            placeholder="Paste <blockquote>...</blockquote> code here"
-            rows={1}
-            className={inputCls + ' resize-none'}
-          />
-          <p className="text-[10px] text-zinc-500 mt-1">Copy from Instagram &gt; ... &gt; Embed.</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-zinc-900/30 border border-zinc-800">
+          <div className={isAutoFilling ? 'animate-pulse' : ''}>
+            <label className={labelCls}>Instagram / TikTok Reel URL</label>
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={e => setVideoUrl(e.target.value)}
+              placeholder="https://www.instagram.com/reel/..."
+              className={inputCls}
+            />
+            <p className="text-[10px] text-zinc-500 mt-1">Direct link to the Reel or Post.</p>
+          </div>
+          <div className={isAutoFilling ? 'animate-pulse' : ''}>
+            <label className={labelCls}>Manual Embed Code</label>
+            <textarea
+              value={embedHtml}
+              onChange={e => setEmbedHtml(e.target.value)}
+              placeholder="Paste <blockquote>...</blockquote> code here"
+              rows={1}
+              className={inputCls + ' resize-none'}
+            />
+            <p className="text-[10px] text-zinc-500 mt-1">Standard Instagram/TikTok embed HTML.</p>
+          </div>
         </div>
       </div>
 
@@ -432,6 +487,11 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
           </button>
         </div>
       </div>
+      <InstagramPostPicker
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelect={handlePostSelect}
+      />
     </form>
   )
 }
