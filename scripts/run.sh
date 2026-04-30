@@ -36,9 +36,13 @@ docker run -d \
   -e TOKEN_ENCRYPTION_KEY="4d47a1eee73a4fc05718375fe118daa30d6d3cfd9615a6b300a1196d1674f129" \
   "$IMAGE_TAG"
 
-if [ $? -eq 0 ]; then
+# Wait a few seconds and check if container is still running
+sleep 3
+if [ "$(docker inspect -f '{{.State.Running}}' prompthub 2>/dev/null)" = "true" ]; then
   echo "✅ PromptHub is running successfully!"
+  echo "Container ID: $(docker ps -qf name=prompthub)"
 else
-  echo "❌ Failed to start PromptHub container."
+  echo "❌ Failed to start PromptHub container or it crashed immediately."
+  echo "Check logs with: docker logs prompthub"
   exit 1
 fi
