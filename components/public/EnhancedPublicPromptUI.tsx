@@ -88,6 +88,7 @@ export default function EnhancedPublicPromptUI({
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       if (params.get('debug') === 'true') {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setShowDebug(true)
         console.log('--- DEBUG INFO ---')
         console.log('Creator:', creator)
@@ -113,14 +114,14 @@ export default function EnhancedPublicPromptUI({
       return `/${clickedPrompt.slug}`
     })()
     window.history.pushState(null, '', newPath)
-    
+
     try {
       const { data, error } = await supabase
         .from('prompts')
         .select('*')
         .eq('slug', clickedPrompt.slug)
         .single()
-        
+
       if (data && !error) {
         setCurrentPrompt(data as Prompt)
       }
@@ -138,7 +139,7 @@ export default function EnhancedPublicPromptUI({
       <div className="max-w-screen-xl mx-auto px-4 pt-8 md:pt-16">
         {/* Main Shadowed Box */}
         <div className="max-w-2xl mx-auto bg-zinc-900 rounded-[32px] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] overflow-hidden border border-zinc-800/50">
-          
+
           {/* 1. Instagram Profile Header */}
           {igUser && (
             <div className="bg-zinc-950">
@@ -153,22 +154,20 @@ export default function EnhancedPublicPromptUI({
           <div className="flex border-b border-zinc-800 bg-zinc-900 sticky top-0 z-20">
             <button
               onClick={() => setActiveTab('prompt')}
-              className={`flex-1 flex items-center justify-center gap-2 py-5 text-sm font-bold transition-all border-b-2 ${
-                activeTab === 'prompt'
+              className={`flex-1 flex items-center justify-center gap-2 py-5 text-sm font-bold transition-all border-b-2 ${activeTab === 'prompt'
                   ? 'border-white text-white'
                   : 'border-transparent text-zinc-500 hover:text-zinc-400'
-              }`}
+                }`}
             >
               <LayoutGrid className="w-4 h-4" />
               Prompt
             </button>
             <button
               onClick={() => setActiveTab('profile')}
-              className={`flex-1 flex items-center justify-center gap-2 py-5 text-sm font-bold transition-all border-b-2 ${
-                activeTab === 'profile'
+              className={`flex-1 flex items-center justify-center gap-2 py-5 text-sm font-bold transition-all border-b-2 ${activeTab === 'profile'
                   ? 'border-white text-white'
                   : 'border-transparent text-zinc-500 hover:text-zinc-400'
-              }`}
+                }`}
             >
               <InstagramIcon className="w-4 h-4" />
               Profile
@@ -190,15 +189,15 @@ export default function EnhancedPublicPromptUI({
                           <InstagramPost media={igMedia} />
                         </div>
                       ) : (
-                        <VideoEmbed 
-                          html={oEmbedHtml} 
-                          url={currentPrompt.video_url || ''} 
+                        <VideoEmbed
+                          html={oEmbedHtml || null}
+                          url={currentPrompt.video_url || ''}
                           fallbackThumbnail={currentPrompt.thumbnail_url}
                         />
                       )}
                     </div>
                   )}
-                  
+
                   <h1 className="text-3xl font-extrabold tracking-tight text-white mb-4 leading-tight">
                     {currentPrompt.title}
                   </h1>
@@ -220,7 +219,7 @@ export default function EnhancedPublicPromptUI({
 
                   {/* Gate */}
                   <PromptGate prompt={currentPrompt} key={currentPrompt.id} />
-                  
+
                   {adBelowPrompt && <div className="mt-8">{adBelowPrompt}</div>}
                 </div>
 
@@ -232,10 +231,10 @@ export default function EnhancedPublicPromptUI({
                 <div className="px-4 sm:px-6 pb-12 bg-zinc-950/30 pt-8 border-t border-zinc-800">
                   <div className="max-w-2xl mx-auto">
                     {relatedData && relatedData.length > 0 && (
-                      <RelatedPrompts 
-                        prompts={relatedData} 
-                        subdomain={creator.subdomain} 
-                        onPromptClick={handlePromptClick} 
+                      <RelatedPrompts
+                        prompts={relatedData}
+                        subdomain={creator.subdomain}
+                        onPromptClick={handlePromptClick}
                       />
                     )}
                   </div>
@@ -244,9 +243,9 @@ export default function EnhancedPublicPromptUI({
             ) : (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-zinc-950 min-h-[400px]">
                 {igUser && (
-                  <InstagramFeed 
-                    feed={igFeed} 
-                    excludeId={igMedia?.id} 
+                  <InstagramFeed
+                    feed={igFeed}
+                    excludeId={igMedia?.id}
                   />
                 )}
               </div>
