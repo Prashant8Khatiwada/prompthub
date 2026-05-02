@@ -66,6 +66,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ message: 'Cron job completed', results })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Instagram Refresh Cron Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

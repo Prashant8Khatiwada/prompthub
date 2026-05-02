@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Rocket, Sparkles, Lock, Globe, ArrowRight } from 'lucide-react'
+import { Rocket, Sparkles, Lock, Globe, ArrowRight, Cpu, Palette, Activity, Heart, Car, Layers, Zap, ShoppingBag, TrendingUp, Newspaper, FileText } from 'lucide-react'
 
 export default function CreatopediaLanding() {
   const [creatorForm, setCreatorForm] = useState({
@@ -149,7 +149,7 @@ export default function CreatopediaLanding() {
             {[
               { label: 'Discover', icon: '⊕', href: '#about' },
               { label: 'Curate', icon: '≡', href: '#rising-creators' },
-              { label: 'Monetize', icon: '✦', href: '#creators' },
+              { label: 'Advertise', icon: '✦', href: '#creators' },
             ].map((tab) => (
               <a
                 key={tab.label}
@@ -185,13 +185,13 @@ export default function CreatopediaLanding() {
             <div className="w-[1px] h-10 bg-gradient-to-b from-white/30 to-transparent" />
           </div>
 
-          <a
+          <Link
             href="/browse"
             className="flex items-center gap-3 bg-[#121626]/70 border border-white/15 hover:border-white/30 backdrop-blur-sm rounded-full px-6 py-3 text-xs font-mono font-bold uppercase tracking-widest text-white/80 hover:text-white transition-all hover:bg-white/10"
           >
             <svg className="w-4 h-4 text-white/60" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
             Explore Library
-          </a>
+          </Link>
         </div>
       </section>
 
@@ -264,6 +264,238 @@ export default function CreatopediaLanding() {
         </div>
       </section>
 
+      {/* ── NICHE SHOWCASE ───────────────────── */}
+      <section id="niches" className="py-36 px-6 border-b border-white/5 bg-[#070914] select-none relative overflow-hidden group">
+        <div
+          className="absolute inset-0 z-0 pointer-events-none opacity-40 group-hover:opacity-55 transition-opacity duration-700"
+          style={{
+            background: [
+              'radial-gradient(ellipse 75% 60% at 10% 20%, rgba(28,55,170,0.30) 0%, transparent 60%)',
+              'radial-gradient(ellipse 65% 50% at 90% 80%, rgba(155,15,50,0.25) 0%, transparent 60%)',
+            ].join(', ')
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto space-y-16 relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#111520]/80 border border-white/10 text-[#ff1f4b] text-[10px] font-mono uppercase tracking-[0.2em]">
+                <span>✦</span> Discovery
+              </div>
+              <h2 className="text-4xl sm:text-5xl font-black leading-tight text-white tracking-tight">
+                Explore Diverse <span className="italic font-light">Niche Showcase</span>
+              </h2>
+            </div>
+            <p className="text-xs text-white/45 font-light max-w-sm font-sans leading-relaxed">
+              Find exactly what you are looking for. Creators on Creatopedia lead across multiple industries with exceptional digital goods.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            {[
+              { id: 'tech', name: 'Tech & Dev', icon: Cpu, desc: 'Advanced coding scripts, AI workflows, and prompts for modern tech stacks.', num: '01', grad: 'from-blue-500/20' },
+              { id: 'creative', name: 'Creative', icon: Palette, desc: 'Midjourney, Stable Diffusion, and prompt design for stunning digital art.', num: '02', grad: 'from-pink-500/20' },
+              { id: 'fitness', name: 'Fitness', icon: Activity, desc: 'Custom routines, habit trackers, and high-quality coaching templates.', num: '03', grad: 'from-emerald-500/20' },
+              { id: 'lifestyle', name: 'Lifestyle', icon: Heart, desc: 'Life operating systems, productivity prompts, and habit planners.', num: '04', grad: 'from-amber-500/20' },
+              { id: 'automobiles', name: 'Automobiles', icon: Car, desc: 'Vehicle configuration setups, mod guides, and auto-enthusiast assets.', num: '05', grad: 'from-red-500/20' }
+            ].map((niche, idx) => {
+              const NicheIcon = niche.icon
+              return (
+                <div
+                  key={idx}
+                  className={`group/niche flex flex-col justify-between h-[280px] bg-[#111520]/70 backdrop-blur-sm border border-white/10 rounded-3xl p-8 hover:scale-[1.03] transition-all duration-500 relative overflow-hidden select-none bg-gradient-to-b ${niche.grad} to-transparent`}
+                >
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 group-hover/niche:bg-white/10 flex items-center justify-center transition-all duration-500">
+                        <NicheIcon className="w-5 h-5 text-white/70 transition-colors" />
+                      </div>
+                      <span className="font-mono text-2xl text-white/10 group-hover/niche:text-white/20 font-black tracking-tight transition-colors">
+                        {niche.num}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-white leading-tight tracking-wide transition-colors">
+                        {niche.name}
+                      </h3>
+                      <p className="text-xs font-sans text-white/45 mt-3 leading-relaxed font-light line-clamp-4">
+                        {niche.desc}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── WHAT YOU CAN LIST ───────────────────── */}
+      <section id="what-you-can-list" className="py-36 px-6 border-b border-white/5 bg-[#080c16] select-none relative overflow-hidden group">
+        <div
+          className="absolute inset-0 z-0 pointer-events-none opacity-40 group-hover:opacity-55 transition-opacity duration-700"
+          style={{
+            background: [
+              'radial-gradient(ellipse 75% 60% at 85% 15%, rgba(155,15,50,0.30) 0%, transparent 60%)',
+              'radial-gradient(ellipse 65% 50% at 15% 85%, rgba(28,55,170,0.25) 0%, transparent 60%)',
+            ].join(', ')
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto space-y-16 relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#111520]/80 border border-white/10 text-[#ff1f4b] text-[10px] font-mono uppercase tracking-[0.2em]">
+                <span>✦</span> Sell Anything
+              </div>
+              <h2 className="text-4xl sm:text-5xl font-black leading-tight text-white tracking-tight">
+                What You <span className="italic font-light">Can List</span>
+              </h2>
+            </div>
+            <p className="text-xs text-white/45 font-light max-w-sm font-sans leading-relaxed">
+              Every creation has a buyer. Diversify your portfolio and showcase what makes your expertise unique on our platform.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {[
+              {
+                title: 'Premium Prompt Packs',
+                desc: 'Highly engineered prompt libraries across models (ChatGPT, Claude, Midjourney).',
+                icon: Sparkles,
+                tag: 'AI Tools'
+              },
+              {
+                title: 'Digital Goods & Templates',
+                desc: 'Richly crafted systems, complete Notion workspace blueprints, and life-organizing frameworks.',
+                icon: Layers,
+                tag: 'Organization'
+              },
+              {
+                title: 'Workflows & Snippets',
+                desc: 'Specialized code bases, automation flows, scripts, and developer productivity tools.',
+                icon: Zap,
+                tag: 'Code'
+              },
+              {
+                title: 'AI Arts & Media',
+                desc: 'Exclusive collections of AI-generated assets, premium digital wallpapers, and high-res media.',
+                icon: ShoppingBag,
+                tag: 'Art Assets'
+              }
+            ].map((item, idx) => {
+              const ItemIcon = item.icon
+              return (
+                <div key={idx} className="group/item bg-[#111520]/60 backdrop-blur-sm p-8 border border-white/10 rounded-3xl hover:scale-[1.02] transition-all duration-500 flex flex-col justify-between h-[320px] select-none">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div className="w-12 h-12 rounded-full border border-white/15 bg-white/5 flex items-center justify-center transition-all duration-500">
+                        <ItemIcon className="w-5 h-5 text-white/60 transition-colors" />
+                      </div>
+                      <span className="font-mono text-[9px] text-[#ff1f4b]/60 border border-[#ff1f4b]/20 bg-[#ff1f4b]/5 rounded-full px-2.5 py-1 tracking-wider uppercase transition-all duration-500 font-bold">
+                        {item.tag}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-white leading-tight">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs font-sans text-white/45 mt-3 leading-relaxed font-light">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-white/30 transition-colors">
+                    <span>Instantly available</span>
+                    <span>✦</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS (CREATORS) ───────────────────── */}
+      <section id="how-it-works" className="py-36 px-6 border-b border-white/5 bg-[#070914] select-none relative overflow-hidden group">
+        <div
+          className="absolute inset-0 z-0 pointer-events-none opacity-40 group-hover:opacity-55 transition-opacity duration-700"
+          style={{
+            background: [
+              'radial-gradient(ellipse 75% 60% at 15% 15%, rgba(28,55,170,0.30) 0%, transparent 60%)',
+              'radial-gradient(ellipse 65% 50% at 85% 85%, rgba(155,15,50,0.25) 0%, transparent 60%)',
+            ].join(', ')
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto space-y-16 relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#111520]/80 border border-white/10 text-[#ff1f4b] text-[10px] font-mono uppercase tracking-[0.2em]">
+                <span>✦</span> Process
+              </div>
+              <h2 className="text-4xl sm:text-5xl font-black leading-tight text-white tracking-tight">
+                How It Works <span className="italic font-light">(Creators)</span>
+              </h2>
+            </div>
+            <p className="text-xs text-white/45 font-light max-w-sm font-sans leading-relaxed">
+              Monetizing your audience doesn&apos;t need to be complex. Claim your spot, upload your items, and grow with us.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-white/5 -translate-y-1/2 hidden md:block z-0" />
+            {[
+              {
+                step: '01',
+                title: 'Claim Your Storefront',
+                desc: 'Set up your direct, custom-built digital storefront within 2 minutes. Own your profile link and highlight your professional presence.',
+                icon: Rocket
+              },
+              {
+                step: '02',
+                title: 'List Your Digital Assets',
+                desc: 'Publish your prompts, Notion kits, or art collections effortlessly. Control the pricing and structure what you offer completely.',
+                icon: Layers
+              },
+              {
+                step: '03',
+                title: 'Direct Sales & Growth',
+                desc: 'Sell directly to a ready-to-buy community. Leverage optimized conversion pipelines to continuously grow your earnings.',
+                icon: TrendingUp
+              }
+            ].map((item, idx) => {
+              const StepIcon = item.icon
+              return (
+                <div key={idx} className="group/step bg-[#111520]/60 backdrop-blur-sm p-10 border border-white/10 rounded-[32px] hover:scale-[1.03] transition-all duration-500 relative flex flex-col justify-between h-[360px] select-none z-10">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="w-14 h-14 rounded-2xl bg-[#ff1f4b]/10 border border-[#ff1f4b]/20 flex items-center justify-center text-[#ff1f4b] transition-all duration-500">
+                        <StepIcon className="w-6 h-6 transition-transform group-hover/step:scale-110" />
+                      </div>
+                      <span className="font-mono text-3xl text-white/10 group-hover/step:text-white/20 font-black tracking-tight transition-colors">
+                        {item.step}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-white leading-tight tracking-wide pr-8">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm font-sans text-white/45 mt-4 leading-relaxed font-light">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-6 border-t border-white/5 text-[11px] font-mono font-bold uppercase tracking-widest text-[#ff1f4b]/60 flex items-center gap-2 transition-colors">
+                    <span>Join early</span> <ArrowRight className="w-3.5 h-3.5 group-hover/step:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ── TOP RISING CREATORS ───────────────────── */}
       <section id="rising-creators" className="py-36 px-6 border-b border-white/5 bg-[#080c16] select-none relative overflow-hidden group">
         <div
@@ -280,9 +512,9 @@ export default function CreatopediaLanding() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#111520]/80 border border-white/10 text-[#ff1f4b] text-[10px] font-mono uppercase tracking-[0.2em]">
-                <span>✦</span> Showcase
+                <span>✦</span> CREATORS
               </div>
-              <h2 className="text-4xl sm:text-5xl font-black leading-tight text-white tracking-tight">The minds defining <br />the <span className="italic font-light">AI frontier.</span></h2>
+              <h2 className="text-4xl sm:text-5xl font-black leading-tight text-white tracking-tight">The minds defining <br />the Rising creators</h2>
             </div>
             <p className="text-xs text-white/45 font-light max-w-sm font-sans leading-relaxed">Our top rising creators are building distinct direct storefronts and shaping the future of prompt design on Creatopedia.</p>
           </div>
@@ -360,44 +592,92 @@ export default function CreatopediaLanding() {
         </div>
       </section>
 
-      {/* ── PLATFORM FEATURES ───────────────────── */}
-      <section id="creators" className="py-36 px-6 border-b border-white/5 select-none bg-[#080c16] relative overflow-hidden group">
+      {/* ── REVENUE MODEL ───────────────────── */}
+      <section id="revenue-model" className="py-36 px-6 border-b border-white/5 select-none bg-[#070914] relative overflow-hidden group">
         <div
           className="absolute inset-0 z-0 pointer-events-none opacity-40 group-hover:opacity-60 transition-opacity duration-700"
           style={{
             background: [
-              'radial-gradient(ellipse 80% 65% at 50% 10%, rgba(28,55,170,0.40) 0%, transparent 60%)',
-              'radial-gradient(ellipse 60% 50% at 90% 90%, rgba(155,15,50,0.35) 0%, transparent 60%)',
+              'radial-gradient(ellipse 75% 60% at 10% 20%, rgba(28,55,170,0.30) 0%, transparent 60%)',
+              'radial-gradient(ellipse 65% 50% at 90% 80%, rgba(155,15,50,0.25) 0%, transparent 60%)',
             ].join(', ')
           }}
         />
 
         <div className="max-w-7xl mx-auto space-y-24 relative z-10">
-          <div className="space-y-4">
+          <div className="text-center max-w-2xl mx-auto space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#111520]/80 border border-white/10 text-[#ff1f4b] text-[10px] font-mono uppercase tracking-[0.2em]">
-              <span>✦</span> Power & Capabilities
+              <span>✦</span> Revenue Model
             </div>
-            <h2 className="text-4xl font-black leading-tight text-white tracking-tight">Capabilities that drive <span className="italic font-light">real impact.</span></h2>
+            <h2 className="text-4xl sm:text-5xl font-black leading-tight text-white tracking-tight">
+              Three ways to earn — <br />
+              <span className="italic font-light text-white/80">your content, your rules</span>
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/5 border-t border-b md:border-none border-white/5 py-12 md:py-0">
             {[
-              { icon: Rocket, title: 'Direct Storefronts', desc: 'Go from simple raw prompts to fully direct, high-end digital storefronts with complete creative control.' },
-              { icon: Sparkles, title: 'Built-in Monetization', desc: 'Monetize direct views via elegant, non-intrusive ad placements and sponsorships.' },
-              { icon: Lock, title: 'Lead Generation', desc: 'Lock premium prompts behind direct email captures to convert casual scrollers into permanent subscribers.' },
-              { icon: Globe, title: 'Seamless Discovery', desc: 'Serve your best workflows and digital playbooks to thousands of highly targeted global users.' },
-            ].map((card, idx) => {
-              const Icon = card.icon
+              {
+                icon: Newspaper,
+                title: 'Ads on Your Page',
+                desc: 'Brands pay to place ads on your creator profile and content pages. You earn passively just by having an audience.',
+                tag: 'Passive Income'
+              },
+              {
+                icon: FileText,
+                title: 'Sell What You Create',
+                desc: 'Upload PDFs, guides, templates, courses, and e-books. Set your price. Buyers pay directly — no middleman cut beyond platform fee.',
+                tag: 'Direct Sales'
+              },
+              {
+                icon: Lock,
+                title: 'Premium Content Access',
+                desc: 'Lock your best tutorials, videos, or resources behind a paywall. Only paying subscribers or one-time buyers get in.',
+                tag: 'Recurring Revenue'
+              }
+            ].map((stream, idx) => {
+              const StreamIcon = stream.icon
               return (
-                <div key={idx} className="bg-[#111520]/60 backdrop-blur-sm p-8 border border-white/10 hover:border-[#ff1f4b]/30 hover:bg-[#1a2035]/40 rounded-2xl transition-all duration-300 space-y-5 hover:scale-[1.02] cursor-pointer">
-                  <div className="w-12 h-12 bg-[#ff1f4b]/10 border border-[#ff1f4b]/20 rounded-xl flex items-center justify-center text-[#ff1f4b] mb-2">
-                    <Icon className="w-5 h-5" />
+                <div
+                  key={idx}
+                  className="group/stream px-8 py-12 md:py-8 flex flex-col justify-between items-start gap-8 hover:bg-white/[0.01] hover:scale-[1.02] transition-all duration-500 relative first:pl-0 last:pr-0"
+                >
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#ff1f4b]/0 to-transparent transition-all duration-700" />
+
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="w-14 h-14 bg-[#111520]/80 border border-white/10 rounded-2xl flex items-center justify-center text-white/60 group-hover/stream:text-white/80 transition-all duration-500">
+                        <StreamIcon className="w-6 h-6 transition-transform group-hover/stream:scale-110 duration-500" />
+                      </div>
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#ff1f4b]/60 border border-[#ff1f4b]/20 bg-[#ff1f4b]/5 px-3 py-1.5 rounded-full transition-all duration-500">
+                        {stream.tag}
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-black text-white transition-colors leading-tight tracking-tight">
+                        {stream.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm font-sans text-white/50 leading-relaxed font-light transition-colors">
+                        {stream.desc}
+                      </p>
+                    </div>
                   </div>
-                  <h4 className="text-lg font-black text-white leading-tight">{card.title}</h4>
-                  <p className="text-xs font-sans text-white/55 font-light leading-relaxed">{card.desc}</p>
+
+                  <div className="flex items-center gap-2 text-[11px] font-mono font-bold uppercase tracking-widest text-white/20 transition-colors mt-auto">
+                    <span>Explore details</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover/stream:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               )
             })}
+          </div>
+
+          <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row items-center justify-center gap-4 text-center max-w-3xl mx-auto">
+            <span className="w-2 h-2 rounded-full bg-[#ff1f4b] flex-shrink-0 animate-pulse" />
+            <p className="font-sans text-xs md:text-sm text-white/45 font-light leading-relaxed">
+              Creatopedia takes a small platform fee only when you earn. Zero cost to list. Zero monthly subscription.
+            </p>
           </div>
         </div>
       </section>
