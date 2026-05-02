@@ -1,38 +1,114 @@
+'use client'
+
+import React, { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { ArrowRight, Eye, Menu, X } from 'lucide-react'
 
 export default function Navbar() {
+  const pathname = usePathname()
+  const [isOpen, setIsOpen] = useState(false)
+
+  const navItems = [
+    { name: 'Creatopedia', href: '/' },
+    { name: 'The Experience', href: '/experience' },
+    { name: 'Platforms', href: '/platforms' },
+    { name: 'Reach Us', href: '/reach-us' },
+  ]
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-zinc-800/50 bg-zinc-950/70 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
-            P
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">
-            Prompt<span className="text-indigo-500">Hub</span>
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-zinc-950/40 backdrop-blur-xl transition-all duration-300">
+      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between relative z-50">
+        <Link href="/" className="flex items-center gap-1 group select-none">
+          <span className="text-3xl md:text-2xl font-serif font-bold text-white tracking-tight group-hover:text-white/90 transition-colors">
+            Creato
           </span>
-        </div>
-        
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
-          <a href="#features" className="hover:text-white transition-colors">Features</a>
-          <a href="#demo" className="hover:text-white transition-colors">Demo</a>
-          <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+          <span
+            className="text-3xl md:text-2xl font-bold tracking-tight transition-all duration-300 group-hover:brightness-110"
+            style={{
+              background: 'linear-gradient(90deg, #6c63ff 0%, #b56bff 35%, #ff4e7a 70%, #ff1f4b 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            pedia
+          </span>
+        </Link>
+
+        {/* Desktop nav links */}
+        <div className="hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-[0.2em]">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative px-2 py-1 transition-all duration-300 select-none ${isActive
+                  ? 'text-white'
+                  : 'text-white/55 hover:text-white/90'
+                  }`}
+              >
+                {item.name}
+                {isActive && (
+                  <span className="absolute bottom-[-6px] left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 to-pink-500 rounded-full" />
+                )}
+              </Link>
+            )
+          })}
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/login" 
-            className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+        {/* Desktop Let's Take a Look CTA button with eye or side arrow */}
+        <div className="hidden md:flex items-center">
+          <Link
+            href="/platforms"
+            className="group flex items-center gap-2.5 bg-zinc-900/40 backdrop-blur-md border border-white/10 px-5 py-2.5 text-xs font-mono font-bold uppercase text-white hover:bg-gradient-to-r hover:from-[#b56bff] hover:to-[#ff1f4b] hover:border-transparent transition-all rounded-full shadow-xl hover:scale-[1.03] select-none"
           >
-            Login
-          </Link>
-          <Link 
-            href="/login" 
-            className="hidden sm:block rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-zinc-200 transition-all active:scale-95"
-          >
-            Get Started
+            <span>Explore Library</span>
           </Link>
         </div>
+
+        {/* Mobile Hamburger menu button on the right */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex md:hidden items-center justify-center w-10 h-10 rounded-xl bg-zinc-900/50 backdrop-blur-md border border-white/10 text-white hover:bg-white/5 transition-all focus:outline-none select-none z-50"
+          aria-label="Toggle Menu"
+        >
+          {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* Mobile Menu Dropdown overlay/panel - centered perfectly on full height */}
+      <div
+        className={`fixed inset-0 h-screen bg-zinc-950/98 backdrop-blur-2xl z-40 md:hidden flex flex-col justify-center items-center gap-10 transition-all duration-500 ${
+          isOpen ? 'opacity-100 pointer-events-auto visible' : 'opacity-0 pointer-events-none invisible translate-y-[-10px]'
+        }`}
+      >
+        <div className="flex flex-col items-center gap-8 text-lg font-mono uppercase tracking-[0.25em]">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsOpen(false)}
+                className={`relative px-4 py-2 transition-all duration-300 select-none text-center ${
+                  isActive ? 'text-white font-bold' : 'text-white/60 hover:text-white'
+                }`}
+              >
+                {item.name}
+              </Link>
+            )
+          })}
+        </div>
+
+        <Link
+          href="/platforms"
+          onClick={() => setIsOpen(false)}
+          className="group flex items-center gap-2.5 bg-zinc-900/40 backdrop-blur-md border border-white/15 px-6 py-3.5 text-xs font-mono font-bold uppercase text-white hover:bg-gradient-to-r hover:from-[#b56bff] hover:to-[#ff1f4b] hover:border-transparent transition-all rounded-full shadow-xl hover:scale-[1.03] select-none mt-2"
+        >
+          <span>Explore Library</span>
+        </Link>
       </div>
     </nav>
   )

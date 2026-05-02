@@ -98,8 +98,8 @@ export default async function PublicPromptPage({ params }: Params) {
     .limit(3)
 
   const isRawHtml = !!prompt.embed_html || prompt.video_url?.trim().startsWith('<')
-  const oEmbedHtml = prompt.embed_html || (prompt.video_url?.trim().startsWith('<') 
-    ? prompt.video_url 
+  const oEmbedHtml = prompt.embed_html || (prompt.video_url?.trim().startsWith('<')
+    ? prompt.video_url
     : (prompt.video_url ? await fetchInstagramOEmbed(prompt.video_url) : null))
 
   console.log({ oEmbedHtml, videoUrl: prompt.video_url, isRawHtml })
