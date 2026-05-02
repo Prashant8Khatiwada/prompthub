@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
+import { Creator } from '@/types'
 
 export async function GET() {
   const cookieStore = await cookies()
@@ -13,9 +14,10 @@ export async function GET() {
   ])
 
   // Fix null avatar_url directly in API
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const creators = (creatorsRes.data || []).map((c: any) => ({
     ...c,
-    avatar_url: c.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
+    avatar_url: (c as Creator).avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
   }))
 
   return NextResponse.json({

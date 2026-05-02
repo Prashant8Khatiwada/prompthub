@@ -46,18 +46,68 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
     }
   }, [html])
 
-  // 1. If we have actual HTML (e.g. valid oEmbed), render it directly
+  // 1. Direct native video support (e.g., .mp4 files or /videos/ files)
+  const isDirectVideo = url?.includes('.mp4') || url?.includes('/videos/')
+  if (isDirectVideo && url) {
+    return (
+      <div className="w-full max-w-2xl mx-auto flex justify-center select-none animate-in fade-in duration-500">
+        <video
+          src={url}
+          autoPlay
+          loop
+          muted
+          playsInline
+          controls
+          className="w-full max-w-[540px] rounded-[32px] md:rounded-[40px] border border-white/10 hover:border-white/20 hover:scale-[1.02] transition-all duration-500 shadow-2xl bg-zinc-950"
+        />
+      </div>
+    )
+  }
+
+  // 2. YouTube Video Support
+  const isYouTube = url?.includes('youtube.com') || url?.includes('youtu.be')
+  if (isYouTube && url) {
+    let videoId = ''
+    try {
+      if (url.includes('youtu.be')) {
+        videoId = url.split('/').pop()?.split('?')[0] || ''
+      } else {
+        const urlObj = new URL(url)
+        videoId = urlObj.searchParams.get('v') || ''
+      }
+    } catch (e) {
+      console.error('Failed to parse YouTube URL:', e)
+    }
+
+    if (videoId) {
+      return (
+        <div className="w-full max-w-2xl mx-auto flex justify-center select-none animate-in fade-in duration-500">
+          <div className="relative w-full max-w-[540px] aspect-video rounded-[32px] md:rounded-[40px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 shadow-2xl bg-zinc-950">
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}`}
+              className="absolute inset-0 w-full h-full object-cover"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )
+    }
+  }
+
+  // 3. oEmbed direct HTML renderer (e.g., valid Instagram oEmbed)
   if (html) {
     return (
       <div
         ref={ref}
-        className="w-full overflow-hidden flex justify-center"
+        className="w-full overflow-hidden flex justify-center select-none animate-in fade-in duration-500"
         dangerouslySetInnerHTML={{ __html: html }}
       />
     )
   }
 
-  // 2. If it's an Instagram URL but oEmbed failed, use a direct iframe embed
+  // 4. Instagram URL fallback via standard iframe
   const isInstagram = url?.includes('instagram.com')
   if (isInstagram && url) {
     // Ensure URL ends with /embed
@@ -65,10 +115,10 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
     const embedUrl = `${cleanUrl}/embed/captioned`
 
     return (
-      <div className="w-full max-w-2xl mx-auto flex justify-center">
+      <div className="w-full max-w-2xl mx-auto flex justify-center select-none animate-in fade-in duration-500">
         <iframe
           src={embedUrl}
-          className="w-full max-w-[400px] min-h-[600px] rounded-xl border border-zinc-800 shadow-2xl bg-zinc-950"
+          className="w-full max-w-[400px] min-h-[580px] md:min-h-[640px] rounded-[32px] md:rounded-[40px] border border-white/10 hover:border-white/20 transition-all duration-500 shadow-2xl bg-zinc-950"
           frameBorder="0"
           scrolling="no"
           allowTransparency={true}
@@ -78,30 +128,32 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
     )
   }
 
-  // 3. Absolute fallback: Just show the thumbnail
-  if (fallbackThumbnail) {
-    return (
-      <div className="w-full max-w-2xl mx-auto flex justify-center">
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block rounded-2xl overflow-hidden relative aspect-video w-full max-w-[540px] bg-zinc-900 border border-zinc-800 group"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={fallbackThumbnail} alt="Video thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">
-            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/40">
-              <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
+  // 5. Absolute Fallback: Show thumbnail as a beautiful card
+  const displayThumb = fallbackThumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
+  return (
+    <div className="w-full max-w-2xl mx-auto flex justify-center select-none animate-in fade-in duration-500">
+      <a
+        href={url || '#'}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-[32px] sm:rounded-[40px] overflow-hidden relative aspect-video w-full max-w-[540px] bg-zinc-900/40 border border-white/10 group backdrop-blur-xl shadow-2xl hover:scale-[1.02] transition-all duration-500"
+      >
+        <img
+          src={displayThumb}
+          alt="Video thumbnail fallback"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-60 group-hover:opacity-85"
+        />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/25 transition-all duration-500">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:scale-110 transition-all duration-500 shadow-xl group-hover:border-white/40">
+            <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white ml-1 group-hover:text-blue-400 transition-colors duration-300" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
           </div>
-          <p className="absolute bottom-3 right-3 text-xs text-white/60 bg-black/40 px-2 py-1 rounded-full">Watch Video</p>
-        </a>
-      </div>
-    )
-  }
-
-  return null
+        </div>
+        <p className="absolute bottom-4 right-4 text-[10px] font-mono tracking-wider uppercase text-white/80 bg-zinc-900/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full select-none">
+          Watch Video
+        </p>
+      </a>
+    </div>
+  )
 }

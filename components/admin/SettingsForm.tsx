@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Creator } from '@/types'
 import InstagramIntegration from './InstagramIntegration'
@@ -17,6 +17,12 @@ export default function SettingsForm({ defaultValues, section }: Props) {
   const [success, setSuccess] = useState(false)
   const [uploading, setUploading] = useState(false)
   const router = useRouter()
+
+  // Keep state synced with default values when profile is fetched
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFormData(defaultValues)
+  }, [defaultValues])
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -129,7 +135,7 @@ export default function SettingsForm({ defaultValues, section }: Props) {
       {section === 'integrations' && (
         <div className="space-y-8">
           <InstagramIntegration />
-          
+
           <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6">
             <div className="space-y-4">
               <div className="space-y-2">

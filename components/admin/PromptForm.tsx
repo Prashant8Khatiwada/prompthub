@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Link as LinkIcon, Sparkles, Loader2 as LoaderIcon } from 'lucide-react'
+import { Link as LinkIcon, Sparkles, Loader2 as LoaderIcon, Plus, Trash2 } from 'lucide-react'
 import type { Prompt, Category } from '@/types'
 import InstagramPostPicker, { type InstagramPost } from './InstagramPostPicker'
 
@@ -29,6 +29,25 @@ const labelCls = 'block text-xs font-semibold text-zinc-400 uppercase tracking-w
 export default function PromptForm({ defaultValues, promptId, onSuccess }: Props) {
   const router = useRouter()
   const isEdit = !!promptId
+
+  const isInitialVariants = (() => {
+    try {
+      if (defaultValues?.content && defaultValues.content.startsWith('[') && defaultValues.content.endsWith(']')) {
+        const parsed = JSON.parse(defaultValues.content)
+        return Array.isArray(parsed) && parsed.length > 0 && parsed.every(v => 'subtitle' in v && 'description' in v)
+      }
+    } catch (e) {}
+    return false
+  })()
+
+  const initialVariants = (() => {
+    try {
+      if (isInitialVariants && defaultValues?.content) {
+        return JSON.parse(defaultValues.content)
+      }
+    } catch (e) {}
+    return [{ subtitle: '', description: '' }]
+  })()
 
   const [title, setTitle] = useState(defaultValues?.title ?? '')
   const [categoryId, setCategoryId] = useState<string>(defaultValues?.category_id ?? '')
@@ -57,6 +76,10 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
   const [serverError, setServerError] = useState<string | null>(null)
   const [isPickerOpen, setIsPickerOpen] = useState(false)
   const [isAutoFilling, setIsAutoFilling] = useState(false)
+
+  // Dynamic variants
+  const [isVariants, setIsVariants] = useState(isInitialVariants)
+  const [variants, setVariants] = useState<{ subtitle: string; description: string }[]>(initialVariants)
 
   useEffect(() => {
     async function fetchCategories() {
@@ -109,11 +132,9 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
     setIsPickerOpen(false)
     setIsAutoFilling(true)
 
-    // 1. Set basic info
     setVideoUrl(post.permalink)
     setThumbnailUrl(post.media_type === 'VIDEO' ? (post.thumbnail_url || post.media_url) : post.media_url)
 
-    // 2. Set title if empty or from caption
     if (post.caption) {
       const firstLine = post.caption.split('\n')[0].trim().substring(0, 60)
       if (title === '' || title === 'Untitled Prompt') {
@@ -124,7 +145,6 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
       }
     }
 
-    // 3. Fetch oEmbed
     try {
       const res = await fetch(`/api/instagram/oembed?url=${encodeURIComponent(post.permalink)}`)
       const data = await res.json()
@@ -138,18 +158,36 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
     }
   }
 
+  const addVariantOption = () => {
+    setVariants(prev => [...prev, { subtitle: '', description: '' }])
+  }
+
+  const removeVariantOption = (index: number) => {
+    if (variants.length > 1) {
+      setVariants(prev => prev.filter((_, i) => i !== index))
+    }
+  }
+
+  const updateVariantOption = (index: number, key: 'subtitle' | 'description', value: string) => {
+    setVariants(prev => prev.map((v, i) => i === index ? { ...v, [key]: value } : v))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     setErrors({})
     setServerError(null)
 
+    const fullContent = contentType === 'prompt'
+      ? (isVariants ? JSON.stringify(variants.filter(v => v.subtitle.trim() && v.description.trim())) : content)
+      : (content || 'PDF Document')
+
     const body = {
       title,
       slug,
       category_id: categoryId,
       description: description || null,
-      content: contentType === 'prompt' ? content : (content || 'PDF Document'),
+      content: fullContent,
       content_type: contentType,
       pdf_url: contentType === 'pdf' ? pdfUrl : null,
       ai_tool: aiTools.join(', '),
@@ -192,7 +230,7 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8 select-none">
       {serverError && (
         <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-4 rounded-xl">
           {serverError}
@@ -257,11 +295,6 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         {errors.category_id && <p className="text-red-400 text-xs mt-1">{errors.category_id[0]}</p>}
-        {categories.length === 0 && (
-          <p className="text-amber-500 text-[10px] mt-1 uppercase font-bold">
-            Go to <Link href="/admin/categories" className="underline">Categories</Link> to create one first.
-          </p>
-        )}
       </div>
 
       {/* Title */}
@@ -321,17 +354,83 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
         </div>
 
         {contentType === 'prompt' ? (
-          <div>
-            <label className={labelCls}>Prompt Content *</label>
-            <textarea
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              placeholder="Paste the full AI prompt here..."
-              rows={6}
-              className={inputCls + ' resize-y font-mono'}
-              required={contentType === 'prompt'}
-            />
-            {errors.content && <p className="text-red-400 text-xs mt-1">{errors.content[0]}</p>}
+          <div className="space-y-4">
+            {/* Toggle for multiple variations array */}
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                Enable Subtitle & Description Variations:
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsVariants(!isVariants)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isVariants ? 'bg-indigo-600' : 'bg-zinc-700'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isVariants ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {isVariants ? (
+              <div className="space-y-4">
+                {variants.map((variant, index) => (
+                  <div key={index} className="p-4 border border-zinc-800 bg-zinc-900/60 rounded-xl space-y-3 relative">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-indigo-400"># {index + 1} Variant</span>
+                      {variants.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeVariantOption(index)}
+                          className="text-zinc-600 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <input
+                          type="text"
+                          value={variant.subtitle}
+                          onChange={e => updateVariantOption(index, 'subtitle', e.target.value)}
+                          placeholder="Subtitle (e.g. For Men, For Women) *"
+                          className={inputCls}
+                          required={isVariants}
+                        />
+                      </div>
+                      <div>
+                        <textarea
+                          value={variant.description}
+                          onChange={e => updateVariantOption(index, 'description', e.target.value)}
+                          placeholder="Prompt description/content *"
+                          rows={3}
+                          className={inputCls + ' resize-y font-mono'}
+                          required={isVariants}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addVariantOption}
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Variant Option
+                </button>
+              </div>
+            ) : (
+              <div>
+                <label className={labelCls}>Prompt Content *</label>
+                <textarea
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  placeholder="Paste the full AI prompt here..."
+                  rows={6}
+                  className={inputCls + ' resize-y font-mono'}
+                  required={!isVariants}
+                />
+                {errors.content && <p className="text-red-400 text-xs mt-1">{errors.content[0]}</p>}
+              </div>
+            )}
           </div>
         ) : (
           <div>
@@ -348,8 +447,6 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
               <p className="text-emerald-400 text-xs mt-1 truncate">✓ PDF Uploaded: {pdfUrl.split('/').pop()}</p>
             )}
             {errors.pdf_url && <p className="text-red-400 text-xs mt-1">{errors.pdf_url[0]}</p>}
-            {/* Hidden content field for DB constraints */}
-            <input type="hidden" value={content} />
           </div>
         )}
       </div>
@@ -503,6 +600,7 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
           </span>
         </div>
       </div>
+
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-zinc-800">
         <button
