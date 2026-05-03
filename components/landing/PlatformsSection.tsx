@@ -147,22 +147,22 @@ export default function PlatformsSection() {
 
   // Loading Shimmer Grids
   const ShimmerGrid = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="grid grid-cols-3 gap-3 md:gap-8">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="group relative h-[480px] rounded-[40px] overflow-hidden border border-white/5 bg-zinc-900/10 backdrop-blur-md p-8 select-none flex flex-col justify-end space-y-5 animate-pulse">
+        <div key={i} className="group relative h-[280px] sm:h-[480px] rounded-[24px] sm:rounded-[40px] overflow-hidden border border-white/5 bg-zinc-900/10 backdrop-blur-md p-3 sm:p-8 select-none flex flex-col justify-end space-y-3 sm:space-y-5 animate-pulse">
           <div className="space-y-3">
-            <div className="h-8 bg-white/5 rounded-xl w-3/4" />
-            <div className="h-4 bg-white/5 rounded-xl w-1/3" />
+            <div className="h-4 sm:h-8 bg-white/5 rounded-xl w-3/4" />
+            <div className="h-2 sm:h-4 bg-white/5 rounded-xl w-1/3" />
           </div>
-          <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-white/5" />
-              <div className="space-y-2">
-                <div className="h-3 bg-white/5 rounded w-16" />
-                <div className="h-2 bg-white/5 rounded w-10" />
+          <div className="pt-2 sm:pt-4 border-t border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-1 sm:gap-3">
+              <div className="w-5 h-5 sm:w-9 sm:h-9 rounded-full bg-white/5" />
+              <div className="space-y-1 sm:space-y-2">
+                <div className="h-2 bg-white/5 rounded w-10 sm:w-16" />
+                <div className="h-1.5 bg-white/5 rounded w-6 sm:w-10" />
               </div>
             </div>
-            <div className="w-24 h-9 bg-white/5 rounded-full" />
+            <div className="w-12 h-6 sm:w-24 sm:h-9 bg-white/5 rounded-full" />
           </div>
         </div>
       ))}
@@ -170,22 +170,23 @@ export default function PlatformsSection() {
   )
 
   const CreatorsShimmerGrid = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="group relative h-[480px] rounded-[40px] overflow-hidden border border-white/5 bg-zinc-900/10 backdrop-blur-md p-8 select-none flex flex-col justify-end space-y-5 animate-pulse">
+        <div key={i} className="group relative h-[280px] sm:h-[480px] rounded-[24px] sm:rounded-[40px] overflow-hidden border border-white/5 bg-zinc-900/10 backdrop-blur-md p-3 sm:p-8 select-none flex flex-col justify-end space-y-3 sm:space-y-5 animate-pulse">
           <div className="space-y-3">
-            <div className="w-16 h-6 bg-white/5 rounded-full" />
-            <div className="h-8 bg-white/5 rounded-xl w-3/4" />
-            <div className="h-4 bg-white/5 rounded-xl w-1/2" />
+            <div className="w-8 h-4 sm:w-16 sm:h-6 bg-white/5 rounded-full" />
+            <div className="h-4 sm:h-8 bg-white/5 rounded-xl w-3/4" />
+            <div className="h-2 sm:h-4 bg-white/5 rounded-xl w-1/2" />
           </div>
-          <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-            <div className="h-4 bg-white/5 rounded-xl w-1/3" />
-            <div className="w-4 h-4 rounded-full bg-white/5" />
+          <div className="pt-2 sm:pt-4 border-t border-white/5 flex items-center justify-between">
+            <div className="h-2 sm:h-4 bg-white/5 rounded-xl w-1/3" />
+            <div className="w-2 h-2 sm:w-4 sm:h-4 rounded-full bg-white/5" />
           </div>
         </div>
       ))}
     </div>
   )
+
 
   return (
     <section className="bg-transparent select-none relative overflow-hidden flex flex-col font-sans">
@@ -251,7 +252,7 @@ export default function PlatformsSection() {
             // eslint-disable-next-line react-hooks/static-components
             <ShimmerGrid />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-3 gap-3 md:gap-8">
               {prompts.slice(0, 3).map((item, i) => {
                 const creativeSub = item.subdomain || creators.find(c => c.id === item.creator_id)?.subdomain || 'milan'
                 const creator = creators.find(c => c.id === item.creator_id)
@@ -259,7 +260,7 @@ export default function PlatformsSection() {
                   <Link
                     href={`/${creativeSub}/${item.slug}`}
                     key={i}
-                    className="group relative h-[480px] rounded-[40px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-8 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
+                    className="group relative h-[280px] sm:h-[480px] rounded-[24px] sm:rounded-[40px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-8 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
                   >
                     {/* Background immersive image with darker glass overlay */}
                     <div className="absolute inset-0 z-0 select-none">
@@ -272,35 +273,36 @@ export default function PlatformsSection() {
                     </div>
 
                     {/* Title directly above the profile section at the bottom */}
-                    <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-5">
-                      <div className="space-y-2 select-none">
-                        <h3 className="text-2xl font-bold tracking-tight text-white/95 leading-tight select-none">
+                    <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-2 sm:space-y-5">
+                      <div className="space-y-1 select-none">
+                        <h3 className="text-xs sm:text-lg md:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-2">
                           {item.title}
                         </h3>
                       </div>
 
                       {/* Dynamic Bottom Row from screenshot reference */}
-                      <div className="w-full flex items-center justify-between border-t border-white/10 pt-4 select-none">
-                        <div className="flex items-center gap-3">
+                      <div className="w-full flex items-center justify-between border-t border-white/10 pt-2 sm:pt-4 select-none">
+                        <div className="flex items-center gap-1 sm:gap-3">
                           <img
                             src={creator?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80'}
                             alt={creator?.name || 'Creator'}
-                            className="w-9 h-9 rounded-full object-cover border border-white/15"
+                            className="w-5 h-5 sm:w-9 sm:h-9 rounded-full object-cover border border-white/15 flex-shrink-0"
                           />
                           <div className="flex flex-col text-left font-mono">
-                            <span className="text-xs text-white/90 font-bold leading-none select-none tracking-tight">
+                            <span className="text-[8px] sm:text-xs text-white/90 font-bold leading-none select-none tracking-tight line-clamp-1">
                               {creator?.handle || '@milanray.design'}
                             </span>
-                            <span className="text-[8px] text-white/40 mt-2 leading-none font-light tracking-wide">
+                            <span className="text-[6px] sm:text-[8px] text-white/40 mt-1 leading-none font-light tracking-wide hidden sm:block">
                               Just published
                             </span>
                           </div>
                         </div>
 
                         {/* White Rounded CTA Button from screenshot */}
-                        <div className="px-5 py-3 bg-white text-zinc-950 font-sans font-bold text-xs rounded-full shadow-lg group-hover:scale-[1.03] transition-all duration-500 hover:bg-white/90 flex items-center gap-1.5 select-none">
-                          <span>+</span>
-                          <span>More Info</span>
+                        <div className="px-2 py-1 sm:px-5 sm:py-3 bg-white text-zinc-950 font-sans font-bold text-[8px] sm:text-xs rounded-full shadow-lg group-hover:scale-[1.03] transition-all duration-500 hover:bg-white/90 flex items-center gap-1 select-none flex-shrink-0">
+                          <span className="hidden sm:inline">+</span>
+                          <span className="sm:hidden">→</span>
+                          <span className="hidden sm:inline">More Info</span>
                         </div>
                       </div>
                     </div>
@@ -359,14 +361,14 @@ export default function PlatformsSection() {
             // eslint-disable-next-line react-hooks/static-components
             <CreatorsShimmerGrid />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-1000">
+            <div className="grid grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 animate-in fade-in duration-1000">
               {filteredCreators.map((creator, i) => {
                 const creativeSubdomain = creator.subdomain || creator.handle?.replace('@', '') || 'milan'
                 return (
                   <Link
                     href={`/${creativeSubdomain}`}
                     key={i}
-                    className="group relative h-[480px] rounded-[40px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-8 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
+                    className="group relative h-[280px] sm:h-[480px] rounded-[24px] sm:rounded-[40px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-8 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
                   >
                     {/* Background immersive image with darker glass overlay */}
                     <div className="absolute inset-0 z-0 select-none">
@@ -379,22 +381,22 @@ export default function PlatformsSection() {
                     </div>
 
                     {/* Dynamic content grouped above profile section at bottom */}
-                    <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-5">
-                      <div className="space-y-2 select-none">
-                        <span className="font-mono text-[9px] text-blue-400 border border-blue-500/20 bg-blue-500/10 px-3 py-1 rounded-full tracking-widest uppercase font-bold w-max block">
+                    <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-2 sm:space-y-5">
+                      <div className="space-y-1 select-none">
+                        <span className="font-mono text-[6px] sm:text-[9px] text-blue-400 border border-blue-500/20 bg-blue-500/10 px-1 py-0.5 sm:px-3 sm:py-1 rounded-full tracking-widest uppercase font-bold w-max block">
                           Creator
                         </span>
-                        <h3 className="text-2xl font-bold tracking-tight text-white/95 leading-tight select-none">
+                        <h3 className="text-xs sm:text-lg md:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-1 sm:line-clamp-2">
                           {creator.name}
                         </h3>
-                        <p className="text-xs text-white/50 font-mono tracking-wide font-light">
+                        <p className="text-[7px] sm:text-xs text-white/50 font-mono tracking-wide font-light line-clamp-1">
                           {creator.handle}
                         </p>
                       </div>
 
-                      <div className="pt-4 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-white/35 group-hover:text-blue-400 transition-colors uppercase tracking-widest select-none">
-                        <span>View Profile</span>
-                        <Globe className="w-4 h-4 text-white/30 group-hover:text-blue-500 transition-colors" />
+                      <div className="pt-2 sm:pt-4 border-t border-white/10 flex items-center justify-between text-[7px] sm:text-[11px] font-mono text-white/35 group-hover:text-blue-400 transition-colors uppercase tracking-widest select-none">
+                        <span className="line-clamp-1">View Profile</span>
+                        <Globe className="w-3 h-3 sm:w-4 sm:h-4 text-white/30 group-hover:text-blue-500 transition-colors flex-shrink-0" />
                       </div>
                     </div>
                   </Link>
@@ -423,7 +425,7 @@ export default function PlatformsSection() {
           {loading ? (
             <ShimmerGrid />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-1000">
+            <div className="grid grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 animate-in fade-in duration-1000">
               {filteredProducts.map((prod, i) => {
                 const creativeSub = prod.subdomain || creators.find(c => c.id === prod.creator_id)?.subdomain || 'milan'
                 const creator = creators.find(c => c.id === prod.creator_id)
@@ -431,7 +433,7 @@ export default function PlatformsSection() {
                   <Link
                     href={`/${creativeSub}/${prod.slug}`}
                     key={i}
-                    className="group relative h-[480px] rounded-[40px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-8 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
+                    className="group relative h-[280px] sm:h-[480px] rounded-[24px] sm:rounded-[40px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-8 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
                   >
                     {/* Background immersive image with darker glass overlay */}
                     <div className="absolute inset-0 z-0 select-none">
@@ -444,38 +446,38 @@ export default function PlatformsSection() {
                     </div>
 
                     {/* Title directly above the profile section at the bottom */}
-                    <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-5">
-                      <div className="space-y-2 select-none">
-                        <h3 className="text-2xl font-bold tracking-tight text-white/95 leading-tight select-none">
+                    <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-2 sm:space-y-5">
+                      <div className="space-y-1 select-none">
+                        <h3 className="text-xs sm:text-lg md:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-1 sm:line-clamp-2">
                           {prod.title}
                         </h3>
-                        <div className="inline-flex items-center gap-1.5 text-white/60 font-mono text-[10px] uppercase tracking-wider font-light">
-                          <span className="w-1.5 h-1.5 rounded-full bg-pink-500/80 animate-pulse" />
-                          Connecting
+                        <div className="inline-flex items-center gap-1.5 text-white/60 font-mono text-[8px] sm:text-[10px] uppercase tracking-wider font-light">
+                          <span className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-pink-500/80 animate-pulse" />
+                          <span>Connecting</span>
                         </div>
                       </div>
 
                       {/* Dynamic Bottom Row from screenshot reference */}
-                      <div className="w-full flex items-center justify-between border-t border-white/10 pt-4 select-none">
-                        <div className="flex items-center gap-3">
+                      <div className="w-full flex items-center justify-between border-t border-white/10 pt-2 sm:pt-4 select-none">
+                        <div className="flex items-center gap-1 sm:gap-3">
                           <img
                             src={creator?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80'}
                             alt={creator?.name || 'Creator'}
-                            className="w-9 h-9 rounded-full object-cover border border-white/15"
+                            className="w-5 h-5 sm:w-9 sm:h-9 rounded-full object-cover border border-white/15 flex-shrink-0"
                           />
                           <div className="flex flex-col text-left font-mono">
-                            <span className="text-xs text-white/90 font-bold leading-none select-none tracking-tight">
+                            <span className="text-[8px] sm:text-xs text-white/90 font-bold leading-none select-none tracking-tight line-clamp-1">
                               {creator?.handle || '@milanray.design'}
                             </span>
-                            <span className="text-[10px] text-white/40 mt-0.5 leading-none font-light tracking-wide">
+                            <span className="text-[6px] sm:text-[10px] text-white/40 mt-1 leading-none font-light tracking-wide hidden sm:block">
                               Available now
                             </span>
                           </div>
                         </div>
 
                         {/* White Rounded CTA Button from screenshot */}
-                        <div className="px-5 py-3 bg-white text-zinc-950 font-sans font-bold text-xs rounded-full shadow-lg group-hover:scale-[1.03] transition-all duration-500 hover:bg-white/90 flex items-center gap-1.5 select-none">
-                          <ArrowRight />
+                        <div className="px-2 py-1 sm:px-5 sm:py-3 bg-white text-zinc-950 font-sans font-bold text-xs rounded-full shadow-lg group-hover:scale-[1.03] transition-all duration-500 hover:bg-white/90 flex items-center gap-1 select-none flex-shrink-0">
+                          <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-zinc-950" />
                         </div>
                       </div>
                     </div>

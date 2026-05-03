@@ -282,6 +282,7 @@ function PdfPlaceholder({ prompt }: { prompt: Prompt }) {
 function PromptContent({ prompt, content }: { prompt: Prompt; content: string }) {
   const isPdf = prompt.content_type === 'pdf'
   const [activeVariantIndex, setActiveVariantIndex] = useState(0)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   if (isPdf) {
     return <PdfPlaceholder prompt={prompt} />
@@ -303,6 +304,7 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
   }
 
   const currentContent = isVariants ? (variants[activeVariantIndex]?.description || '') : content
+  const hasMoreContent = currentContent.split('\n').length > 2 || currentContent.length > 120
 
   return (
     <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl transition-shadow hover:shadow-md select-none">
@@ -322,7 +324,10 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => setActiveVariantIndex(idx)}
+                  onClick={() => {
+                    setActiveVariantIndex(idx)
+                    setIsExpanded(false)
+                  }}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                     activeVariantIndex === idx ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'
                   }`}
@@ -340,9 +345,21 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
         />
       </div>
       
-      <pre className="p-6 font-mono text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap break-words">
+      <div className={`p-6 font-mono text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap break-words select-text ${!isExpanded ? 'line-clamp-2 overflow-hidden' : ''}`}>
         {currentContent}
-      </pre>
+      </div>
+
+      {hasMoreContent && (
+        <div className="px-6 pb-4 pt-1 flex justify-start">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs font-bold text-sky-400 hover:text-sky-300 transition-colors select-none"
+          >
+            {isExpanded ? 'Show less' : 'Show more'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

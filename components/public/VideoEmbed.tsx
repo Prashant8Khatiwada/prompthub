@@ -50,7 +50,7 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
   const isDirectVideo = url?.includes('.mp4') || url?.includes('/videos/')
   if (isDirectVideo && url) {
     return (
-      <div className="w-full max-w-2xl mx-auto flex justify-center select-none animate-in fade-in duration-500">
+      <div className="w-full max-w-full mx-auto flex justify-center select-none animate-in fade-in duration-500">
         <video
           src={url}
           autoPlay
@@ -58,7 +58,7 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
           muted
           playsInline
           controls
-          className="w-full max-w-[540px] rounded-[32px] md:rounded-[40px] border border-white/10 hover:border-white/20 hover:scale-[1.02] transition-all duration-500 shadow-2xl bg-zinc-950"
+          className="w-full max-w-full rounded-2xl border border-white/10 hover:border-white/20 hover:scale-[1.01] transition-all duration-500 shadow-2xl bg-zinc-950"
         />
       </div>
     )
@@ -81,8 +81,8 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
 
     if (videoId) {
       return (
-        <div className="w-full max-w-2xl mx-auto flex justify-center select-none animate-in fade-in duration-500">
-          <div className="relative w-full max-w-[540px] aspect-video rounded-[32px] md:rounded-[40px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 shadow-2xl bg-zinc-950">
+        <div className="w-full max-w-full mx-auto flex justify-center select-none animate-in fade-in duration-500">
+          <div className="relative w-full max-w-full aspect-video rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 shadow-2xl bg-zinc-950">
             <iframe
               src={`https://www.youtube.com/embed/${videoId}`}
               className="absolute inset-0 w-full h-full object-cover"
@@ -96,7 +96,30 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
     }
   }
 
-  // 3. oEmbed direct HTML renderer (e.g., valid Instagram oEmbed)
+  // 3. Instagram URL fallback via standard iframe
+  const isInstagram = url?.includes('instagram.com')
+  if (isInstagram && url) {
+    // Ensure URL ends with /embed
+    const cleanUrl = url.split('?')[0].replace(/\/$/, '')
+    const embedUrl = `${cleanUrl}/embed`
+
+    return (
+      <div className="w-full max-w-full mx-auto flex justify-center select-none animate-in fade-in duration-500">
+        <div className="w-full max-w-full relative overflow-hidden rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-500 shadow-2xl bg-zinc-950 h-[480px] md:h-[720px] lg:h-[840px]">
+          <iframe
+            src={embedUrl}
+            className="absolute top-[-44px] scale-105 left-0 w-full h-[calc(100%+108px)]"
+            frameBorder="0"
+            scrolling="no"
+            allowTransparency={true}
+            allow="encrypted-media; picture-in-picture"
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // 4. oEmbed direct HTML renderer (e.g., valid Instagram oEmbed)
   if (html) {
     return (
       <div
@@ -104,27 +127,6 @@ export default function VideoEmbed({ html, fallbackThumbnail, url }: Props) {
         className="w-full overflow-hidden flex justify-center select-none animate-in fade-in duration-500"
         dangerouslySetInnerHTML={{ __html: html }}
       />
-    )
-  }
-
-  // 4. Instagram URL fallback via standard iframe
-  const isInstagram = url?.includes('instagram.com')
-  if (isInstagram && url) {
-    // Ensure URL ends with /embed
-    const cleanUrl = url.split('?')[0].replace(/\/$/, '')
-    const embedUrl = `${cleanUrl}/embed/captioned`
-
-    return (
-      <div className="w-full max-w-2xl mx-auto flex justify-center select-none animate-in fade-in duration-500">
-        <iframe
-          src={embedUrl}
-          className="w-full max-w-[400px] min-h-[580px] md:min-h-[640px] rounded-[32px] md:rounded-[40px] border border-white/10 hover:border-white/20 transition-all duration-500 shadow-2xl bg-zinc-950"
-          frameBorder="0"
-          scrolling="no"
-          allowTransparency={true}
-          allow="encrypted-media; picture-in-picture"
-        />
-      </div>
     )
   }
 
