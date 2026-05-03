@@ -538,7 +538,7 @@ export default function EnhancedPublicPromptUI({
                         <div
                           onClick={() => handleLibraryPromptClick(p)}
                           key={p.id}
-                          className="group relative h-[320px] sm:h-[440px] rounded-[32px] sm:rounded-[36px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-4 sm:p-7 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
+                          className="group relative h-[320px] sm:h-[440px] rounded-[32px] sm:rounded-[36px] lg:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-4 sm:p-7 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
                         >
                           {/* Background immersive image with darker glass overlay */}
                           <div className="absolute inset-0 z-0 select-none">
