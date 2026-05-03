@@ -119,6 +119,7 @@ export default async function PublicPromptPage({ params }: Params) {
       is_global,
       prompt_id,
       category_id,
+      creator_id,
       campaign:ad_campaigns(*)
     `)
     .or(filters.join(','))
