@@ -22,7 +22,7 @@ echo "--- Starting Docker build for $IMAGE_TAG (Platform: linux/amd64) ---"
 
 # Use the values from .env or fall back to hardcoded defaults
 # Note: For NEXT_PUBLIC_BASE_DOMAIN, we ensure it's just the domain without protocol for the layout.tsx logic
-BASE_DOMAIN=${NEXT_PUBLIC_BASE_DOMAIN:-"zip.fotosfolio.com"}
+BASE_DOMAIN=${NEXT_PUBLIC_BASE_DOMAIN:-"creatopedia.tech"}
 BASE_DOMAIN=${BASE_DOMAIN#https://}
 BASE_DOMAIN=${BASE_DOMAIN#http://}
 
@@ -40,7 +40,7 @@ docker build \
   --build-arg INSTAGRAM_APP_SECRET="${INSTAGRAM_APP_SECRET:-"3b9da31ebec993c75529931d56a965d6"}" \
   --build-arg INSTAGRAM_CLIENT_ID="${INSTAGRAM_CLIENT_ID:-"1844374976242880"}" \
   --build-arg INSTAGRAM_CLIENT_SECRET="${INSTAGRAM_CLIENT_SECRET:-"e3dc546a1370a20d2a3010fd02563acd"}" \
-  --build-arg INSTAGRAM_REDIRECT_URI="${INSTAGRAM_REDIRECT_URI:-"https://zip.fotosfolio.com/api/auth/instagram/callback"}" \
+  --build-arg INSTAGRAM_REDIRECT_URI="${INSTAGRAM_REDIRECT_URI:-"https://creatopedia.tech/api/auth/instagram/callback"}" \
   --build-arg TOKEN_ENCRYPTION_KEY="${TOKEN_ENCRYPTION_KEY:-"4d47a1eee73a4fc05718375fe118daa30d6d3cfd9615a6b300a1196d1674f129"}" \
   -t "$IMAGE_TAG" .
 
