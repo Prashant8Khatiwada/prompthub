@@ -8,7 +8,11 @@ export async function GET() {
   const supabase = createClient(cookieStore)
   const { data, error } = await supabase.from('categories').select('*').order('name')
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-  return NextResponse.json(data)
+  return NextResponse.json(data, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
+    }
+  })
 }
 
 export async function POST(req: NextRequest) {

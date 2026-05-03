@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function RefreshStatsButton() {
   const [isSyncing, setIsSyncing] = useState(false)
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   async function handleSync() {
     if (isSyncing) return
@@ -13,6 +15,8 @@ export default function RefreshStatsButton() {
     try {
       const res = await fetch('/api/analytics/sync', { method: 'POST' })
       if (res.ok) {
+        // Invalidate all analytics related queries
+        await queryClient.invalidateQueries({ queryKey: ['analytics'] })
         router.refresh()
       }
     } catch (err) {
