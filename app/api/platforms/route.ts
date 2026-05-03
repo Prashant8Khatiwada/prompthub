@@ -15,6 +15,28 @@ export async function GET() {
   // Fix null avatar_url directly in API
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawCreators = creatorsRes.data || []
+
+  // Fetch igFeed per creator to get live Instagram thumbnails
+  const igFeedByCreator: Record<string, Record<string, string>> = {}
+  await Promise.all(
+    rawCreators.map(async (c: { id: string; avatar_url?: string | null }) => {
+      try {
+        const { fetchInstagramFeed } = await import('@/lib/instagram')
+        const feed = await fetchInstagramFeed(c.id)
+        const map: Record<string, string> = {}
+        for (const m of feed) {
+          if (m.permalink) {
+            const displayUrl = m.media_type === 'VIDEO' ? (m.thumbnail_url || m.media_url) : m.media_url
+            if (displayUrl) map[m.permalink] = displayUrl
+          }
+        }
+        igFeedByCreator[c.id] = map
+      } catch {
+        igFeedByCreator[c.id] = {}
+      }
+    })
+  )
+
   const creators = await Promise.all(
     rawCreators.map(async (c: { id: string, avatar_url?: string | null }) => {
       if (c.avatar_url) {
@@ -36,10 +58,18 @@ export async function GET() {
     })
   )
 
+  // Attach ig_thumbnail_url to each prompt
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const prompts = (promptsRes.data || []).map((p: any) => {
+    const feedMap = igFeedByCreator[p.creator_id] || {}
+    const igThumb = p.video_url ? feedMap[p.video_url] : null
+    return { ...p, ig_thumbnail_url: igThumb || null }
+  })
+
   return NextResponse.json({
     categories: categoriesRes.data || [],
     creators,
-    prompts: promptsRes.data || []
+    prompts
   }, {
     headers: {
       'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'

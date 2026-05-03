@@ -105,7 +105,7 @@ export default function EnhancedPublicPromptUI({
         .eq('creator_id', creator.id)
         .eq('status', 'published')
         .single()
-      
+
       if (error || !data) throw new Error(error?.message || 'Prompt not found')
       return data as Prompt
     },
@@ -125,7 +125,7 @@ export default function EnhancedPublicPromptUI({
         .eq('status', 'published')
         .neq('id', currentPrompt.id) // Exclude current prompt
         .limit(6)
-      
+
       return (data || []) as RelatedPromptType[]
     },
     initialData: currentPrompt?.id === initialPrompt.id ? relatedData : undefined,
@@ -223,7 +223,7 @@ export default function EnhancedPublicPromptUI({
 
   const handlePromptClick = (clickedPrompt: RelatedPromptType) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    
+
     // Update state to trigger useQuery
     setCurrentSlug(clickedPrompt.slug)
 
@@ -272,7 +272,7 @@ export default function EnhancedPublicPromptUI({
               className="px-3.5 py-2.5 bg-zinc-900/60 hover:bg-zinc-800/80 backdrop-blur-md border border-white/10 hover:border-white/20 text-white rounded-full flex items-center gap-2 text-xs font-mono tracking-wider transition-all duration-300 shadow-xl select-none"
             >
               <Globe className="w-4 h-4 text-white" />
-              <span>For Sponsors</span>
+              <span> Advertise</span>
             </a>
           </div>
           <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/60 to-transparent z-10" />
@@ -370,9 +370,7 @@ export default function EnhancedPublicPromptUI({
                 <span>Follow</span>
               </a>
               <a
-                href={creator.tiktok_url || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={`/${creator.subdomain}`}
                 className="flex-1 md:flex-initial px-5 py-2.5 bg-zinc-900/60 border border-white/10 hover:border-white/25 text-white text-xs font-mono rounded-full font-bold tracking-wide transition-all duration-300 flex items-center justify-center gap-2 backdrop-blur-md select-none"
               >
                 <Globe className="w-3.5 h-3.5 text-blue-400" />
@@ -562,7 +560,8 @@ export default function EnhancedPublicPromptUI({
                               className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border bg-zinc-900/70 border-white/10 text-white/90 backdrop-blur-md"
                             >
                               <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: toolColor }} />
-                              {p.ai_tool}
+                              <span className="sm:hidden">{p.ai_tool?.split(',')[0].trim()}</span>
+                              <span className="hidden sm:inline">{p.ai_tool?.split(',')[0].trim()}</span>
                             </span>
 
                             <div className="flex gap-1 sm:gap-2">
@@ -586,11 +585,11 @@ export default function EnhancedPublicPromptUI({
                               <h3 className="text-base sm:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-2">
                                 {p.title}
                               </h3>
-                              {p.description && (
+                              {/* {p.description && (
                                 <p className="text-[10px] sm:text-xs text-white/45 leading-relaxed line-clamp-2 font-light hidden sm:block">
                                   {p.description}
                                 </p>
-                              )}
+                              )} */}
                             </div>
 
                             {/* Card footer */}

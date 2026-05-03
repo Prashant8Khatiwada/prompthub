@@ -5,7 +5,7 @@ import Link from 'next/link'
 import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
 import type { Creator, Category, Prompt } from '@/types'
 import InstagramProfile from './InstagramProfile'
-import { Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, LayoutGrid, Globe, Camera, ArrowLeft } from 'lucide-react'
+import { Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, LayoutGrid, Globe, Camera, ArrowLeft, BadgeCheck } from 'lucide-react'
 import AdBanner, { AdPlacementData } from './AdBanner'
 
 interface PromptWithCategory extends Prompt {
@@ -63,7 +63,7 @@ const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
-export default function UserProfilePageClient({ creator, igUser, categories, prompts, adPlacements = [] }: Props) {
+export default function UserProfilePageClient({ creator, igUser, igFeed, categories, prompts, adPlacements = [] }: Props) {
   const [activeTab, setActiveTab] = useState<'creation' | 'profile'>('creation')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
@@ -84,6 +84,18 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
     if (!activeCategory) return prompts
     return prompts.filter(p => p.category_id === activeCategory)
   }, [prompts, activeCategory])
+
+  // Build a map from Instagram permalink → live display URL
+  const igFeedMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const m of igFeed) {
+      if (m.permalink) {
+        const displayUrl = m.media_type === 'VIDEO' ? (m.thumbnail_url || m.media_url) : m.media_url
+        if (displayUrl) map[m.permalink] = displayUrl
+      }
+    }
+    return map
+  }, [igFeed])
 
   const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
 
@@ -306,14 +318,14 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                 <p className="text-sm">No prompts in this category yet.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-in fade-in duration-500">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-3 animate-in fade-in duration-500">
                 {(() => {
                   const items = []
                   const isAdsEnabled = creator.ads_enabled !== false // Default to true if undefined
                   const frequency = creator.ad_frequency || 4
                   const hasPageAd = adPlacements.some(p => p.position === 'creator_page')
                   let adsInjected = 0
-                  
+
                   for (let i = 0; i < filteredPrompts.length; i++) {
                     const prompt = filteredPrompts[i]
                     const toolColor = AI_TOOL_COLORS[prompt.ai_tool.split(',')[0].trim()] ?? '#6366f1'
@@ -324,21 +336,25 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                       <Link
                         href={href}
                         key={prompt.id}
-                        className="group relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-7 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
+                        className="group relative aspect-[3/4.2] sm:h-[440px] rounded-[32px] sm:rounded-[32px] lg:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-7 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
                       >
                         {/* Background immersive image with darker glass overlay */}
                         <div className="absolute inset-0 z-0 select-none">
-                          {prompt.thumbnail_url ? (
-                            <img
-                              src={prompt.thumbnail_url}
-                              alt={prompt.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-55 group-hover:opacity-70"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-zinc-950 flex items-center justify-center opacity-40">
-                              <Sparkles className="w-10 h-10 text-white/20" />
-                            </div>
-                          )}
+                          {(() => {
+                            const igDisplayUrl = prompt.video_url ? igFeedMap[prompt.video_url] : null
+                            const src = igDisplayUrl || prompt.thumbnail_url
+                            return src ? (
+                              <img
+                                src={src}
+                                alt={prompt.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-55 group-hover:opacity-70"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-zinc-950 flex items-center justify-center opacity-40">
+                                <Sparkles className="w-10 h-10 text-white/20" />
+                              </div>
+                            )
+                          })()}
                           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/45 to-transparent z-10" />
                         </div>
 
@@ -348,7 +364,7 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                             className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-full border bg-zinc-900/70 border-white/10 text-white/90 backdrop-blur-md"
                           >
                             <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: toolColor }} />
-                            {prompt.ai_tool}
+                            {prompt.ai_tool?.split(',')[0].trim()}
                           </span>
 
                           <div className="flex gap-1 sm:gap-2">
@@ -372,11 +388,11 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                             <h3 className="text-base sm:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-2">
                               {prompt.title}
                             </h3>
-                            {prompt.description && (
+                            {/* {prompt.description && (
                               <p className="text-[10px] sm:text-xs text-white/45 leading-relaxed line-clamp-2 font-light hidden sm:block">
                                 {prompt.description}
                               </p>
-                            )}
+                            )} */}
                           </div>
 
                           {/* Card footer */}
@@ -401,10 +417,10 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                       adsInjected++
                       items.push(
                         <div key={`ad-${i}`} className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
-                           <AdBanner 
-                            placements={adPlacements} 
-                            position="creator_page" 
-                            creatorId={creator.id} 
+                          <AdBanner
+                            placements={adPlacements}
+                            position="creator_page"
+                            creatorId={creator.id}
                           />
                         </div>
                       )
@@ -415,10 +431,10 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                   if (isAdsEnabled && hasPageAd && adsInjected === 0 && items.length > 0) {
                     items.push(
                       <div key="ad-final" className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
-                         <AdBanner 
-                          placements={adPlacements} 
-                          position="creator_page" 
-                          creatorId={creator.id} 
+                        <AdBanner
+                          placements={adPlacements}
+                          position="creator_page"
+                          creatorId={creator.id}
                         />
                       </div>
                     )

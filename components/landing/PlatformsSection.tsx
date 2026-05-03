@@ -274,7 +274,7 @@ export default function PlatformsSection() {
                     {/* Background immersive image with darker glass overlay */}
                     <div className="absolute inset-0 z-0 select-none">
                       <img
-                        src={item.thumbnail_url || item.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=500&q=80'}
+                        src={item.ig_thumbnail_url || item.thumbnail_url || item.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=500&q=80'}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-55 group-hover:opacity-70"
                       />
@@ -454,7 +454,7 @@ export default function PlatformsSection() {
                       {/* Background immersive image with darker glass overlay */}
                       <div className="absolute inset-0 z-0 select-none">
                         <img
-                          src={prod.thumbnail_url || prod.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=500&q=80'}
+                          src={prod.ig_thumbnail_url || prod.thumbnail_url || prod.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=500&q=80'}
                           alt={prod.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-55 group-hover:opacity-70"
                         />

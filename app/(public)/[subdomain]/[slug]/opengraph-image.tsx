@@ -39,17 +39,21 @@ export default async function Image({ params }: Props) {
   const creatorName = creator?.name ?? subdomain
   const aiTool = prompt?.ai_tool ?? 'AI'
 
+  // Only use uploaded thumbnails (Supabase storage) for OG image.
+  // Instagram CDN URLs are blocked by most social crawlers, so we skip them.
+  const isUploadedThumbnail =
+    !!prompt?.thumbnail_url &&
+    (prompt.thumbnail_url.includes('supabase.co') || prompt.thumbnail_url.includes('supabase.in'))
+
   // Fetch the thumbnail as base64 so bots can embed it directly
   let thumbnailData: string | null = null
-  if (prompt?.thumbnail_url) {
+  if (isUploadedThumbnail && prompt?.thumbnail_url) {
     try {
       const res = await fetch(prompt.thumbnail_url, {
         headers: {
-          // Mimic a browser so Instagram CDN serves the image
           'User-Agent': 'Mozilla/5.0 (compatible; PromptHubBot/1.0)',
           Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
         },
-        // 5 second timeout
         signal: AbortSignal.timeout(5000),
       })
       if (res.ok) {

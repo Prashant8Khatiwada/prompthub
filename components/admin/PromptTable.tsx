@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -49,6 +49,8 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
   const [editingPrompt, setEditingPrompt] = useState<PromptWithCategory | null>(null)
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null)
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({})
 
   const siteUrl = (slug: string) => `/${subdomain}/${slug}`
 
@@ -91,8 +93,8 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800 overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="rounded-2xl border border-zinc-800">
+      <table className="w-full text-sm overflow-hidden rounded-2xl">
         <thead>
           <tr className="border-b border-zinc-800 bg-zinc-900/50">
             <th className="text-left px-5 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Title</th>
@@ -156,7 +158,19 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
 
                   <div className="relative">
                     <button
-                      onClick={() => setOpenDropdownId(openDropdownId === p.id ? null : p.id)}
+                      ref={el => { buttonRefs.current[p.id] = el }}
+                      onClick={() => {
+                        if (openDropdownId === p.id) {
+                          setOpenDropdownId(null)
+                          setDropdownPos(null)
+                        } else {
+                          const rect = buttonRefs.current[p.id]?.getBoundingClientRect()
+                          if (rect) {
+                            setDropdownPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
+                          }
+                          setOpenDropdownId(p.id)
+                        }
+                      }}
                       className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all"
                     >
                       <MoreHorizontal size={18} />
@@ -165,10 +179,13 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
                     {openDropdownId === p.id && (
                       <>
                         <div
-                          className="fixed inset-0 z-10"
-                          onClick={() => setOpenDropdownId(null)}
+                          className="fixed inset-0 z-[9998]"
+                          onClick={() => { setOpenDropdownId(null); setDropdownPos(null) }}
                         />
-                        <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-20 py-1 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div
+                          className="fixed w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-[9999] py-1 overflow-hidden animate-in fade-in zoom-in duration-200"
+                          style={dropdownPos ? { top: dropdownPos.top, right: dropdownPos.right } : {}}
+                        >
                           <button
                             onClick={() => {
                               setEditingPrompt(p)
