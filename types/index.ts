@@ -23,6 +23,7 @@ export interface Creator {
   stripe_id: string | null
   plan_tier: PlanTier
   ad_frequency: number | null
+  ads_enabled: boolean
   created_at: string
 }
 
@@ -124,6 +125,7 @@ export interface AdPlacement {
   category_id: string | null
   position: AdPlacementPosition
   is_global: boolean
+  creator_id: string | null
   created_at: string
   campaign?: AdCampaign
 }

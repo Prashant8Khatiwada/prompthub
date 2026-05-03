@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AdPlacementPosition } from '@/types'
 
 export interface AdPlacementData {
@@ -8,6 +8,7 @@ export interface AdPlacementData {
   position: AdPlacementPosition
   is_global: boolean
   prompt_id: string | null
+  creator_id: string | null
   campaign: {
     id: string
     name: string
@@ -32,27 +33,37 @@ interface Props {
 export default function AdBanner({ placements, position, promptId, creatorId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [hasImpressed, setHasImpressed] = useState(false)
-  
+
   // Viewport time tracking
   const startTimeRef = useRef<number | null>(null)
   const totalViewTimeRef = useRef<number>(0)
 
   // Find placements for this exact position
-  const validPlacements = placements.filter(p => p.position === position)
-  
+  const validPlacements = useMemo<AdPlacementData[]>(() => {
+    const positionMatches = placements.filter(p => p.position === position)
+
+    // If a creatorId is provided, prioritize ads specifically for this creator
+    if (creatorId) {
+      const creatorSpecific = positionMatches.filter(p => p.creator_id === creatorId)
+      if (creatorSpecific.length > 0) return creatorSpecific
+    }
+
+    // Fallback to global ads for this position
+    return positionMatches.filter(p => p.is_global)
+  }, [placements, position, creatorId])
+
   // Pick one (randomly) and stick with it for the lifetime of this component instance
   const [placement] = useState<AdPlacementData | null>(() => {
-    const valid = placements.filter(p => p.position === position)
-    if (valid.length === 0) return null
-    const randomIndex = Math.floor(Math.random() * valid.length)
-    return valid[randomIndex]
+    if (validPlacements.length === 0) return null
+    const randomIndex = Math.floor(Math.random() * validPlacements.length)
+    return validPlacements[randomIndex]
   })
 
   useEffect(() => {
     if (!placement) return
 
     const sessionKey = `imp_${placement.id}`
-    
+
     const sendDuration = () => {
       if (startTimeRef.current !== null) {
         const duration = (Date.now() - startTimeRef.current) / 1000
@@ -71,7 +82,7 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
               session_id: sessionStorage.getItem('ph_sid'),
               creator_id: creatorId ?? placement.campaign.creator_id ?? null,
             }),
-          }).catch(() => {})
+          }).catch(() => { })
         }
       }
     }
@@ -79,7 +90,7 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries
-        
+
         if (entry.isIntersecting) {
           // Start timer
           startTimeRef.current = Date.now()
@@ -97,7 +108,7 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
                 session_id: sessionId,
                 creator_id: creatorId ?? placement.campaign.creator_id ?? null,
               }),
-            }).catch(() => {})
+            }).catch(() => { })
 
             sessionStorage.setItem(sessionKey, '1')
             setHasImpressed(true)
@@ -139,9 +150,9 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
     <div ref={containerRef} className="relative w-full overflow-hidden rounded-xl bg-zinc-900 border border-zinc-800 transition-transform hover:scale-[1.01]">
       <a href={baseClickUrl} onClick={handleClick} target="_blank" rel="noopener noreferrer" className="block w-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img 
-          src={placement.campaign.banner_url} 
-          alt={placement.campaign.banner_alt || 'Advertisement'} 
+        <img
+          src={placement.campaign.banner_url}
+          alt={placement.campaign.banner_alt || 'Advertisement'}
           className="w-full h-auto object-cover"
         />
       </a>

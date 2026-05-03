@@ -309,9 +309,10 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-in fade-in duration-500">
                 {(() => {
                   const items = []
-                  // Default to showing an ad every 4 items if not specified
+                  const isAdsEnabled = creator.ads_enabled !== false // Default to true if undefined
                   const frequency = creator.ad_frequency || 4
                   const hasPageAd = adPlacements.some(p => p.position === 'creator_page')
+                  let adsInjected = 0
                   
                   for (let i = 0; i < filteredPrompts.length; i++) {
                     const prompt = filteredPrompts[i]
@@ -396,7 +397,8 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                     )
 
                     // Inject ad if frequency reached AND we actually have a placement
-                    if (hasPageAd && frequency > 0 && (i + 1) % frequency === 0 && i !== filteredPrompts.length - 1) {
+                    if (isAdsEnabled && hasPageAd && (i + 1) % frequency === 0 && i !== filteredPrompts.length - 1) {
+                      adsInjected++
                       items.push(
                         <div key={`ad-${i}`} className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
                            <AdBanner 
@@ -408,6 +410,20 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                       )
                     }
                   }
+
+                  // If no ads were injected (small grid) but ads are enabled, show one at the end
+                  if (isAdsEnabled && hasPageAd && adsInjected === 0 && items.length > 0) {
+                    items.push(
+                      <div key="ad-final" className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
+                         <AdBanner 
+                          placements={adPlacements} 
+                          position="creator_page" 
+                          creatorId={creator.id} 
+                        />
+                      </div>
+                    )
+                  }
+
                   return items
                 })()}
               </div>
