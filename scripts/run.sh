@@ -21,7 +21,7 @@ echo "--- Starting PromptHub container with actual secrets ---"
 docker run -d \
   --name prompthub \
   --restart always \
-  --network fotosfolio-zip \
+  --network web \
   -e NEXT_PUBLIC_SUPABASE_URL="https://slbywxgigzuodyrmhdsg.supabase.co" \
   -e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="sb_publishable_-mTGIQxaESrC94yQHTmgaA_0czKQo30" \
   -e SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsYnl3eGdpZ3p1b2R5cm1oZHNnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzA5NzQ3MSwiZXhwIjoyMDkyNjczNDcxfQ.QrgqANXTZMhYCLttHREaLny_cKEMDSxgMbIIvAr8f-s" \
