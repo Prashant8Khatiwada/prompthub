@@ -3,17 +3,9 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { fetchInstagramOEmbed } from '@/lib/oembed'
 import { adminClient } from '@/lib/supabase/admin'
-import VideoEmbed from '@/components/public/VideoEmbed'
-import PromptGate from '@/components/public/PromptGate'
-import RelatedPrompts from '@/components/public/RelatedPrompts'
 import ViewTracker from '@/components/public/ViewTracker'
 import AdBanner from '@/components/public/AdBanner'
 import { fetchInstagramMedia, fetchInstagramUser, fetchInstagramFeed } from '@/lib/instagram'
-import InstagramPost from '@/components/public/InstagramPost'
-import InstagramProfile from '@/components/public/InstagramProfile'
-import InstagramFeed from '@/components/public/InstagramFeed'
-import PublicProfileTabs from '@/components/public/PublicProfileTabs'
-import InstagramView from '@/components/public/InstagramView'
 import { AdPlacementPosition } from '@/types'
 import { AdPlacementData } from '@/components/public/AdBanner'
 
@@ -108,19 +100,6 @@ export default async function PublicPromptPage({ params }: Params) {
   const igUser = await fetchInstagramUser(creator.id)
   const igFeed = await fetchInstagramFeed(creator.id)
 
-  const AI_TOOL_COLORS: Record<string, string> = {
-    Midjourney: '#1b6ef3',
-    ChatGPT: '#10a37f',
-    Claude: '#c96442',
-    Gemini: '#4285f4',
-    Runway: '#7c3aed',
-    Pika: '#ec4899',
-    Kling: '#f59e0b',
-    Veo: '#06b6d4',
-    Other: '#6366f1',
-  }
-
-  const toolColor = AI_TOOL_COLORS[prompt.ai_tool] ?? '#6366f1'
 
   // 6. Fetch active ad placements for this prompt
   const now = new Date().toISOString()
@@ -146,7 +125,7 @@ export default async function PublicPromptPage({ params }: Params) {
 
   const placements: AdPlacement[] = (rawPlacements ?? [])
     .map((p) => {
-      const raw = p as any
+      const raw = p
       return {
         ...raw,
         campaign: Array.isArray(raw.campaign) ? raw.campaign[0] : raw.campaign

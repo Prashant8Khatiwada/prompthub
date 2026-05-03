@@ -110,7 +110,7 @@ export default function SettingsForm({ defaultValues, section }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Handle</label>
+              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Handle (Public Username)</label>
               <input
                 type="text"
                 value={formData.handle || ''}

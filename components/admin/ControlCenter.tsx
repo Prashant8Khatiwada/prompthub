@@ -6,17 +6,21 @@ import type { Creator } from '@/types'
 import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
 import InstagramView from '@/components/public/InstagramView'
 
+import AccountSettings from './AccountSettings'
+
 interface Props {
   creator: Creator
+  userEmail: string
   igUser: InstagramUser | null
   igFeed: InstagramMedia[]
 }
 
-export default function ControlCenter({ creator, igUser, igFeed }: Props) {
-  const [activeTab, setActiveTab] = useState<'profile' | 'integrations' | 'instagram'>('profile')
+export default function ControlCenter({ creator, userEmail, igUser, igFeed }: Props) {
+  const [activeTab, setActiveTab] = useState<'profile' | 'integrations' | 'instagram' | 'account'>('profile')
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
+    { id: 'account', label: 'Account & Security', icon: '🔒' },
     { id: 'integrations', label: 'Integrations', icon: '🔌' },
     { id: 'instagram', label: 'Instagram Profile', icon: '📸' },
   ]
@@ -49,6 +53,16 @@ export default function ControlCenter({ creator, igUser, igFeed }: Props) {
               <p className="text-zinc-500 text-sm">How you appear to the world on your discovery hub.</p>
             </div>
             <SettingsForm defaultValues={creator} section="profile" />
+          </div>
+        )}
+
+        {activeTab === 'account' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-white">Account & Security</h2>
+              <p className="text-zinc-500 text-sm">Manage your login credentials and security preferences.</p>
+            </div>
+            <AccountSettings userEmail={userEmail} />
           </div>
         )}
 

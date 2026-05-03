@@ -54,6 +54,7 @@ export default async function SettingsPage() {
 
       <ControlCenter 
         creator={creator!} 
+        userEmail={user.email!}
         igUser={igUser} 
         igFeed={igFeed} 
       />
