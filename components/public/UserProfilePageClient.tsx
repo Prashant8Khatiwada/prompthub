@@ -316,7 +316,7 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                   
                   for (let i = 0; i < filteredPrompts.length; i++) {
                     const prompt = filteredPrompts[i]
-                    const toolColor = AI_TOOL_COLORS[prompt.ai_tool] ?? '#6366f1'
+                    const toolColor = AI_TOOL_COLORS[prompt.ai_tool.split(',')[0].trim()] ?? '#6366f1'
                     const gate = GATE_LABELS[prompt.gate_type] ?? GATE_LABELS.open
                     const href = promptUrl(prompt.slug)
 

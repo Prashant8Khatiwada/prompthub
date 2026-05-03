@@ -5,7 +5,7 @@ export const promptSchema = z.object({
   category_id: z.string().uuid('Category is required'),
   description: z.string().max(500).optional().nullable().or(z.literal('')),
   content: z.string().min(1, 'Prompt content is required'),
-  ai_tool: z.enum(['Midjourney', 'Claude', 'ChatGPT', 'Gemini', 'Runway', 'Pika', 'Kling', 'Veo', 'Other']),
+  ai_tool: z.string().min(1, 'At least one AI tool is required'),
   output_type: z.enum(['image', 'video', 'text', 'code', 'audio']),
   gate_type: z.enum(['open', 'email', 'payment']),
   price: z.number().positive().optional().nullable(),

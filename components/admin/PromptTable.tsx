@@ -3,16 +3,14 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { 
-  Eye, 
-  Edit2, 
-  Trash2, 
-  Cloud, 
-  CloudOff, 
-  MoreHorizontal, 
+import {
+  Eye,
+  Edit2,
+  Trash2,
+  Cloud,
+  CloudOff,
+  MoreHorizontal,
   ExternalLink,
-  ChevronDown,
-  Globe
 } from 'lucide-react'
 import type { Prompt } from '@/types'
 import PromptModal from './PromptModal'
@@ -50,7 +48,7 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
-  const [editingPrompt, setEditingPrompt] = useState<any | null>(null)
+  const [editingPrompt, setEditingPrompt] = useState<PromptWithCategory | null>(null)
 
   const siteUrl = (slug: string) => `/${subdomain}/${slug}`
 
@@ -133,9 +131,9 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
                 </span>
               </td>
               <td className="px-4 py-4 text-center">
-                <a 
-                  href={siteUrl(p.slug)} 
-                  target="_blank" 
+                <a
+                  href={siteUrl(p.slug)}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-zinc-900/50 text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-zinc-800/50 hover:border-indigo-500/20 transition-all"
                   title="View Published Prompt"
@@ -155,7 +153,7 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
                   >
                     <Eye size={18} />
                   </Link>
-                  
+
                   <div className="relative">
                     <button
                       onClick={() => setOpenDropdownId(openDropdownId === p.id ? null : p.id)}
@@ -166,11 +164,11 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
 
                     {openDropdownId === p.id && (
                       <>
-                        <div 
-                          className="fixed inset-0 z-10" 
+                        <div
+                          className="fixed inset-0 z-10"
                           onClick={() => setOpenDropdownId(null)}
                         />
-                         <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-20 py-1 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-20 py-1 overflow-hidden animate-in fade-in zoom-in duration-200">
                           <button
                             onClick={() => {
                               setEditingPrompt(p)
@@ -181,7 +179,7 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
                             <Edit2 size={16} />
                             <span>Edit Prompt</span>
                           </button>
-                          
+
                           <button
                             onClick={() => {
                               handleToggleStatus(p)
@@ -219,13 +217,13 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
       </table>
 
       {editingPrompt && (
-        <PromptModal 
-          isOpen={true} 
+        <PromptModal
+          isOpen={true}
           onClose={() => {
             setEditingPrompt(null)
             router.refresh()
-          }} 
-          promptToEdit={editingPrompt} 
+          }}
+          promptToEdit={editingPrompt}
         />
       )}
     </div>

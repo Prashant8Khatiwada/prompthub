@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { LayoutGrid, Camera, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { LayoutGrid, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const InstagramIcon = ({ className }: { className?: string }) => (
@@ -19,15 +20,13 @@ const InstagramIcon = ({ className }: { className?: string }) => (
     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
   </svg>
 )
-import InstagramProfile from './InstagramProfile'
 import InstagramPost from './InstagramPost'
-import InstagramFeed from './InstagramFeed'
 import PromptGate from './PromptGate'
 import RelatedPrompts from './RelatedPrompts'
 import AdPopup from './AdPopup'
 import type { AdPlacementData } from './AdBanner'
 import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
-import type { Creator, Prompt } from '@/types'
+import type { Creator, Prompt, Category } from '@/types'
 
 import VideoEmbed from './VideoEmbed'
 
@@ -84,7 +83,6 @@ export default function EnhancedPublicPromptUI({
   prompt: initialPrompt,
   igUser,
   igMedia,
-  igFeed,
   relatedData,
   adAbovePrompt,
   adBelowPrompt,
@@ -92,13 +90,56 @@ export default function EnhancedPublicPromptUI({
   oEmbedHtml
 }: Props) {
   const [activeTab, setActiveTab] = useState<'prompt' | 'profile'>('prompt')
-  const [currentPrompt, setCurrentPrompt] = useState<Prompt>(initialPrompt)
-  const [isLoading, setIsLoading] = useState(false)
+  const [currentSlug, setCurrentSlug] = useState(initialPrompt.slug)
   const [showDebug, setShowDebug] = useState(false)
   const supabase = createClient()
 
+  // ─── Query for the Active Prompt ───
+  const { data: currentPrompt, isLoading: isPromptLoading } = useQuery({
+    queryKey: ['public-prompt', creator.id, currentSlug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('prompts')
+        .select('*')
+        .eq('slug', currentSlug)
+        .eq('creator_id', creator.id)
+        .eq('status', 'published')
+        .single()
+      
+      if (error || !data) throw new Error(error?.message || 'Prompt not found')
+      return data as Prompt
+    },
+    initialData: currentSlug === initialPrompt.slug ? initialPrompt : undefined,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+
+  // ─── Query for Related Prompts (Updates when currentPrompt changes) ───
+  const { data: dynamicRelatedData } = useQuery({
+    queryKey: ['related-prompts', creator.id, currentPrompt?.id],
+    queryFn: async () => {
+      if (!currentPrompt?.id) return []
+      const { data, error } = await supabase
+        .from('prompts')
+        .select('id, title, slug, ai_tool, output_type, thumbnail_url')
+        .eq('creator_id', creator.id)
+        .eq('status', 'published')
+        .neq('id', currentPrompt.id) // Exclude current prompt
+        .limit(6)
+      
+      return (data || []) as RelatedPromptType[]
+    },
+    initialData: currentPrompt?.id === initialPrompt.id ? relatedData : undefined,
+    enabled: !!currentPrompt?.id,
+    staleTime: 1000 * 60 * 5,
+  })
+
+  // Use the filtered list for rendering
+  const finalRelatedData = useMemo(() => {
+    return (dynamicRelatedData || []).filter(p => p.id !== currentPrompt?.id)
+  }, [dynamicRelatedData, currentPrompt?.id])
+
   const [libraryPrompts, setLibraryPrompts] = useState<Prompt[]>([])
-  const [categories, setCategories] = useState<any[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   const postCount = igUser?.media_count ?? 28
@@ -126,10 +167,10 @@ export default function EnhancedPublicPromptUI({
           .order('created_at', { ascending: false })
 
         if (promptsData && !pError) {
-          setLibraryPrompts(promptsData as any[])
+          setLibraryPrompts(promptsData as unknown as Prompt[])
 
           const categoryIds = [
-            ...new Set(promptsData.map((p: any) => p.category_id).filter(Boolean)),
+            ...new Set(promptsData.map((p) => p.category_id).filter(Boolean)),
           ]
 
           if (categoryIds.length > 0) {
@@ -164,9 +205,9 @@ export default function EnhancedPublicPromptUI({
     return libraryPrompts.filter(p => p.category_id === activeCategory)
   }, [libraryPrompts, activeCategory])
 
-  const handleLibraryPromptClick = async (clickedPrompt: any) => {
+  const handleLibraryPromptClick = async (clickedPrompt: Prompt | RelatedPromptType) => {
     setActiveTab('prompt')
-    await handlePromptClick(clickedPrompt)
+    handlePromptClick(clickedPrompt)
   }
 
   useEffect(() => {
@@ -180,9 +221,12 @@ export default function EnhancedPublicPromptUI({
     }
   }, [])
 
-  const handlePromptClick = async (clickedPrompt: RelatedPromptType) => {
-    setIsLoading(true)
+  const handlePromptClick = (clickedPrompt: RelatedPromptType) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
+    
+    // Update state to trigger useQuery
+    setCurrentSlug(clickedPrompt.slug)
+
     // Update URL without reload
     const newPath = (() => {
       const hostname = window.location.hostname
@@ -194,25 +238,11 @@ export default function EnhancedPublicPromptUI({
       return `/${clickedPrompt.slug}`
     })()
     window.history.pushState(null, '', newPath)
-
-    try {
-      const { data, error } = await supabase
-        .from('prompts')
-        .select('*')
-        .eq('slug', clickedPrompt.slug)
-        .single()
-
-      if (data && !error) {
-        setCurrentPrompt(data as Prompt)
-      }
-    } catch (e) {
-      console.error('Failed to fetch new prompt', e)
-    } finally {
-      setIsLoading(false)
-    }
   }
 
-  const toolColor = AI_TOOL_COLORS[currentPrompt.ai_tool] ?? '#6366f1'
+  if (!currentPrompt) return null
+
+  const toolColor = AI_TOOL_COLORS[currentPrompt.ai_tool.split(',')[0].trim()] ?? '#6366f1'
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] pb-20 text-white select-none relative overflow-hidden">
@@ -243,7 +273,7 @@ export default function EnhancedPublicPromptUI({
               <span>For Sponsors</span>
             </a>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent z-10" />
+          <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/60 to-transparent z-10" />
           <img
             src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80"
             alt="Cover"
@@ -257,8 +287,8 @@ export default function EnhancedPublicPromptUI({
             {/* Left Column with Avatar, Name, and Info */}
             <div className="flex flex-row items-center gap-4 sm:gap-6 text-left w-full md:w-auto">
               {/* Large Avatar with Verification Badge */}
-              <div className="relative group select-none flex-shrink-0">
-                <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-[#3b82f6] via-[#a855f7] to-[#ec4899] shadow-2xl hover:scale-105 transition-transform duration-500 select-none">
+              <div className="relative group select-none shrink-0">
+                <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-linear-to-tr from-[#3b82f6] via-[#a855f7] to-[#ec4899] shadow-2xl hover:scale-105 transition-transform duration-500 select-none">
                   <div className="w-full h-full rounded-full bg-zinc-950 p-1">
                     {creator.avatar_url ? (
                       <img
@@ -382,7 +412,7 @@ export default function EnhancedPublicPromptUI({
           {/* Tab Content */}
           <div className="relative select-none">
             {activeTab === 'prompt' ? (
-              <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 transition-opacity ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
+              <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 transition-opacity ${isPromptLoading ? 'opacity-50' : 'opacity-100'}`}>
                 <div className="px-5 py-8 md:px-12 text-white">
                   {/* Embedding Section at the very top of prompt detail */}
                   {(igMedia || oEmbedHtml || currentPrompt.video_url) && (
@@ -436,7 +466,7 @@ export default function EnhancedPublicPromptUI({
                   <div className="max-w-2xl mx-auto">
                     {relatedData && relatedData.length > 0 && (
                       <RelatedPrompts
-                        prompts={relatedData}
+                        prompts={finalRelatedData}
                         subdomain={creator.subdomain}
                         onPromptClick={handlePromptClick}
                       />
@@ -487,7 +517,7 @@ export default function EnhancedPublicPromptUI({
                 ) : (
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-in fade-in duration-500">
                     {filteredLibraryPrompts.map(p => {
-                      const toolColor = AI_TOOL_COLORS[p.ai_tool] ?? '#6366f1'
+                      const toolColor = AI_TOOL_COLORS[p.ai_tool.split(',')[0].trim()] ?? '#6366f1'
                       const gate = GATE_LABELS[p.gate_type] ?? GATE_LABELS.open
 
                       return (
@@ -509,7 +539,7 @@ export default function EnhancedPublicPromptUI({
                                 <Sparkles className="w-10 h-10 text-white/20" />
                               </div>
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/45 to-transparent z-10" />
+                            <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/45 to-transparent z-10" />
                           </div>
 
                           {/* Badges on top */}
@@ -558,7 +588,7 @@ export default function EnhancedPublicPromptUI({
                                 </span>
                               </div>
 
-                              <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-white text-zinc-950 font-sans font-bold text-xs shadow-lg group-hover:scale-105 transition-all duration-500 hover:bg-white/90 flex-shrink-0 select-none">
+                              <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-white text-zinc-950 font-sans font-bold text-xs shadow-lg group-hover:scale-105 transition-all duration-500 hover:bg-white/90 shrink-0 select-none">
                                 <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950" />
                               </div>
                             </div>
@@ -600,7 +630,7 @@ export default function EnhancedPublicPromptUI({
               <pre className="text-zinc-300">
                 {JSON.stringify({
                   activeTab,
-                  isLoading,
+                  isLoading: isPromptLoading,
                   hasIgUser: !!igUser,
                   hasIgMedia: !!igMedia,
                   hasOEmbed: !!oEmbedHtml

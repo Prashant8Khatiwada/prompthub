@@ -48,7 +48,7 @@ export interface Prompt {
   video_url: string | null
   embed_html: string | null
   thumbnail_url: string | null
-  ai_tool: AiTool
+  ai_tool: string
   output_type: OutputType
   gate_type: GateType
   price: number | null
