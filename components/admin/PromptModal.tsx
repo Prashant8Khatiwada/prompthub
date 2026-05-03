@@ -7,6 +7,7 @@ import PromptForm from './PromptForm'
 interface Props {
   isOpen: boolean
   onClose: () => void
+  promptToEdit?: any
 }
 
 interface NewPromptItem {
@@ -22,7 +23,7 @@ interface Category {
   name: string
 }
 
-export default function PromptModal({ isOpen, onClose }: Props) {
+export default function PromptModal({ isOpen, onClose, promptToEdit }: Props) {
   const [mode, setMode] = useState<'single' | 'multiple'>('single')
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState('')
@@ -188,12 +189,16 @@ export default function PromptModal({ isOpen, onClose }: Props) {
       
       {/* Modal */}
       <div className="relative w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300">
-        {/* Header */}
+         {/* Header */}
         <div className="p-6 border-b border-zinc-800 flex flex-col gap-4 sticky top-0 bg-zinc-900 z-10 select-none">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-bold text-white tracking-tight">Add New Prompt</h3>
-              <p className="text-zinc-500 text-xs mt-1">Fill in the details below to publish your creation.</p>
+              <h3 className="text-xl font-bold text-white tracking-tight">
+                {promptToEdit ? 'Edit Prompt' : 'Add New Prompt'}
+              </h3>
+              <p className="text-zinc-500 text-xs mt-1">
+                {promptToEdit ? 'Make changes to your existing creation.' : 'Fill in the details below to publish your creation.'}
+              </p>
             </div>
             <button 
               onClick={onClose}
@@ -203,26 +208,30 @@ export default function PromptModal({ isOpen, onClose }: Props) {
             </button>
           </div>
 
-          {/* Creation Mode Tabs Toggle */}
-          <div className="flex bg-zinc-950 p-1 border border-zinc-800/80 rounded-xl w-full max-w-xs gap-1 select-none">
-            <button
-              onClick={() => setMode('single')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${mode === 'single' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              Single
-            </button>
-            <button
-              onClick={() => setMode('multiple')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${mode === 'multiple' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              Add Multiple
-            </button>
-          </div>
+          {/* Creation Mode Tabs Toggle (only for adding) */}
+          {!promptToEdit && (
+            <div className="flex bg-zinc-950 p-1 border border-zinc-800/80 rounded-xl w-full max-w-xs gap-1 select-none">
+              <button
+                onClick={() => setMode('single')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${mode === 'single' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                Single
+              </button>
+              <button
+                onClick={() => setMode('multiple')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${mode === 'multiple' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                Add Multiple
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
-          {mode === 'single' ? (
+          {promptToEdit ? (
+            <PromptForm defaultValues={promptToEdit} promptId={promptToEdit.id} onSuccess={onClose} />
+          ) : mode === 'single' ? (
             <PromptForm onSuccess={onClose} />
           ) : (
             <form onSubmit={handleSubmitAll} className="space-y-6 select-none">

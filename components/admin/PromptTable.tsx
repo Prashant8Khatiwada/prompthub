@@ -15,6 +15,7 @@ import {
   Globe
 } from 'lucide-react'
 import type { Prompt } from '@/types'
+import PromptModal from './PromptModal'
 
 interface PromptWithCategory extends Prompt {
   categories?: {
@@ -49,6 +50,7 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
+  const [editingPrompt, setEditingPrompt] = useState<any | null>(null)
 
   const siteUrl = (slug: string) => `/${subdomain}/${slug}`
 
@@ -168,14 +170,17 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
                           className="fixed inset-0 z-10" 
                           onClick={() => setOpenDropdownId(null)}
                         />
-                        <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-20 py-1 overflow-hidden animate-in fade-in zoom-in duration-200">
-                          <Link
-                            href={`/admin/prompts/${p.id}`}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
+                         <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-20 py-1 overflow-hidden animate-in fade-in zoom-in duration-200">
+                          <button
+                            onClick={() => {
+                              setEditingPrompt(p)
+                              setOpenDropdownId(null)
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
                           >
                             <Edit2 size={16} />
                             <span>Edit Prompt</span>
-                          </Link>
+                          </button>
                           
                           <button
                             onClick={() => {
@@ -212,6 +217,17 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
           ))}
         </tbody>
       </table>
+
+      {editingPrompt && (
+        <PromptModal 
+          isOpen={true} 
+          onClose={() => {
+            setEditingPrompt(null)
+            router.refresh()
+          }} 
+          promptToEdit={editingPrompt} 
+        />
+      )}
     </div>
   )
 }
