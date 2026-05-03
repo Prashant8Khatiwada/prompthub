@@ -272,7 +272,7 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
               <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto select-none">
                 <button
                   onClick={() => setActiveCategory(null)}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${activeCategory === null
+                  className={`px-5 py-2.5 rounded-md sm:rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${activeCategory === null
                     ? 'bg-blue-600/10 border-blue-500/50 text-blue-400 font-bold'
                     : 'bg-zinc-900/40 border-white/5 text-white/40 hover:text-white hover:border-white/15'
                     }`}
@@ -286,7 +286,7 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                     <button
                       key={cat.id}
                       onClick={() => setActiveCategory(isActive ? null : cat.id)}
-                      className={`px-5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${isActive
+                      className={`px-5 py-2.5 rounded-md sm:rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${isActive
                         ? 'bg-blue-600/10 border-blue-500/50 text-blue-400 font-bold'
                         : 'bg-zinc-900/40 border-white/5 text-white/40 hover:text-white hover:border-white/15'
                         }`}
@@ -307,87 +307,125 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-in fade-in duration-500">
-                {filteredPrompts.map(prompt => {
-                  const toolColor = AI_TOOL_COLORS[prompt.ai_tool] ?? '#6366f1'
-                  const gate = GATE_LABELS[prompt.gate_type] ?? GATE_LABELS.open
-                  const href = promptUrl(prompt.slug)
+                {(() => {
+                  const items = []
+                  const isAdsEnabled = creator.ads_enabled !== false // Default to true if undefined
+                  const frequency = creator.ad_frequency || 4
+                  const hasPageAd = adPlacements.some(p => p.position === 'creator_page')
+                  let adsInjected = 0
+                  
+                  for (let i = 0; i < filteredPrompts.length; i++) {
+                    const prompt = filteredPrompts[i]
+                    const toolColor = AI_TOOL_COLORS[prompt.ai_tool] ?? '#6366f1'
+                    const gate = GATE_LABELS[prompt.gate_type] ?? GATE_LABELS.open
+                    const href = promptUrl(prompt.slug)
 
-                  return (
-                    <Link
-                      href={href}
-                      key={prompt.id}
-                      className="group relative h-[320px] sm:h-[440px] rounded-[32px] sm:rounded-[36px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-4 sm:p-7 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
-                    >
-                      {/* Background immersive image with darker glass overlay */}
-                      <div className="absolute inset-0 z-0 select-none">
-                        {prompt.thumbnail_url ? (
-                          <img
-                            src={prompt.thumbnail_url}
-                            alt={prompt.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-55 group-hover:opacity-70"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-zinc-950 flex items-center justify-center opacity-40">
-                            <Sparkles className="w-10 h-10 text-white/20" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/45 to-transparent z-10" />
-                      </div>
-
-                      {/* Badges on top */}
-                      <div className="relative z-10 flex justify-between items-start">
-                        <span
-                          className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border bg-zinc-900/70 border-white/10 text-white/90 backdrop-blur-md"
-                        >
-                          <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: toolColor }} />
-                          {prompt.ai_tool}
-                        </span>
-
-                        <div className="flex gap-1 sm:gap-2">
-                          {prompt.content_type === 'pdf' && (
-                            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 bg-pink-600/20 text-pink-300 border border-pink-500/30 rounded-full font-mono uppercase tracking-wide">
-                              PDF
-                            </span>
+                    items.push(
+                      <Link
+                        href={href}
+                        key={prompt.id}
+                        className="group relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-7 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
+                      >
+                        {/* Background immersive image with darker glass overlay */}
+                        <div className="absolute inset-0 z-0 select-none">
+                          {prompt.thumbnail_url ? (
+                            <img
+                              src={prompt.thumbnail_url}
+                              alt={prompt.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-55 group-hover:opacity-70"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-zinc-950 flex items-center justify-center opacity-40">
+                              <Sparkles className="w-10 h-10 text-white/20" />
+                            </div>
                           )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/45 to-transparent z-10" />
+                        </div>
+
+                        {/* Badges on top */}
+                        <div className="relative z-10 flex justify-between items-start">
                           <span
-                            className="text-[8px] sm:text-[9px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-mono uppercase tracking-wide"
-                            style={{ background: `${gate.color}22`, color: gate.color, border: `1px solid ${gate.color}44` }}
+                            className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-full border bg-zinc-900/70 border-white/10 text-white/90 backdrop-blur-md"
                           >
-                            {gate.label}
+                            <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: toolColor }} />
+                            {prompt.ai_tool}
                           </span>
-                        </div>
-                      </div>
 
-                      {/* Content text grouped at bottom */}
-                      <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-2 sm:space-y-4">
-                        <div className="space-y-1 sm:space-y-2 select-none">
-                          <h3 className="text-base sm:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-2">
-                            {prompt.title}
-                          </h3>
-                          {prompt.description && (
-                            <p className="text-[10px] sm:text-xs text-white/45 leading-relaxed line-clamp-2 font-light hidden sm:block">
-                              {prompt.description}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Card footer */}
-                        <div className="w-full flex items-center justify-between border-t border-white/10 pt-2 sm:pt-4 select-none">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] text-zinc-500 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 font-mono">
-                              {OUTPUT_ICONS[prompt.output_type] || <FileText className="w-3.5 h-3.5" />}
-                              {prompt.output_type}
+                          <div className="flex gap-1 sm:gap-2">
+                            {prompt.content_type === 'pdf' && (
+                              <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 bg-pink-600/20 text-pink-300 border border-pink-500/30 rounded-md sm:rounded-full font-mono uppercase tracking-wide">
+                                PDF
+                              </span>
+                            )}
+                            <span
+                              className="text-[8px] sm:text-[9px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-full font-mono uppercase tracking-wide"
+                              style={{ background: `${gate.color}22`, color: gate.color, border: `1px solid ${gate.color}44` }}
+                            >
+                              {gate.label}
                             </span>
                           </div>
+                        </div>
 
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-white text-zinc-950 font-sans font-bold text-xs shadow-lg group-hover:scale-105 transition-all duration-500 hover:bg-white/90 flex-shrink-0 select-none">
-                            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950" />
+                        {/* Content text grouped at bottom */}
+                        <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-2 sm:space-y-4">
+                          <div className="space-y-1 sm:space-y-2 select-none">
+                            <h3 className="text-base sm:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-2">
+                              {prompt.title}
+                            </h3>
+                            {prompt.description && (
+                              <p className="text-[10px] sm:text-xs text-white/45 leading-relaxed line-clamp-2 font-light hidden sm:block">
+                                {prompt.description}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Card footer */}
+                          <div className="w-full flex items-center justify-between border-t border-white/10 pt-2 sm:pt-4 select-none">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] text-zinc-500 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-full bg-zinc-800/80 border border-zinc-700/60 font-mono">
+                                {OUTPUT_ICONS[prompt.output_type] || <FileText className="w-3.5 h-3.5" />}
+                                {prompt.output_type}
+                              </span>
+                            </div>
+
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-md sm:rounded-full bg-white text-zinc-950 font-sans font-bold text-xs shadow-lg group-hover:scale-105 transition-all duration-500 hover:bg-white/90 flex-shrink-0 select-none">
+                              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950" />
+                            </div>
                           </div>
                         </div>
+                      </Link>
+                    )
+
+                    // Inject ad if frequency reached AND we actually have a placement
+                    if (isAdsEnabled && hasPageAd && (i + 1) % frequency === 0 && i !== filteredPrompts.length - 1) {
+                      adsInjected++
+                      items.push(
+                        <div key={`ad-${i}`} className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
+                           <AdBanner 
+                            placements={adPlacements} 
+                            position="creator_page" 
+                            creatorId={creator.id} 
+                          />
+                        </div>
+                      )
+                    }
+                  }
+
+                  // If no ads were injected (small grid) but ads are enabled, show one at the end
+                  if (isAdsEnabled && hasPageAd && adsInjected === 0 && items.length > 0) {
+                    items.push(
+                      <div key="ad-final" className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
+                         <AdBanner 
+                          placements={adPlacements} 
+                          position="creator_page" 
+                          creatorId={creator.id} 
+                        />
                       </div>
-                    </Link>
-                  )
-                })}
+                    )
+                  }
+
+                  return items
+                })()}
               </div>
             )}
           </div>
@@ -397,14 +435,14 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
         {activeTab === 'profile' && (
           <div className="max-w-4xl mx-auto animate-in fade-in duration-500 select-none">
             {igUser ? (
-              <div className="rounded-3xl overflow-hidden border border-white/5 bg-zinc-900/30 backdrop-blur-xl p-2 select-none">
+              <div className="rounded-md sm:rounded-3xl overflow-hidden border border-white/5 bg-zinc-900/30 backdrop-blur-xl p-2 select-none">
                 <InstagramProfile
                   user={igUser}
                   creator={creator}
                 />
               </div>
             ) : (
-              <div className="py-24 flex flex-col items-center justify-center border border-white/5 rounded-3xl bg-zinc-900/30 backdrop-blur-xl max-w-2xl mx-auto p-8 text-center space-y-4 select-none">
+              <div className="py-24 flex flex-col items-center justify-center border border-white/5 rounded-md sm:rounded-3xl bg-zinc-900/30 backdrop-blur-xl max-w-2xl mx-auto p-8 text-center space-y-4 select-none">
                 <Camera className="w-12 h-12 text-zinc-700 animate-pulse" />
                 <h3 className="text-lg font-bold text-white tracking-tight">Instagram profile not connected yet</h3>
                 <p className="text-xs text-zinc-500 font-light leading-relaxed max-w-xs">

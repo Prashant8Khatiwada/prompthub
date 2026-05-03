@@ -1,7 +1,16 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { unstable_cache } from 'next/cache'
 
-export async function getAggregatedStats(supabase: SupabaseClient, userId: string) {
+export interface AnalyticsStats {
+  dailyViews: { date: string; views: number }[]
+  promptStats: { title: string; copies: number; email_captures: number }[]
+  topByViews: { id: string; title: string; slug: string; view_count: number }[]
+  topByConversion: { id: string; title: string; slug: string; view_count: number; conversion_rate: string }[]
+  topCampaigns: { id: string; name: string; status: string; impressions: number; clicks: number }[]
+  recentCaptures: any[]
+}
+
+export async function getAggregatedStats(supabase: SupabaseClient, userId: string): Promise<AnalyticsStats> {
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
@@ -13,7 +22,7 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
 
   const promptIds = prompts?.map(p => p.id) || []
 
-  // 2. Fetch pages for these prompts
+  // 2. Fetch pages for these prompts (Legacy mapping)
   const { data: pages } = await supabase
     .from('pages')
     .select('id, prompt_id')
@@ -21,21 +30,28 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
 
   const pageIds = pages?.map(pg => pg.id) || []
 
-  // 3. Fetch views (last 30 days)
-  const { data: views } = await supabase
+  // 3. Fetch from NEW analytics_events table
+  const { data: newEvents } = await supabase
+    .from('analytics_events')
+    .select('event_type, created_at, prompt_id, campaign_id')
+    .eq('creator_id', userId)
+    .gte('created_at', thirtyDaysAgo.toISOString())
+
+  // 4. Fetch from LEGACY views table
+  const { data: legacyViews } = await supabase
     .from('views')
     .select('created_at, page_id')
     .in('page_id', pageIds)
     .gte('created_at', thirtyDaysAgo.toISOString())
 
-  // 4. Fetch events (copies)
-  const { data: events } = await supabase
+  // 5. Fetch from LEGACY events table (copies)
+  const { data: legacyEvents } = await supabase
     .from('events')
     .select('page_id, type')
     .in('page_id', pageIds)
     .in('type', ['copy', 'prompt_copy'])
 
-  // 5. Fetch email captures
+  // 6. Fetch email captures
   const { data: recentCaptures } = await supabase
     .from('email_captures')
     .select('id, email, captured_at, prompt_id')
@@ -43,9 +59,28 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
     .order('captured_at', { ascending: false })
     .limit(10)
 
+  // ─── COMBINE DATA ───────────────────────────────────────────
+
+  // Map legacy page_id back to prompt_id for uniform processing
+  const pageToPrompt: Record<string, string> = {}
+  pages?.forEach(pg => { pageToPrompt[pg.id] = pg.prompt_id })
+
+  // Unified Views
+  const unifiedViews: { created_at: string; prompt_id: string }[] = [
+    ...(newEvents?.filter(e => e.event_type === 'prompt_view').map(e => ({ created_at: e.created_at, prompt_id: e.prompt_id! })) || []),
+    ...(legacyViews?.map(v => ({ created_at: v.created_at, prompt_id: pageToPrompt[v.page_id] })) || [])
+  ]
+
+  // Unified Copies
+  const unifiedCopies: { prompt_id: string }[] = [
+    ...(newEvents?.filter(e => e.event_type === 'prompt_copy' || e.event_type === 'copy').map(e => ({ prompt_id: e.prompt_id! })) || []),
+    ...(legacyEvents?.map(e => ({ prompt_id: pageToPrompt[e.page_id] })) || [])
+  ]
+
   // Daily Views (Group by date)
   const dailyViewsMap: Record<string, number> = {}
-  views?.forEach(v => {
+  unifiedViews.forEach(v => {
+    if (!v.created_at) return
     const date = new Date(v.created_at).toISOString().split('T')[0]
     dailyViewsMap[date] = (dailyViewsMap[date] || 0) + 1
   })
@@ -63,29 +98,26 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
 
   // Engagement per Prompt
   const promptStats = prompts?.map(p => {
-    const promptPageIds = pages?.filter(pg => pg.prompt_id === p.id).map(pg => pg.id) || []
-    const copies = events?.filter(e => promptPageIds.includes(e.page_id)).length || 0
-    const captures = recentCaptures?.filter(ec => ec.prompt_id === p.id).length || 0
+    const pCopies = unifiedCopies.filter(e => e.prompt_id === p.id).length
+    const pCaptures = recentCaptures?.filter(ec => ec.prompt_id === p.id).length || 0
     
     return {
       title: p.title,
-      copies,
-      email_captures: captures
+      copies: pCopies,
+      email_captures: pCaptures
     }
   }) || []
 
   // Top Lists
-  // Since we have all views and events in memory for 30 days, we'll use those for rankings
-  const topByViews = prompts?.map(p => {
-    const pPageIds = pages?.filter(pg => pg.prompt_id === p.id).map(pg => pg.id) || []
-    const count = views?.filter(v => pPageIds.includes(v.page_id)).length || 0
+  const topByViews = (prompts?.map(p => {
+    const count = unifiedViews.filter(v => v.prompt_id === p.id).length
     return {
       id: p.id,
       title: p.title,
       slug: p.slug,
       view_count: count
     }
-  }).sort((a, b) => b.view_count - a.view_count).slice(0, 5) || []
+  }) || []).sort((a, b) => b.view_count - a.view_count).slice(0, 5)
 
   const topByConversion = topByViews.map(p => {
     const captures = recentCaptures?.filter(ec => ec.prompt_id === p.id).length || 0
@@ -102,31 +134,17 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
     .select('id, name, status')
     .eq('creator_id', userId)
 
-  let topCampaigns: { id: string; name: string; status: string; impressions?: number; clicks?: number; ctr?: number }[] = []
-  if (topCampaignsData && topCampaignsData.length > 0) {
-    const ids = topCampaignsData.map(c => c.id)
-    const [{ count: impsCount }, { count: clksCount }] = await Promise.all([
-      supabase.from('ad_impressions').select('*', { count: 'exact', head: true }).in('campaign_id', ids),
-      supabase.from('ad_clicks').select('*', { count: 'exact', head: true }).in('campaign_id', ids)
-    ])
-    
-    // Note: The original code was filtering by ID in memory. 
-    // To be perfectly accurate with counts per ID, we'd need separate count queries or a group by.
-    // However, fetching all rows was the main bottleneck.
-    // For now, I'll use a more efficient select that only gets what's needed.
-    const [{ data: imps }, { data: clks }] = await Promise.all([
-      supabase.from('ad_impressions').select('campaign_id').in('campaign_id', ids),
-      supabase.from('ad_clicks').select('campaign_id').in('campaign_id', ids)
-    ])
-    
-    topCampaigns = topCampaignsData.map(c => {
-      return {
-        ...c,
-        impressions: (imps || []).filter(i => i.campaign_id === c.id).length,
-        clicks: (clks || []).filter(clk => clk.campaign_id === c.id).length
-      }
-    }).sort((a, b) => b.clicks - a.clicks).slice(0, 5)
-  }
+  const topCampaigns = (topCampaignsData || []).map(c => {
+    const impressions = newEvents?.filter(e => e.event_type === 'ad_impression' && e.campaign_id === c.id).length || 0
+    const clicks = newEvents?.filter(e => e.event_type === 'ad_click' && e.campaign_id === c.id).length || 0
+    return {
+      id: c.id,
+      name: c.name,
+      status: c.status,
+      impressions,
+      clicks
+    }
+  }).sort((a, b) => b.clicks - a.clicks).slice(0, 5)
 
   return {
     dailyViews,
@@ -134,10 +152,10 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
     topByViews,
     topByConversion,
     topCampaigns,
-    recentCaptures: recentCaptures?.map(c => ({
+    recentCaptures: (recentCaptures || []).map(c => ({
       ...c,
       prompts: prompts?.find(p => p.id === c.prompt_id)
-    })) || []
+    }))
   }
 }
 

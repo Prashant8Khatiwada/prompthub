@@ -95,7 +95,7 @@ export default async function UserProfilePage({ params }: Params) {
   const now = new Date().toISOString()
   const { data: rawPlacements } = await adminClient
     .from('ad_placements')
-    .select('id, position, is_global, campaign:ad_campaigns(*)')
+    .select('id, position, is_global, creator_id, campaign:ad_campaigns(*)')
     .eq('position', 'creator_page')
     .or(`is_global.eq.true,creator_id.eq.${creator.id}`) // Assuming placements might be specific to creator
 

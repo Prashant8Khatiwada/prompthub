@@ -110,7 +110,7 @@ export default function SettingsForm({ defaultValues, section }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Handle</label>
+              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Handle (Public Username)</label>
               <input
                 type="text"
                 value={formData.handle || ''}
@@ -128,6 +128,48 @@ export default function SettingsForm({ defaultValues, section }: Props) {
               onChange={e => setFormData(prev => ({ ...prev, bio: e.target.value }))}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none resize-none"
             />
+          </div>
+
+          <div className="pt-6 border-t border-zinc-800/50">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                <span className="text-xs font-bold">ADS</span>
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">Discovery Hub Ads</h4>
+                <p className="text-[10px] text-zinc-500">Inject advertisements into your profile grid.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-6 max-w-sm">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
+                <div className="space-y-0.5">
+                  <label className="text-xs font-semibold text-white uppercase tracking-wider">Enable Ads</label>
+                  <p className="text-[10px] text-zinc-500">Show/hide ads on your profile.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, ads_enabled: !prev.ads_enabled }))}
+                  className={`w-10 h-6 rounded-full transition-colors relative ${formData.ads_enabled ? 'bg-indigo-600' : 'bg-zinc-700'}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${formData.ads_enabled ? 'left-5' : 'left-1'}`} />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Ad Frequency (Every X items)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={formData.ad_frequency || 4}
+                  onChange={e => setFormData(prev => ({ ...prev, ad_frequency: parseInt(e.target.value) || 4 }))}
+                  disabled={!formData.ads_enabled}
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none disabled:opacity-50"
+                />
+                <p className="text-[10px] text-zinc-500">Set to 2 to show an ad after every 2 prompts.</p>
+              </div>
+            </div>
           </div>
         </>
       )}
