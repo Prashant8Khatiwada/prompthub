@@ -2,15 +2,40 @@
 
 import React, { useState } from 'react'
 
+import { useEffect } from 'react'
+
 export default function RisingCreatorsSection() {
   const [activeCreator, setActiveCreator] = useState(0)
-
-  const risingCreators = [
+  const [risingCreators, setRisingCreators] = useState<any[]>([
     { name: 'Aasma Shrestha', niche: 'Midjourney Artist', handle: '@aasma_visuals', metrics: '120k+ impressions', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80' },
     { name: 'Milan Ray', niche: 'Claude Workflows', handle: '@milan_designs', metrics: '45k+ direct reach', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80' },
     { name: 'David Cern', niche: 'ChatGPT Prompts', handle: '@david_cosmos', metrics: '80k+ direct reads', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80' },
     { name: 'Sarah Kim', niche: 'Stable Diffusion', handle: '@sarah_arts', metrics: '150k+ clicks', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80' },
-  ]
+  ])
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/platforms')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.creators && data.creators.length > 0) {
+            const mapped = data.creators.slice(0, 4).map((c: any) => ({
+              name: c.name,
+              niche: c.bio || 'Prompts Creator',
+              handle: c.handle || `@${c.subdomain}`,
+              metrics: c.metrics || '100k+ impressions',
+              image: c.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
+            }))
+            setRisingCreators(mapped)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load rising creators', err)
+      }
+    }
+    fetchData()
+  }, [])
 
   return (
     <section id="rising-creators" className="py-36 px-6 bg-transparent select-none relative overflow-hidden group">

@@ -167,6 +167,12 @@ export default function EnhancedPublicPromptUI({
                     alt={creator.name}
                     className="w-full h-full rounded-full object-cover border border-white/10 select-none"
                   />
+                ) : igUser?.profile_picture_url ? (
+                  <img
+                    src={igUser.profile_picture_url}
+                    alt={creator.name}
+                    className="w-full h-full rounded-full object-cover border border-white/10 select-none"
+                  />
                 ) : (
                   <div
                     className="w-full h-full rounded-full flex items-center justify-center text-2xl md:text-3xl font-black font-sans tracking-tight select-none"

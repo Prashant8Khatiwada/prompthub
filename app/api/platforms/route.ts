@@ -15,10 +15,27 @@ export async function GET() {
 
   // Fix null avatar_url directly in API
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const creators = (creatorsRes.data || []).map((c: any) => ({
-    ...c,
-    avatar_url: (c as Creator).avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
-  }))
+  const rawCreators = creatorsRes.data || []
+  const creators = await Promise.all(
+    rawCreators.map(async (c: any) => {
+      if (c.avatar_url) {
+        return c
+      }
+      try {
+        const { fetchInstagramUser } = await import('@/lib/instagram')
+        const igUser = await fetchInstagramUser(c.id)
+        if (igUser?.profile_picture_url) {
+          return { ...c, avatar_url: igUser.profile_picture_url }
+        }
+      } catch (e) {
+        console.error('Failed to fetch fallback instagram picture', e)
+      }
+      return {
+        ...c,
+        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
+      }
+    })
+  )
 
   return NextResponse.json({
     categories: categoriesRes.data || [],

@@ -19,11 +19,15 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   // Find creator by subdomain OR handle
   const { data: creator } = await supabase
     .from('creators')
-    .select('name, handle, bio, avatar_url, subdomain')
+    .select('id, name, handle, bio, avatar_url, subdomain')
     .or(`subdomain.eq.${subdomain},handle.eq.${subdomain}`)
     .single()
 
   if (!creator) return { title: 'Creator Not Found' }
+
+  // Fetch Instagram data for avatar fallback
+  const igUser = await fetchInstagramUser(creator.id)
+  const avatarUrl = creator.avatar_url || igUser?.profile_picture_url
 
   const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'prompthub.app'
   const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
@@ -34,7 +38,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     openGraph: {
       title: `${creator.name} on PromptHub`,
       description: creator.bio ?? `Browse AI prompts by ${creator.name}.`,
-      images: creator.avatar_url ? [{ url: creator.avatar_url }] : [],
+      images: avatarUrl ? [{ url: avatarUrl }] : [],
       type: 'profile',
       url: `https://${baseDomain}/${creator.handle || creator.subdomain}`,
     },
@@ -42,7 +46,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       card: 'summary',
       title: `${creator.name} on PromptHub`,
       description: creator.bio ?? `Browse AI prompts by ${creator.name}.`,
-      images: creator.avatar_url ? [creator.avatar_url] : [],
+      images: avatarUrl ? [avatarUrl] : [],
     },
   }
 }
