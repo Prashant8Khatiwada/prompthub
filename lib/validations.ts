@@ -15,6 +15,8 @@ export const promptSchema = z.object({
   thumbnail_url: z.string().url().optional().nullable().or(z.literal('')),
   status: z.enum(['draft', 'published']),
   featured: z.boolean().default(false),
+  content_type: z.enum(['prompt', 'pdf']).default('prompt'),
+  pdf_url: z.string().url().optional().nullable().or(z.literal('')),
 })
 
 export const emailCaptureSchema = z.object({
