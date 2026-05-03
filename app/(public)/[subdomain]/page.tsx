@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const igUser = await fetchInstagramUser(creator.id)
   const avatarUrl = creator.avatar_url || igUser?.profile_picture_url
 
-  const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'prompthub.app'
+  const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
   const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
 
   return {

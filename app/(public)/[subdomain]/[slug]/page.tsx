@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   const title = `${prompt.title} by ${creator.name}`
   const description = prompt.description ?? `${prompt.ai_tool} prompt by ${creator.name}`
-  const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'prompthub.app'
+  const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
   const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
 
   return {

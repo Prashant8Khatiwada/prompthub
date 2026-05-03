@@ -100,8 +100,9 @@ export default function EnhancedPublicPromptUI({
     // Update URL without reload
     const newPath = (() => {
       const hostname = window.location.hostname
-      const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN?.replace(/^https?:\/\//, '') || 'prompthub.app'
-      if (hostname === baseDomain || hostname === 'localhost' || hostname === '127.0.0.1') {
+      const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN?.replace(/^https?:\/\//, '') || 'creatopedia.tech'
+      const isSubdomain = hostname.startsWith(`${creator.subdomain}.`)
+      if (hostname === baseDomain || hostname === 'localhost' || hostname === '127.0.0.1' || !isSubdomain) {
         return `/${creator.subdomain}/${clickedPrompt.slug}`
       }
       return `/${clickedPrompt.slug}`

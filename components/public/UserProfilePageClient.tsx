@@ -85,15 +85,16 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
     return prompts.filter(p => p.category_id === activeCategory)
   }, [prompts, activeCategory])
 
-  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'prompthub.app'
+  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
 
   const promptUrl = (slug: string) => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname
       const cleanBaseDomain = baseDomain.replace(/^https?:\/\//, '')
+      const isSubdomain = hostname.startsWith(`${creator.subdomain}.`)
 
       // If we are on the main domain (or localhost), we use /subdomain/slug
-      if (hostname === cleanBaseDomain || hostname === 'localhost' || hostname === '127.0.0.1') {
+      if (hostname === cleanBaseDomain || hostname === 'localhost' || hostname === '127.0.0.1' || !isSubdomain) {
         return `/${creator.subdomain}/${slug}`
       }
 
