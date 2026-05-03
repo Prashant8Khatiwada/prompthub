@@ -14,12 +14,22 @@ import InstagramProfile from '@/components/public/InstagramProfile'
 import InstagramFeed from '@/components/public/InstagramFeed'
 import PublicProfileTabs from '@/components/public/PublicProfileTabs'
 import InstagramView from '@/components/public/InstagramView'
+import { AdPlacementPosition } from '@/types'
+import { AdPlacementData } from '@/components/public/AdBanner'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const revalidate = 3600 // 1 hour
 
 interface Params {
   params: Promise<{ subdomain: string; slug: string }>
+}
+
+interface AdPlacement extends Omit<AdPlacementData, 'position'> {
+  position: AdPlacementPosition
+  category_id?: string | null
+  campaign: AdPlacementData['campaign'] & {
+    starts_at?: string | null
+    ends_at?: string | null
+  }
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
@@ -64,38 +74,23 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 import EnhancedPublicPromptUI from '@/components/public/EnhancedPublicPromptUI'
 
+import { getCachedCreator, getCachedPrompt, getCachedRelatedPrompts } from '@/lib/data/public-prompts'
+
 export default async function PublicPromptPage({ params }: Params) {
   const { subdomain, slug } = await params
-  const supabase = await createClient()
 
-  // 1. Fetch creator by subdomain
-  const { data: creator } = await supabase
-    .from('creators').select('*').eq('subdomain', subdomain).single()
+  // 1. Fetch creator by subdomain (Cached)
+  const creator = await getCachedCreator(subdomain)
   if (!creator) notFound()
 
-  // 2. Fetch published prompt
-  const { data: prompt, error: promptError } = await supabase
-    .from('prompts').select('*')
-    .eq('creator_id', creator.id)
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .single()
+  // 2. Fetch published prompt (Cached)
+  const prompt = await getCachedPrompt(creator.id, slug)
+  if (!prompt) notFound()
 
-  if (promptError || !prompt) {
-    console.error('PROMPT FETCH ERROR:', { subdomain, slug, error: promptError })
-    notFound()
-  }
+  console.log('PROMPT FETCHED (Possibly Cached):', { id: prompt.id, title: prompt.title })
 
-  console.log('PROMPT FETCHED:', { id: prompt.id, title: prompt.title, gate_type: prompt.gate_type })
-
-  // 3. Fetch related prompts (up to 3, excluding current)
-  const { data: related } = await supabase
-    .from('prompts')
-    .select('id,title,slug,ai_tool,output_type,thumbnail_url')
-    .eq('creator_id', creator.id)
-    .eq('status', 'published')
-    .neq('id', prompt.id)
-    .limit(3)
+  // 3. Fetch related prompts (Cached)
+  const related = await getCachedRelatedPrompts(creator.id, prompt.id)
 
   const isRawHtml = !!prompt.embed_html || prompt.video_url?.trim().startsWith('<')
   const oEmbedHtml = prompt.embed_html || (prompt.video_url?.trim().startsWith('<')
@@ -149,14 +144,15 @@ export default async function PublicPromptPage({ params }: Params) {
     `)
     .or(filters.join(','))
 
-  const placements = (rawPlacements ?? [])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((p: any) => ({
-      ...p,
-      campaign: Array.isArray(p.campaign) ? p.campaign[0] : p.campaign
-    }))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((p: any) => {
+  const placements: AdPlacement[] = (rawPlacements ?? [])
+    .map((p) => {
+      const raw = p as any
+      return {
+        ...raw,
+        campaign: Array.isArray(raw.campaign) ? raw.campaign[0] : raw.campaign
+      } as AdPlacement
+    })
+    .filter((p) => {
       const cam = p.campaign
       if (!cam || cam.status !== 'active') return false
       if (cam.starts_at && cam.starts_at > now) return false
@@ -181,16 +177,16 @@ export default async function PublicPromptPage({ params }: Params) {
         igFeed={igFeed}
         relatedData={related ?? []}
         adAbovePrompt={
-          placements.some((p: any) => p.position === 'above_prompt') && (
+          placements.some((p: AdPlacement) => p.position === 'above_prompt') && (
             <AdBanner placements={placements} position="above_prompt" promptId={prompt.id} creatorId={creator.id} />
           )
         }
         adBelowPrompt={
-          placements.some((p: any) => p.position === 'below_prompt') && (
+          placements.some((p: AdPlacement) => p.position === 'below_prompt') && (
             <AdBanner placements={placements} position="below_prompt" promptId={prompt.id} creatorId={creator.id} />
           )
         }
-        adPopupPlacements={placements.filter((p: any) => p.position === 'popup')}
+        adPopupPlacements={placements.filter((p: AdPlacement) => p.position === 'popup')}
         oEmbedHtml={oEmbedHtml}
       />
     </main>
