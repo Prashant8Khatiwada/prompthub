@@ -26,12 +26,9 @@ export interface InstagramUser {
   website?: string
 }
 
-// Memory caching for performance optimization and avoiding heap out of memory
-const igUserCache = new Map<string, { data: InstagramUser | null; expiresAt: number }>()
-const igFeedCache = new Map<string, { data: InstagramMedia[]; expiresAt: number }>()
-const igMediaCache = new Map<string, { data: InstagramMedia | null; expiresAt: number }>()
+import { unstable_cache } from 'next/cache'
 
-const CACHE_TTL = 1000 * 60 * 5 // 5 minutes cache
+const CACHE_TTL = 300 // 5 minutes in seconds
 
 async function getCreatorToken(creatorId: string) {
   console.log(`[Instagram] Fetching token for creator: ${creatorId}`)
@@ -62,116 +59,74 @@ async function getCreatorToken(creatorId: string) {
   }
 }
 
-export async function fetchInstagramUser(creatorId?: string): Promise<InstagramUser | null> {
+async function fetchInstagramUserRaw(creatorId?: string): Promise<InstagramUser | null> {
   if (!creatorId) return null
 
-  // 1. Check in-memory cache
-  const now = Date.now()
-  const cached = igUserCache.get(creatorId)
-  if (cached && cached.expiresAt > now) {
-    console.log(`[Instagram] Returning cached user info for ${creatorId}`)
-    return cached.data
-  }
-
   const auth = await getCreatorToken(creatorId)
-  if (!auth) {
-    // Cache failures for a shorter time to avoid spamming the DB
-    igUserCache.set(creatorId, { data: null, expiresAt: now + CACHE_TTL / 5 })
-    return null
-  }
+  if (!auth) return null
 
   try {
     console.log(`[Instagram] Fetching user info from Graph API for ${auth.igId}...`)
     const res = await fetch(`https://graph.facebook.com/v19.0/${auth.igId}?fields=id,username,name,biography,followers_count,follows_count,media_count,profile_picture_url,website&access_token=${auth.token}`)
     
     if (!res.ok) {
-      const errData = await res.json()
-      console.error(`[Instagram] API Error:`, errData)
-      
       console.log(`[Instagram] Retrying with graph.instagram.com/me...`)
       const res2 = await fetch(`https://graph.instagram.com/me?fields=id,username,account_type,media_count,biography,followers_count,follows_count,profile_picture_url,name,website&access_token=${auth.token}`)
-      if (!res2.ok) {
-        igUserCache.set(creatorId, { data: null, expiresAt: now + CACHE_TTL / 5 })
-        return null
-      }
-      const data2 = await res2.json()
-      igUserCache.set(creatorId, { data: data2 as InstagramUser, expiresAt: now + CACHE_TTL })
-      return data2 as InstagramUser
+      if (!res2.ok) return null
+      return await res2.json() as InstagramUser
     }
     
-    const data = await res.json()
-    igUserCache.set(creatorId, { data: data as InstagramUser, expiresAt: now + CACHE_TTL })
-    return data as InstagramUser
+    return await res.json() as InstagramUser
   } catch (error) {
     console.error('[Instagram] Error fetching Instagram user:', error)
-    igUserCache.set(creatorId, { data: null, expiresAt: now + CACHE_TTL / 5 })
     return null
   }
 }
 
-export async function fetchInstagramFeed(creatorId?: string, limit: number = 100): Promise<InstagramMedia[]> {
+export const fetchInstagramUser = (creatorId?: string) => 
+  unstable_cache(
+    async () => fetchInstagramUserRaw(creatorId),
+    ['ig-user', creatorId || 'none'],
+    { revalidate: CACHE_TTL, tags: [`ig-user-${creatorId}`] }
+  )()
+
+async function fetchInstagramFeedRaw(creatorId?: string, limit: number = 100): Promise<InstagramMedia[]> {
   if (!creatorId) return []
 
-  // 1. Check in-memory cache
-  const now = Date.now()
-  const cached = igFeedCache.get(creatorId)
-  if (cached && cached.expiresAt > now) {
-    console.log(`[Instagram] Returning cached feed for ${creatorId}`)
-    return cached.data
-  }
-
   const auth = await getCreatorToken(creatorId)
-  if (!auth) {
-    igFeedCache.set(creatorId, { data: [], expiresAt: now + CACHE_TTL / 5 })
-    return []
-  }
+  if (!auth) return []
 
   try {
     console.log(`[Instagram] Fetching feed for ${auth.igId}...`)
     const res = await fetch(`https://graph.facebook.com/v19.0/${auth.igId}/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username,like_count,comments_count&limit=${limit}&access_token=${auth.token}`)
     
     if (!res.ok) {
-      const errData = await res.json()
-      console.error(`[Instagram] Feed API Error:`, errData)
-      
       const res2 = await fetch(`https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username,like_count,comments_count&limit=${limit}&access_token=${auth.token}`)
-      if (!res2.ok) {
-        igFeedCache.set(creatorId, { data: [], expiresAt: now + CACHE_TTL / 5 })
-        return []
-      }
+      if (!res2.ok) return []
       const data2 = await res2.json()
-      const dataOut = data2.data || []
-      igFeedCache.set(creatorId, { data: dataOut, expiresAt: now + CACHE_TTL })
-      return dataOut
+      return data2.data || []
     }
     
     const data = await res.json()
-    const dataOut = data.data || []
-    igFeedCache.set(creatorId, { data: dataOut, expiresAt: now + CACHE_TTL })
-    return dataOut
+    return data.data || []
   } catch (error) {
     console.error('[Instagram] Error fetching Instagram feed:', error)
-    igFeedCache.set(creatorId, { data: [], expiresAt: now + CACHE_TTL / 5 })
     return []
   }
 }
 
-export async function fetchInstagramMedia(url: string, creatorId?: string): Promise<InstagramMedia | null> {
+export const fetchInstagramFeed = (creatorId?: string, limit: number = 100) => 
+  unstable_cache(
+    async () => fetchInstagramFeedRaw(creatorId, limit),
+    ['ig-feed', creatorId || 'none', String(limit)],
+    { revalidate: CACHE_TTL, tags: [`ig-feed-${creatorId}`] }
+  )()
+
+async function fetchInstagramMediaRaw(url: string, creatorId?: string): Promise<InstagramMedia | null> {
   if (!creatorId) return null
 
-  const cacheKey = `${creatorId}:${url}`
-  const now = Date.now()
-  const cached = igMediaCache.get(cacheKey)
-  if (cached && cached.expiresAt > now) {
-    console.log(`[Instagram] Returning cached media for ${cacheKey}`)
-    return cached.data
-  }
-
   const auth = await getCreatorToken(creatorId)
-  if (!auth) {
-    igMediaCache.set(cacheKey, { data: null, expiresAt: now + CACHE_TTL / 5 })
-    return null
-  }
+  if (!auth) return null
 
   try {
     const match = url.match(/(?:\/(?:p|reels|reel)\/)([A-Za-z0-9_-]+)/)
@@ -182,25 +137,24 @@ export async function fetchInstagramMedia(url: string, creatorId?: string): Prom
     
     if (!res.ok) {
       const res2 = await fetch(`https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username,like_count,comments_count&access_token=${auth.token}`)
-      if (!res2.ok) {
-        igMediaCache.set(cacheKey, { data: null, expiresAt: now + CACHE_TTL / 5 })
-        return null
-      }
+      if (!res2.ok) return null
       const data2 = await res2.json()
       const media2 = data2.data as InstagramMedia[]
-      const found = media2.find(m => m.permalink.includes(shortcode)) || null
-      igMediaCache.set(cacheKey, { data: found, expiresAt: now + CACHE_TTL })
-      return found
+      return media2.find(m => m.permalink.includes(shortcode)) || null
     }
     
     const data = await res.json()
     const media = data.data as InstagramMedia[]
-    const found = media.find(m => m.permalink.includes(shortcode)) || null
-    igMediaCache.set(cacheKey, { data: found, expiresAt: now + CACHE_TTL })
-    return found
+    return media.find(m => m.permalink.includes(shortcode)) || null
   } catch (error) {
     console.error('[Instagram] Error fetching Instagram media:', error)
-    igMediaCache.set(cacheKey, { data: null, expiresAt: now + CACHE_TTL / 5 })
     return null
   }
 }
+
+export const fetchInstagramMedia = (url: string, creatorId?: string) => 
+  unstable_cache(
+    async () => fetchInstagramMediaRaw(url, creatorId),
+    ['ig-media', creatorId || 'none', url],
+    { revalidate: CACHE_TTL, tags: [`ig-media-${creatorId}`] }
+  )()
