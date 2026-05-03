@@ -309,7 +309,8 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-in fade-in duration-500">
                 {(() => {
                   const items = []
-                  const frequency = creator.ad_frequency || 0
+                  // Default to showing an ad every 4 items if not specified
+                  const frequency = creator.ad_frequency || 4
                   const hasPageAd = adPlacements.some(p => p.position === 'creator_page')
                   
                   for (let i = 0; i < filteredPrompts.length; i++) {
@@ -397,8 +398,8 @@ export default function UserProfilePageClient({ creator, igUser, categories, pro
                     // Inject ad if frequency reached AND we actually have a placement
                     if (hasPageAd && frequency > 0 && (i + 1) % frequency === 0 && i !== filteredPrompts.length - 1) {
                       items.push(
-                        <div key={`ad-${i}`} className="aspect-[3/4.2] sm:h-[440px] flex items-center justify-center">
-                          <AdBanner 
+                        <div key={`ad-${i}`} className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
+                           <AdBanner 
                             placements={adPlacements} 
                             position="creator_page" 
                             creatorId={creator.id} 

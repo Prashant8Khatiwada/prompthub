@@ -37,8 +37,16 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
   const startTimeRef = useRef<number | null>(null)
   const totalViewTimeRef = useRef<number>(0)
 
-  // Find placement for this exact position
-  const placement = placements.find(p => p.position === position)
+  // Find placements for this exact position
+  const validPlacements = placements.filter(p => p.position === position)
+  
+  // Pick one (randomly) and stick with it for the lifetime of this component instance
+  const [placement] = useState<AdPlacementData | null>(() => {
+    const valid = placements.filter(p => p.position === position)
+    if (valid.length === 0) return null
+    const randomIndex = Math.floor(Math.random() * valid.length)
+    return valid[randomIndex]
+  })
 
   useEffect(() => {
     if (!placement) return
