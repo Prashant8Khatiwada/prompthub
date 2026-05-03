@@ -2,6 +2,8 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { promptSchema } from '@/lib/validations'
+import { revalidateTag } from 'next/cache'
+import { Prompt } from '@/types'
 
 export async function GET() {
   const cookieStore = await cookies()
@@ -16,7 +18,7 @@ export async function GET() {
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  return NextResponse.json(data as Prompt[])
 }
 
 export async function POST(req: NextRequest) {
@@ -35,9 +37,12 @@ export async function POST(req: NextRequest) {
     .from('prompts')
     .insert({ ...parsed.data, creator_id: user.id })
     .select()
-    .single()
+    .single<Prompt>()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error || !data) return NextResponse.json({ error: error?.message || 'Failed to create' }, { status: 400 })
+  
+  // Invalidate cache list
+  revalidateTag(`prompts-list-${user.id}`, 'max')
 
   // If published, create page record for analytics
   if (parsed.data.status === 'published') {

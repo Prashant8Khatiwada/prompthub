@@ -56,5 +56,5 @@ export const getCachedRelatedPrompts = (creatorId: string, currentPromptId: stri
       return (data || []) as RelatedPromptType[]
     },
     ['related-prompts', creatorId, currentPromptId],
-    { revalidate: 1 }
+    { revalidate: 3600, tags: [`prompts-list-${creatorId}`] }
   )()
