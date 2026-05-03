@@ -22,6 +22,7 @@ export interface Creator {
   tiktok_api_key?: string | null
   stripe_id: string | null
   plan_tier: PlanTier
+  ad_frequency: number | null
   created_at: string
 }
 

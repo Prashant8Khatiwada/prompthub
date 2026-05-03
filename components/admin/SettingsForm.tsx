@@ -129,6 +129,32 @@ export default function SettingsForm({ defaultValues, section }: Props) {
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none resize-none"
             />
           </div>
+
+          <div className="pt-6 border-t border-zinc-800/50">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                <span className="text-xs font-bold">ADS</span>
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">Discovery Hub Ads</h4>
+                <p className="text-[10px] text-zinc-500">Inject advertisements into your profile grid.</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 max-w-xs">
+              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Ad Frequency (Every X items)</label>
+              <input
+                type="number"
+                min={0}
+                max={10}
+                value={formData.ad_frequency || 0}
+                onChange={e => setFormData(prev => ({ ...prev, ad_frequency: parseInt(e.target.value) || 0 }))}
+                placeholder="0 = Disabled"
+                className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none"
+              />
+              <p className="text-[10px] text-zinc-500">Set to 2 to show an ad after every 2 prompts.</p>
+            </div>
+          </div>
         </>
       )}
 
