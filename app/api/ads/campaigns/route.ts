@@ -7,7 +7,7 @@ import { z } from 'zod'
 const placementSchema = z.object({
   prompt_id: z.string().uuid().nullable().optional(),
   category_id: z.string().uuid().nullable().optional(),
-  position: z.enum(['below_video', 'above_gate', 'below_gate']).default('below_video'),
+  position: z.enum(['above_prompt', 'below_prompt', 'popup', 'creator_page']).default('above_prompt'),
   is_global: z.boolean().default(false),
 })
 
@@ -88,15 +88,19 @@ export async function POST(req: NextRequest) {
   if (error || !campaign) return NextResponse.json({ error: error?.message ?? 'Failed' }, { status: 400 })
 
   // Insert placements
+  let insertedPlacements = []
   if (placements.length > 0) {
-    const { error: placementError } = await adminClient.from('ad_placements').insert(
+    const { data: pData, error: placementError } = await adminClient.from('ad_placements').insert(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       placements.map((p: any) => ({ ...p, campaign_id: campaign.id }))
-    )
+    ).select()
+    
     if (placementError) {
       console.error('Placement error:', placementError.message)
+    } else {
+      insertedPlacements = pData ?? []
     }
   }
 
-  return NextResponse.json(campaign, { status: 201 })
+  return NextResponse.json({ ...campaign, placements: insertedPlacements }, { status: 201 })
 }

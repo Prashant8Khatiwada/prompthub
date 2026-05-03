@@ -1,12 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { CampaignAnalyticsResponse } from '@/lib/analytics/types'
+
+interface CampaignStatsRow {
+  date: string
+  impressions: number
+  unique_impressions: number
+  clicks: number
+  unique_clicks: number
+}
+
+interface JoinedPrompt {
+  title: string
+  slug: string
+}
+
+interface JoinedClient {
+  name: string
+}
 
 interface Params { params: Promise<{ id: string }> }
 
 export async function GET(req: NextRequest, { params }: Params) {
   const { id: campaignId } = await params
-  
+
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
   const { data: { user } } = await supabase.auth.getUser()
@@ -29,46 +47,152 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const { searchParams } = new URL(req.url)
   const rangeParam = searchParams.get('range') || '7d'
-  const days = rangeParam === '30d' ? 30 : rangeParam === '14d' ? 14 : 7
+  const monthParam = searchParams.get('month') // e.g. "2024-03"
 
-  const today = new Date()
-  const currentPeriodStart = new Date(today)
-  currentPeriodStart.setDate(today.getDate() - days)
-  
+  let currentPeriodStart: Date
+  const currentPeriodEnd = monthParam
+    ? new Date(Date.UTC(Number(monthParam.split('-')[0]), Number(monthParam.split('-')[1]), 0, 23, 59, 59))
+    : new Date()
+  const isAllTime = rangeParam === 'all'
+  let days = 7
+
+  if (monthParam) {
+    const [year, month] = monthParam.split('-').map(Number)
+    currentPeriodStart = new Date(Date.UTC(year, month - 1, 1))
+  } else if (isAllTime) {
+    currentPeriodStart = new Date(0) // Beginning of time
+  } else {
+    days = rangeParam === '90d' ? 90 : rangeParam === '30d' ? 30 : rangeParam === '14d' ? 14 : 7
+    currentPeriodStart = new Date()
+    currentPeriodStart.setDate(currentPeriodStart.getDate() - days)
+  }
+
   const previousPeriodStart = new Date(currentPeriodStart)
-  previousPeriodStart.setDate(currentPeriodStart.getDate() - days)
+  if (!isAllTime && !monthParam) {
+    previousPeriodStart.setDate(currentPeriodStart.getDate() - days)
+  }
 
   const currentStartStr = currentPeriodStart.toISOString()
+  const currentEndStr = currentPeriodEnd.toISOString()
   const prevStartStr = previousPeriodStart.toISOString()
-  const todayStr = today.toISOString()
+  const todayStr = new Date().toISOString()
+
+  // 1b. Fetch all prompt IDs associated with this campaign
+  const { data: placements } = await supabase
+    .from('ad_placements')
+    .select('prompt_id, is_global, category_id')
+    .eq('campaign_id', campaignId)
+
+  let promptIdsToQuery: string[] = []
+  const directIds = (placements || []).map(p => p.prompt_id).filter(Boolean) as string[]
+  
+  if (placements?.some(p => p.is_global)) {
+    // If global, fetch all published prompts for this creator
+    const { data: allPrompts } = await supabase.from('prompts').select('id').eq('creator_id', user.id).eq('status', 'published')
+    promptIdsToQuery = (allPrompts || []).map(p => p.id)
+  } else if (placements?.some(p => p.category_id)) {
+    // If category-based, fetch all prompts in those categories
+    const catIds = placements.map(p => p.category_id).filter(Boolean)
+    const { data: catPrompts } = await supabase.from('prompts').select('id').in('category_id', catIds).eq('status', 'published')
+    promptIdsToQuery = Array.from(new Set([...directIds, ...(catPrompts || []).map(p => p.id)]))
+  } else {
+    promptIdsToQuery = directIds
+  }
+
+  const campaignPromptIds = promptIdsToQuery
 
   // 2. Fetch daily stats
-  const [{ data: currentStats }, { data: prevStats }] = await Promise.all([
+  const todayStart = new Date()
+  todayStart.setUTCHours(0, 0, 0, 0)
+  const todayStartStr = todayStart.toISOString()
+
+  // Only include today's live events if the current period includes today
+  const includesToday = currentPeriodEnd >= todayStart
+
+  const [{ data: currentStats }, { data: prevStats }, { data: todayEvents }] = await Promise.all([
     supabase
       .from('campaign_stats_daily')
       .select('*')
       .eq('campaign_id', campaignId)
       .gte('date', currentStartStr)
-      .lte('date', todayStr),
+      .lte('date', currentEndStr),
     supabase
       .from('campaign_stats_daily')
       .select('*')
       .eq('campaign_id', campaignId)
       .gte('date', prevStartStr)
-      .lt('date', currentStartStr)
+      .lt('date', currentStartStr),
+    includesToday ? 
+      supabase
+        .from('analytics_events')
+        .select('event_type, session_id')
+        .eq('campaign_id', campaignId)
+        .gte('created_at', todayStartStr) : 
+      Promise.resolve({ data: [] })
   ])
 
-  const aggregateStats = (data: any[]) => data.reduce((acc, row) => ({
+  const todayRaw = (todayEvents || []).reduce((acc, row) => {
+    if (row.event_type === 'ad_impression') {
+      acc.impressions++
+      acc.unique_imps.add(row.session_id)
+    }
+    if (row.event_type === 'ad_click') {
+      acc.clicks++
+      acc.unique_clicks.add(row.session_id)
+    }
+    return acc
+  }, { impressions: 0, clicks: 0, unique_imps: new Set<string>(), unique_clicks: new Set<string>() } as { impressions: number, clicks: number, unique_imps: Set<string>, unique_clicks: Set<string> })
+
+  const todayStatsRow: CampaignStatsRow = {
+    date: todayStartStr,
+    impressions: todayRaw.impressions,
+    unique_impressions: todayRaw.unique_imps.size,
+    clicks: todayRaw.clicks,
+    unique_clicks: todayRaw.unique_clicks.size
+  }
+
+  // Only add today's live data to stats if we are looking at the current period
+  const combinedStats: CampaignStatsRow[] = includesToday ? [...((currentStats) || []), todayStatsRow] : (currentStats || [])
+
+  const aggregateStats = (data: CampaignStatsRow[]) => data.reduce((acc, row) => ({
     impressions: acc.impressions + (row.impressions || 0),
     unique_impressions: acc.unique_impressions + (row.unique_impressions || 0),
     clicks: acc.clicks + (row.clicks || 0),
     unique_clicks: acc.unique_clicks + (row.unique_clicks || 0)
   }), { impressions: 0, unique_impressions: 0, clicks: 0, unique_clicks: 0 })
 
-  const curr = aggregateStats(currentStats || [])
-  const prev = aggregateStats(prevStats || [])
+  const curr = aggregateStats(combinedStats)
+  const prev = aggregateStats((prevStats) || [])
 
   const calcChange = (c: number, p: number) => p === 0 ? (c > 0 ? 100 : 0) : ((c - p) / p) * 100
+
+  // 2b. Fetch Prompt Views for context (Total traffic of the pages)
+  const [{ data: promptViewsData }, { data: liveViewsData }] = await Promise.all([
+    supabase
+      .from('prompt_stats_daily')
+      .select('prompt_id, views')
+      .in('prompt_id', campaignPromptIds)
+      .gte('date', currentStartStr),
+    supabase
+      .from('analytics_events')
+      .select('prompt_id')
+      .eq('event_type', 'prompt_view')
+      .in('prompt_id', campaignPromptIds)
+      .gte('created_at', todayStartStr)
+  ])
+  
+  // Aggregate views per prompt for breakdown
+  const promptViewsMap: Record<string, number> = {}
+  ;(promptViewsData || []).forEach(row => {
+    promptViewsMap[row.prompt_id] = (promptViewsMap[row.prompt_id] || 0) + (row.views || 0)
+  })
+  ;(liveViewsData || []).forEach(row => {
+    if (row.prompt_id) {
+      promptViewsMap[row.prompt_id] = (promptViewsMap[row.prompt_id] || 0) + 1
+    }
+  })
+
+  const totalPromptViews = Object.values(promptViewsMap).reduce((sum, v) => sum + v, 0)
 
   const summary = {
     impressions: curr.impressions, impressions_change_pct: calcChange(curr.impressions, prev.impressions),
@@ -78,17 +202,20 @@ export async function GET(req: NextRequest, { params }: Params) {
     ctr: curr.impressions > 0 ? (curr.clicks / curr.impressions) * 100 : 0,
     ctr_change_pct: calcChange(curr.impressions > 0 ? (curr.clicks / curr.impressions) * 100 : 0, prev.impressions > 0 ? (prev.clicks / prev.impressions) * 100 : 0),
     frequency: curr.unique_impressions > 0 ? curr.impressions / curr.unique_impressions : 0,
-    frequency_change_pct: calcChange(curr.unique_impressions > 0 ? curr.impressions / curr.unique_impressions : 0, prev.unique_impressions > 0 ? prev.impressions / prev.unique_impressions : 0)
+    frequency_change_pct: calcChange(curr.unique_impressions > 0 ? curr.impressions / curr.unique_impressions : 0, prev.unique_impressions > 0 ? prev.impressions / prev.unique_impressions : 0),
+    total_prompt_views: totalPromptViews // Contextual views
   }
 
   // 3. Daily performance chart data
+  const chartDays = isAllTime ? 30 : (monthParam ? 31 : days) // Limit chart to 30 days for all-time
   const dailyMap: Record<string, { impressions: number, clicks: number }> = {}
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today)
+  
+  for (let i = chartDays - 1; i >= 0; i--) {
+    const d = new Date(currentPeriodEnd)
     d.setDate(d.getDate() - i)
     dailyMap[d.toISOString().split('T')[0]] = { impressions: 0, clicks: 0 }
   }
-  (currentStats || []).forEach(row => {
+  (combinedStats).forEach(row => {
     const d = row.date.split('T')[0]
     if (dailyMap[d]) {
       dailyMap[d].impressions += row.impressions || 0
@@ -103,29 +230,38 @@ export async function GET(req: NextRequest, { params }: Params) {
     .select('prompt_id, impressions, clicks, prompts(title, slug)')
     .eq('campaign_id', campaignId)
     .gte('date', currentStartStr)
+    .lte('date', currentEndStr)
 
-  const placementMap: Record<string, any> = {}
-  ;(placementData || []).forEach(row => {
-    const pId = row.prompt_id || 'unknown'
-    const promptObj = Array.isArray(row.prompts) ? row.prompts[0] : row.prompts
+  const placementMap: Record<string, { prompt_id: string, prompt_title: string, prompt_slug: string, impressions: number, clicks: number, views: number }> = {}
+    ; (placementData || []).forEach(row => {
+      const pId = row.prompt_id || 'unknown'
+      const promptObj = (Array.isArray(row.prompts) ? row.prompts[0] : row.prompts) as unknown as JoinedPrompt | null
 
-    if (!placementMap[pId]) {
-      placementMap[pId] = {
-        prompt_id: pId,
-        prompt_title: (promptObj as any)?.title || 'Global Placement (All Prompts)',
-        prompt_slug: (promptObj as any)?.slug || '',
-        impressions: 0,
-        clicks: 0
+      if (!placementMap[pId]) {
+        placementMap[pId] = {
+          prompt_id: pId,
+          prompt_title: promptObj?.title || 'Global Placement (All Prompts)',
+          prompt_slug: promptObj?.slug || '',
+          impressions: 0,
+          clicks: 0,
+          views: 0
+        }
       }
+      placementMap[pId].impressions += row.impressions || 0
+      placementMap[pId].clicks += row.clicks || 0
+    })
+
+  // Add contextual views to each placement
+  Object.keys(placementMap).forEach(pId => {
+    if (promptViewsMap[pId]) {
+      placementMap[pId].views = promptViewsMap[pId]
     }
-    placementMap[pId].impressions += row.impressions || 0
-    placementMap[pId].clicks += row.clicks || 0
   })
 
-  const placement_breakdown = Object.values(placementMap).map((p: any) => ({
+  const placement_breakdown = Object.values(placementMap).map((p) => ({
     ...p,
     ctr: p.impressions > 0 ? (p.clicks / p.impressions) * 100 : 0
-  })).sort((a: any, b: any) => b.clicks - a.clicks)
+  })).sort((a, b) => b.clicks - a.clicks)
 
   // 5. Raw events for Device, Country, Hourly Heatmap, Timeline
   const { data: rawEvents } = await supabase
@@ -133,46 +269,47 @@ export async function GET(req: NextRequest, { params }: Params) {
     .select('event_type, created_at, device_type, country, prompt_id')
     .eq('campaign_id', campaignId)
     .gte('created_at', currentStartStr)
+    .lte('created_at', currentEndStr)
 
   const deviceMap: Record<string, number> = {}
   const countryMap: Record<string, number> = {}
   const hourlyMap: Record<string, number> = {}
   let totalImpressionsRaw = 0
 
-  const clicksList: any[] = []
+  const clicksList: { timestamp: string, prompt_id: string | null, device: string, country: string }[] = []
 
-  ;(rawEvents || []).forEach(row => {
-    const isImp = row.event_type === 'ad_impression'
-    const isClick = row.event_type === 'ad_click'
+    ; (rawEvents || []).forEach(row => {
+      const isImp = row.event_type === 'ad_impression'
+      const isClick = row.event_type === 'ad_click'
 
-    if (isImp) {
-      totalImpressionsRaw++
-      // Device
-      const device = row.device_type || 'unknown'
-      deviceMap[device] = (deviceMap[device] || 0) + 1
+      if (isImp) {
+        totalImpressionsRaw++
+        // Device
+        const device = row.device_type || 'unknown'
+        deviceMap[device] = (deviceMap[device] || 0) + 1
 
-      // Country
-      const country = row.country || 'Unknown'
-      countryMap[country] = (countryMap[country] || 0) + 1
-    }
+        // Country
+        const country = row.country || 'Unknown'
+        countryMap[country] = (countryMap[country] || 0) + 1
+      }
 
-    if (isClick) {
-      // Heatmap
-      const dateObj = new Date(row.created_at)
-      const dayOfWeek = dateObj.getUTCDay() // 0-6
-      const hourOfDay = dateObj.getUTCHours() // 0-23
-      const key = `${dayOfWeek}-${hourOfDay}`
-      hourlyMap[key] = (hourlyMap[key] || 0) + 1
+      if (isClick) {
+        // Heatmap
+        const dateObj = new Date(row.created_at)
+        const dayOfWeek = dateObj.getUTCDay() // 0-6
+        const hourOfDay = dateObj.getUTCHours() // 0-23
+        const key = `${dayOfWeek}-${hourOfDay}`
+        hourlyMap[key] = (hourlyMap[key] || 0) + 1
 
-      // Timeline
-      clicksList.push({
-        timestamp: row.created_at,
-        prompt_id: row.prompt_id,
-        device: row.device_type || 'unknown',
-        country: row.country || 'Unknown'
-      })
-    }
-  })
+        // Timeline
+        clicksList.push({
+          timestamp: row.created_at,
+          prompt_id: row.prompt_id,
+          device: row.device_type || 'unknown',
+          country: row.country || 'Unknown'
+        })
+      }
+    })
 
   const device_breakdown = Object.entries(deviceMap).map(([device, count]) => ({
     device,
@@ -214,7 +351,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   return NextResponse.json({
     campaign: {
       ...campaign,
-      client_name: (campaign.client as any)?.name || 'Direct'
+      client_name: (campaign.client as unknown as JoinedClient)?.name || 'Direct'
     },
     summary,
     daily,
@@ -223,5 +360,9 @@ export async function GET(req: NextRequest, { params }: Params) {
     country_breakdown,
     hourly_heatmap,
     click_timeline
+  }, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+    }
   })
 }

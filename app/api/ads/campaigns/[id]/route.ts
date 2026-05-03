@@ -7,7 +7,7 @@ import { z } from 'zod'
 const placementSchema = z.object({
   prompt_id: z.string().uuid().nullable().optional(),
   category_id: z.string().uuid().nullable().optional(),
-  position: z.enum(['below_video', 'above_gate', 'below_gate']).default('below_video'),
+  position: z.enum(['above_prompt', 'below_prompt', 'popup', 'creator_page']).default('above_prompt'),
   is_global: z.boolean().default(false),
 })
 
@@ -73,16 +73,22 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (error || !campaign) return NextResponse.json({ error: error?.message ?? 'Not found' }, { status: 400 })
 
   // Replace placements if provided
+  let updatedPlacements = []
   if (placements !== undefined) {
     await adminClient.from('ad_placements').delete().eq('campaign_id', id)
     if (placements.length > 0) {
-      await adminClient.from('ad_placements').insert(
+      const { data: pData } = await adminClient.from('ad_placements').insert(
         placements.map((p) => ({ ...p, campaign_id: id }))
-      )
+      ).select()
+      updatedPlacements = pData ?? []
     }
+  } else {
+    // Fetch existing placements if not updated
+    const { data: pData } = await adminClient.from('ad_placements').select('*').eq('campaign_id', id)
+    updatedPlacements = pData ?? []
   }
 
-  return NextResponse.json(campaign)
+  return NextResponse.json({ ...campaign, ad_placements: updatedPlacements })
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {

@@ -3,17 +3,22 @@
 import { useState } from 'react'
 import SettingsForm from './SettingsForm'
 import type { Creator } from '@/types'
+import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
+import InstagramView from '@/components/public/InstagramView'
 
 interface Props {
   creator: Creator
+  igUser: InstagramUser | null
+  igFeed: InstagramMedia[]
 }
 
-export default function ControlCenter({ creator }: Props) {
-  const [activeTab, setActiveTab] = useState<'profile' | 'integrations'>('profile')
+export default function ControlCenter({ creator, igUser, igFeed }: Props) {
+  const [activeTab, setActiveTab] = useState<'profile' | 'integrations' | 'instagram'>('profile')
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
     { id: 'integrations', label: 'Integrations', icon: '🔌' },
+    { id: 'instagram', label: 'Instagram Profile', icon: '📸' },
   ]
 
   return (
@@ -36,7 +41,7 @@ export default function ControlCenter({ creator }: Props) {
         ))}
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-2xl">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-2xl overflow-hidden">
         {activeTab === 'profile' && (
           <div className="space-y-6">
             <div>
@@ -54,6 +59,34 @@ export default function ControlCenter({ creator }: Props) {
               <p className="text-zinc-500 text-sm">Securely connect your social API keys for automated features.</p>
             </div>
             <SettingsForm defaultValues={creator} section="integrations" />
+          </div>
+        )}
+        {activeTab === 'instagram' && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl font-bold text-white">Instagram Preview</h2>
+              <p className="text-zinc-500 text-sm">Review how your Instagram profile appears to visitors.</p>
+            </div>
+            
+            {igUser ? (
+              <div className="rounded-2xl overflow-hidden -mx-8 md:mx-0 border border-zinc-800">
+                <InstagramView 
+                  user={igUser} 
+                  feed={igFeed} 
+                  creator={creator} 
+                />
+              </div>
+            ) : (
+              <div className="py-20 text-center border-2 border-dashed border-zinc-800 rounded-3xl">
+                <p className="text-zinc-500 mb-4 text-sm font-medium">Your Instagram account is not connected.</p>
+                <button 
+                  onClick={() => setActiveTab('integrations')}
+                  className="text-indigo-400 font-bold hover:text-indigo-300 transition-colors"
+                >
+                  Connect Instagram Now →
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

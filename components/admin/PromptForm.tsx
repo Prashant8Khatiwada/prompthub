@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Link as LinkIcon } from 'lucide-react'
+import { Link as LinkIcon, Sparkles, Loader2 as LoaderIcon, Plus, Trash2 } from 'lucide-react'
 import type { Prompt, Category } from '@/types'
+import InstagramPostPicker, { type InstagramPost } from './InstagramPostPicker'
 
 const AI_TOOLS = ['Midjourney', 'Claude', 'ChatGPT', 'Gemini', 'Runway', 'Pika', 'Kling', 'Veo', 'Other'] as const
 const OUTPUT_TYPES = ['image', 'video', 'text', 'code', 'audio'] as const
@@ -17,6 +18,7 @@ function toSlug(title: string) {
 interface Props {
   defaultValues?: Partial<Prompt>
   promptId?: string
+  onSuccess?: () => void
 }
 
 type FieldErrors = Record<string, string[]>
@@ -24,16 +26,37 @@ type FieldErrors = Record<string, string[]>
 const inputCls = 'w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm'
 const labelCls = 'block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2'
 
-export default function PromptForm({ defaultValues, promptId }: Props) {
+export default function PromptForm({ defaultValues, promptId, onSuccess }: Props) {
   const router = useRouter()
   const isEdit = !!promptId
+
+  const isInitialVariants = (() => {
+    try {
+      if (defaultValues?.content && defaultValues.content.startsWith('[') && defaultValues.content.endsWith(']')) {
+        const parsed = JSON.parse(defaultValues.content)
+        return Array.isArray(parsed) && parsed.length > 0 && parsed.every(v => 'subtitle' in v && 'description' in v)
+      }
+    } catch (e) {}
+    return false
+  })()
+
+  const initialVariants = (() => {
+    try {
+      if (isInitialVariants && defaultValues?.content) {
+        return JSON.parse(defaultValues.content)
+      }
+    } catch (e) {}
+    return [{ subtitle: '', description: '' }]
+  })()
 
   const [title, setTitle] = useState(defaultValues?.title ?? '')
   const [categoryId, setCategoryId] = useState<string>(defaultValues?.category_id ?? '')
   const [categories, setCategories] = useState<Category[]>([])
   const [description, setDescription] = useState(defaultValues?.description ?? '')
   const [content, setContent] = useState(defaultValues?.content ?? '')
-  const [aiTool, setAiTool] = useState<typeof AI_TOOLS[number]>(defaultValues?.ai_tool ?? 'Midjourney')
+  const [aiTools, setAiTools] = useState<string[]>(
+    defaultValues?.ai_tool ? defaultValues.ai_tool.split(',').map(t => t.trim()) : ['Midjourney']
+  )
   const [outputType, setOutputType] = useState<typeof OUTPUT_TYPES[number]>(defaultValues?.output_type ?? 'image')
   const [gateType, setGateType] = useState<typeof GATE_TYPES[number]>(defaultValues?.gate_type ?? 'open')
   const [price, setPrice] = useState<string>(defaultValues?.price?.toString() ?? '')
@@ -51,6 +74,12 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [serverError, setServerError] = useState<string | null>(null)
+  const [isPickerOpen, setIsPickerOpen] = useState(false)
+  const [isAutoFilling, setIsAutoFilling] = useState(false)
+
+  // Dynamic variants
+  const [isVariants, setIsVariants] = useState(isInitialVariants)
+  const [variants, setVariants] = useState<{ subtitle: string; description: string }[]>(initialVariants)
 
   useEffect(() => {
     async function fetchCategories() {
@@ -99,21 +128,69 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
     }
   }
 
+  async function handlePostSelect(post: InstagramPost) {
+    setIsPickerOpen(false)
+    setIsAutoFilling(true)
+
+    setVideoUrl(post.permalink)
+    setThumbnailUrl(post.media_type === 'VIDEO' ? (post.thumbnail_url || post.media_url) : post.media_url)
+
+    if (post.caption) {
+      const firstLine = post.caption.split('\n')[0].trim().substring(0, 60)
+      if (title === '' || title === 'Untitled Prompt') {
+        setTitle(firstLine)
+        if (!slugManuallyEdited) {
+          setSlug(toSlug(firstLine))
+        }
+      }
+    }
+
+    try {
+      const res = await fetch(`/api/instagram/oembed?url=${encodeURIComponent(post.permalink)}`)
+      const data = await res.json()
+      if (data.html) {
+        setEmbedHtml(data.html)
+      }
+    } catch (err) {
+      console.error('Failed to fetch oEmbed', err)
+    } finally {
+      setIsAutoFilling(false)
+    }
+  }
+
+  const addVariantOption = () => {
+    setVariants(prev => [...prev, { subtitle: '', description: '' }])
+  }
+
+  const removeVariantOption = (index: number) => {
+    if (variants.length > 1) {
+      setVariants(prev => prev.filter((_, i) => i !== index))
+    }
+  }
+
+  const updateVariantOption = (index: number, key: 'subtitle' | 'description', value: string) => {
+    setVariants(prev => prev.map((v, i) => i === index ? { ...v, [key]: value } : v))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     setErrors({})
     setServerError(null)
 
+    const fullContent = contentType === 'prompt'
+      ? (isVariants ? JSON.stringify(variants.filter(v => v.subtitle.trim() && v.description.trim())) : content)
+      : (content || 'PDF Document')
+
     const body = {
       title,
       slug,
       category_id: categoryId,
       description: description || null,
-      content: contentType === 'prompt' ? content : (content || 'PDF Document'),
+      content: fullContent,
       content_type: contentType,
       pdf_url: contentType === 'pdf' ? pdfUrl : null,
-      ai_tool: aiTool,
+      ai_tool: aiTools.join(', '),
       output_type: outputType,
       gate_type: gateType,
       price: gateType === 'payment' ? parseFloat(price) : null,
@@ -144,17 +221,81 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
       return
     }
 
-    router.push('/admin/prompts')
+    if (onSuccess) {
+      onSuccess()
+    } else {
+      router.push('/admin/prompts')
+    }
     router.refresh()
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8 select-none">
       {serverError && (
         <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-4 rounded-xl">
           {serverError}
         </div>
       )}
+
+      {/* Media Integration */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <label className={labelCls}>Media Integration</label>
+          <button
+            type="button"
+            onClick={() => setIsPickerOpen(true)}
+            disabled={isAutoFilling}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold transition-all active:scale-95 shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+          >
+            {isAutoFilling ? (
+              <LoaderIcon className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            {isAutoFilling ? 'Auto-filling...' : 'Select from Instagram'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-zinc-900/30 border border-zinc-800">
+          <div className={isAutoFilling ? 'animate-pulse' : ''}>
+            <label className={labelCls}>Instagram / TikTok Reel URL</label>
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={e => setVideoUrl(e.target.value)}
+              placeholder="https://www.instagram.com/reel/..."
+              className={inputCls}
+            />
+            <p className="text-[10px] text-zinc-500 mt-1">Direct link to the Reel or Post.</p>
+          </div>
+          <div className={isAutoFilling ? 'animate-pulse' : ''}>
+            <label className={labelCls}>Manual Embed Code</label>
+            <textarea
+              value={embedHtml}
+              onChange={e => setEmbedHtml(e.target.value)}
+              placeholder="Paste <blockquote>...</blockquote> code here"
+              rows={1}
+              className={inputCls + ' resize-none'}
+            />
+            <p className="text-[10px] text-zinc-500 mt-1">Standard Instagram/TikTok embed HTML.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Category */}
+      <div>
+        <label className={labelCls}>Category *</label>
+        <select
+          value={categoryId}
+          onChange={e => setCategoryId(e.target.value)}
+          className={inputCls}
+          required
+        >
+          {categories.length === 0 && <option value="">No categories available</option>}
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        {errors.category_id && <p className="text-red-400 text-xs mt-1">{errors.category_id[0]}</p>}
+      </div>
 
       {/* Title */}
       <div>
@@ -174,26 +315,6 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
           required
         />
         {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title[0]}</p>}
-      </div>
-
-      {/* Category */}
-      <div>
-        <label className={labelCls}>Category *</label>
-        <select
-          value={categoryId}
-          onChange={e => setCategoryId(e.target.value)}
-          className={inputCls}
-          required
-        >
-          {categories.length === 0 && <option value="">No categories available</option>}
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        {errors.category_id && <p className="text-red-400 text-xs mt-1">{errors.category_id[0]}</p>}
-        {categories.length === 0 && (
-          <p className="text-amber-500 text-[10px] mt-1 uppercase font-bold">
-            Go to <Link href="/admin/categories" className="underline">Categories</Link> to create one first.
-          </p>
-        )}
       </div>
 
       {/* Description */}
@@ -233,17 +354,83 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
         </div>
 
         {contentType === 'prompt' ? (
-          <div>
-            <label className={labelCls}>Prompt Content *</label>
-            <textarea
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              placeholder="Paste the full AI prompt here..."
-              rows={6}
-              className={inputCls + ' resize-y font-mono'}
-              required={contentType === 'prompt'}
-            />
-            {errors.content && <p className="text-red-400 text-xs mt-1">{errors.content[0]}</p>}
+          <div className="space-y-4">
+            {/* Toggle for multiple variations array */}
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                Enable Subtitle & Description Variations:
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsVariants(!isVariants)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isVariants ? 'bg-indigo-600' : 'bg-zinc-700'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isVariants ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {isVariants ? (
+              <div className="space-y-4">
+                {variants.map((variant, index) => (
+                  <div key={index} className="p-4 border border-zinc-800 bg-zinc-900/60 rounded-xl space-y-3 relative">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-indigo-400"># {index + 1} Variant</span>
+                      {variants.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeVariantOption(index)}
+                          className="text-zinc-600 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <input
+                          type="text"
+                          value={variant.subtitle}
+                          onChange={e => updateVariantOption(index, 'subtitle', e.target.value)}
+                          placeholder="Subtitle (e.g. For Men, For Women) *"
+                          className={inputCls}
+                          required={isVariants}
+                        />
+                      </div>
+                      <div>
+                        <textarea
+                          value={variant.description}
+                          onChange={e => updateVariantOption(index, 'description', e.target.value)}
+                          placeholder="Prompt description/content *"
+                          rows={3}
+                          className={inputCls + ' resize-y font-mono'}
+                          required={isVariants}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addVariantOption}
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Variant Option
+                </button>
+              </div>
+            ) : (
+              <div>
+                <label className={labelCls}>Prompt Content *</label>
+                <textarea
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  placeholder="Paste the full AI prompt here..."
+                  rows={6}
+                  className={inputCls + ' resize-y font-mono'}
+                  required={!isVariants}
+                />
+                {errors.content && <p className="text-red-400 text-xs mt-1">{errors.content[0]}</p>}
+              </div>
+            )}
           </div>
         ) : (
           <div>
@@ -260,8 +447,6 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
               <p className="text-emerald-400 text-xs mt-1 truncate">✓ PDF Uploaded: {pdfUrl.split('/').pop()}</p>
             )}
             {errors.pdf_url && <p className="text-red-400 text-xs mt-1">{errors.pdf_url[0]}</p>}
-            {/* Hidden content field for DB constraints */}
-            <input type="hidden" value={content} />
           </div>
         )}
       </div>
@@ -269,9 +454,35 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
       {/* AI Tool + Output Type row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
-          <label className={labelCls}>AI Tool *</label>
-          <select value={aiTool} onChange={e => setAiTool(e.target.value as typeof AI_TOOLS[number])} className={inputCls}>
-            {AI_TOOLS.map(t => <option key={t} value={t}>{t}</option>)}
+          <label className={labelCls}>AI Tools *</label>
+          <div className="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+            {aiTools.map(tool => (
+              <span key={tool} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs font-bold">
+                {tool}
+                <button 
+                  type="button" 
+                  onClick={() => setAiTools(prev => prev.length > 1 ? prev.filter(t => t !== tool) : prev)}
+                  className="hover:text-white transition-colors"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+          <select 
+            value="" 
+            onChange={e => {
+              const val = e.target.value
+              if (val && !aiTools.includes(val)) {
+                setAiTools(prev => [...prev, val])
+              }
+            }} 
+            className={inputCls}
+          >
+            <option value="" disabled>+ Add AI Tool</option>
+            {AI_TOOLS.map(t => (
+              <option key={t} value={t} disabled={aiTools.includes(t)}>{t}</option>
+            ))}
           </select>
         </div>
         <div>
@@ -335,32 +546,6 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
         {errors.slug && <p className="text-red-400 text-xs mt-1">{errors.slug[0]}</p>}
       </div>
 
-      {/* Video / Embed */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className={labelCls}>Instagram / TikTok Reel URL</label>
-          <input
-            type="url"
-            value={videoUrl}
-            onChange={e => setVideoUrl(e.target.value)}
-            placeholder="https://www.instagram.com/reel/..."
-            className={inputCls}
-          />
-          <p className="text-[10px] text-zinc-500 mt-1">Use this if you have an API Key in Settings.</p>
-        </div>
-        <div>
-          <label className={labelCls}>OR: Manual Embed Code</label>
-          <textarea
-            value={embedHtml}
-            onChange={e => setEmbedHtml(e.target.value)}
-            placeholder="Paste <blockquote>...</blockquote> code here"
-            rows={1}
-            className={inputCls + ' resize-none'}
-          />
-          <p className="text-[10px] text-zinc-500 mt-1">Copy from Instagram &gt; ... &gt; Embed.</p>
-        </div>
-      </div>
-
       {/* Thumbnail */}
       <div>
         <label className={labelCls}>Thumbnail Image</label>
@@ -385,7 +570,7 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
         </div>
       </div>
 
-      {/* Status + Submit */}
+      {/* Status + Featured */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-4 border-t border-zinc-800">
         <div className="flex items-center gap-3">
           <label className="text-sm font-semibold text-zinc-400">Status:</label>
@@ -414,24 +599,30 @@ export default function PromptForm({ defaultValues, promptId }: Props) {
             {featured ? '★ Featured' : 'Standard'}
           </span>
         </div>
-
-        <div className="flex gap-3 sm:ml-auto">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-6 py-3 rounded-xl border border-zinc-700 text-sm font-semibold text-zinc-400 hover:text-white hover:border-zinc-600 transition-all"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={saving || uploading || uploadingPdf || categories.length === 0}
-            className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 shadow-lg shadow-indigo-500/20"
-          >
-            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Prompt'}
-          </button>
-        </div>
       </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-zinc-800">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="flex-1 px-6 py-4 rounded-2xl border border-zinc-800 bg-zinc-900 text-sm font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 transition-all active:scale-[0.98]"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={saving || uploading || uploadingPdf || categories.length === 0}
+          className="flex-[2] px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 shadow-xl shadow-indigo-500/20"
+        >
+          {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Prompt'}
+        </button>
+      </div>
+      <InstagramPostPicker
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelect={handlePostSelect}
+      />
     </form>
   )
 }

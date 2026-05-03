@@ -1,38 +1,66 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
 import RefreshStatsButton from '@/components/admin/RefreshStatsButton'
+import { AnalyticsOverviewResponse, TopPromptData, TopCampaignData } from '@/lib/analytics/types'
+import { useQuery } from '@tanstack/react-query'
 
 export default function AnalyticsPage() {
   const [range, setRange] = useState('7d')
-  const [data, setData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [month, setMonth] = useState('')
+  const [search, setSearch] = useState('')
+  const [gateType, setGateType] = useState('')
+  const [categoryId, setCategoryId] = useState('')
 
-  useEffect(() => {
-    let isMounted = true
-    fetch(`/api/analytics/overview?range=${range}`)
-      .then(res => res.json())
-      .then(json => {
-        if (isMounted) {
-          setData(json)
-          setLoading(false)
-        }
-      })
-    return () => { isMounted = false }
-  }, [range])
+  // Fetch categories with caching
+  const { data: categories = [] } = useQuery<{ id: string, name: string }[]>({
+    queryKey: ['categories'],
+    queryFn: () => fetch('/api/categories').then(res => res.json()),
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours
+  })
+
+  // Fetch analytics data with caching
+  const params = new URLSearchParams({
+    range,
+    month,
+    search,
+    gate_type: gateType,
+    category_id: categoryId
+  })
+
+  const { data, isLoading: loading } = useQuery<AnalyticsOverviewResponse>({
+    queryKey: ['analytics', range, month, search, gateType, categoryId],
+    queryFn: () => fetch(`/api/analytics/overview?${params.toString()}`).then(res => res.json()),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
 
   function handleRangeChange(r: string) {
-    setLoading(true)
     setRange(r)
+    setMonth('')
   }
 
-  if (!data && loading) {
+  function handleMonthChange(m: string) {
+    setMonth(m)
+    setRange('')
+  }
+
+  // Generate last 12 months for dropdown
+  const months = []
+  const date = new Date()
+  for (let i = 0; i < 12; i++) {
+    const m = date.getMonth() + 1
+    const y = date.getFullYear()
+    const value = `${y}-${m.toString().padStart(2, '0')}`
+    const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    months.push({ value, label })
+    date.setMonth(date.getMonth() - 1)
+  }
+
+  if (!data) {
     return <div className="p-10 text-center text-zinc-500">Loading analytics...</div>
   }
-
-  const stats = data || {}
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -41,31 +69,73 @@ export default function AnalyticsPage() {
           <h1 className="text-3xl font-bold text-white tracking-tight">Analytics Overview</h1>
           <p className="text-zinc-500 text-sm">Track your prompt performance and audience growth.</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <RefreshStatsButton />
+          
+          <input 
+            type="text" 
+            placeholder="Search prompts..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500 transition-colors w-full sm:w-48"
+          />
+
+          <select
+            value={gateType}
+            onChange={(e) => setGateType(e.target.value)}
+            className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors"
+          >
+            <option value="">All Gates</option>
+            <option value="open">Open</option>
+            <option value="email">Email</option>
+            <option value="payment">Payment</option>
+          </select>
+
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors max-w-[150px]"
+          >
+            <option value="">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={month}
+            onChange={(e) => handleMonthChange(e.target.value)}
+            className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors"
+          >
+            <option value="">Select Month</option>
+            {months.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 flex gap-1">
-          {['7d', '14d', '30d'].map((r) => (
-            <button
-              key={r}
-              onClick={() => handleRangeChange(r)}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                range === r ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-              }`}
-            >
-              {r.toUpperCase()}
-            </button>
-          ))}
+            {['7d', '14d', '30d', '90d', 'all'].map((r) => (
+              <button
+                key={r}
+                onClick={() => handleRangeChange(r)}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                  range === r ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                }`}
+              >
+                {r === 'all' ? 'All Time' : r.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
     </div>
 
       {loading && <div className="opacity-50 pointer-events-none transition-opacity">Updating...</div>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <SummaryCard title="Total Views" value={stats.summary?.total_views || 0} change={stats.summary?.views_change_pct || 0} />
-        <SummaryCard title="Unique Visitors" value={stats.summary?.unique_visitors || 0} change={stats.summary?.visitors_change_pct || 0} />
-        <SummaryCard title="Conversions" value={stats.summary?.total_conversions || 0} change={stats.summary?.conversions_change_pct || 0} />
-        <SummaryCard title="Revenue" value={`$${(stats.summary?.total_revenue || 0).toFixed(2)}`} change={stats.summary?.revenue_change_pct || 0} />
+        <SummaryCard title="Total Views" value={data.summary.total_views} change={data.summary.views_change_pct} />
+        <SummaryCard title="Unique Visitors" value={data.summary.unique_visitors} change={data.summary.visitors_change_pct} />
+        <SummaryCard title="Conversions" value={data.summary.total_conversions} change={data.summary.conversions_change_pct} />
+        <SummaryCard title="Revenue" value={`$${(data.summary.total_revenue).toFixed(2)}`} change={data.summary.revenue_change_pct} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
@@ -73,7 +143,7 @@ export default function AnalyticsPage() {
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-lg font-bold text-white">Daily Views</h2>
           </div>
-          <AnalyticsChart type="line" data={stats.daily_views?.map((d: any) => ({ date: d.date, views: d.views })) || []} />
+          <AnalyticsChart type="line" data={data?.daily_views?.map((d) => ({ date: d.date, views: d.views })) || []} />
         </section>
 
         <section className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-xl">
@@ -81,10 +151,10 @@ export default function AnalyticsPage() {
             <h2 className="text-lg font-bold text-white">Conversion Funnel</h2>
           </div>
           <div className="space-y-6 mt-4">
-            <FunnelStep label="Total Views" value={stats.funnel?.views || 0} max={stats.funnel?.views || 1} color="bg-indigo-500" />
-            <FunnelStep label="Gate Attempts" value={stats.funnel?.gate_attempts || 0} max={stats.funnel?.views || 1} color="bg-emerald-500" />
-            <FunnelStep label="Successful Unlocks" value={stats.funnel?.successful_unlocks || 0} max={stats.funnel?.views || 1} color="bg-amber-500" />
-            <FunnelStep label="Copies" value={stats.funnel?.copies || 0} max={stats.funnel?.views || 1} color="bg-purple-500" />
+            <FunnelStep label="Total Views" value={data.funnel.views} max={data.funnel.views} color="bg-indigo-500" />
+            <FunnelStep label="Email Submissions" value={data.funnel.email_submissions} max={data.funnel.views} color="bg-emerald-500" />
+            <FunnelStep label="Prompt Unlocks" value={data.funnel.prompt_unlocks} max={data.funnel.views} color="bg-amber-500" />
+            <FunnelStep label="Copies" value={data.funnel.copies} max={data.funnel.views} color="bg-purple-500" />
           </div>
         </section>
       </div>
@@ -103,14 +173,14 @@ export default function AnalyticsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {(stats.traffic_sources || []).map((t: any, i: number) => (
+              {(data.traffic_sources || []).map((t, i) => (
                 <tr key={i} className="hover:bg-zinc-800/30">
                   <td className="px-8 py-4 text-white">{t.source}</td>
                   <td className="px-8 py-4 text-right text-zinc-400 font-mono">{t.sessions.toLocaleString()}</td>
                   <td className="px-8 py-4 text-right font-mono text-zinc-400">{t.pct.toFixed(1)}%</td>
                 </tr>
               ))}
-              {(!stats.traffic_sources || stats.traffic_sources.length === 0) && (
+              {(!data.traffic_sources || data.traffic_sources.length === 0) && (
                 <tr><td colSpan={3} className="px-8 py-10 text-center text-zinc-500">No traffic sources recorded yet.</td></tr>
               )}
             </tbody>
@@ -119,8 +189,8 @@ export default function AnalyticsPage() {
       </section>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <TopPromptsTable data={stats.top_prompts || []} />
-        <TopCampaignsTable data={stats.top_campaigns || []} />
+        <TopPromptsTable data={data.top_prompts} />
+        <TopCampaignsTable data={data.top_campaigns} />
       </div>
     </div>
   )
@@ -154,7 +224,7 @@ function FunnelStep({ label, value, max, color }: { label: string, value: number
   )
 }
 
-function TopPromptsTable({ data }: { data: any[] }) {
+function TopPromptsTable({ data }: { data: TopPromptData[] }) {
   return (
     <section className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl flex flex-col">
       <div className="px-8 py-6 border-b border-zinc-800 flex justify-between items-center">
@@ -194,7 +264,7 @@ function TopPromptsTable({ data }: { data: any[] }) {
   )
 }
 
-function TopCampaignsTable({ data }: { data: any[] }) {
+function TopCampaignsTable({ data }: { data: TopCampaignData[] }) {
   return (
     <section className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl flex flex-col">
       <div className="px-8 py-6 border-b border-zinc-800 flex justify-between items-center">

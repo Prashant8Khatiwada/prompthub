@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   try {
     // 2. Fetch tokens expiring in the next 10 days
     const tenDaysFromNow = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString()
-    
+
     const { data: tokens, error } = await adminClient
       .from('creator_instagram_tokens')
       .select('*')
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       results.processed++
       try {
         const currentToken = decrypt(tokenData.encrypted_token, tokenData.iv)
-        
+
         const res = await fetch(
           `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${currentToken}`
         )
@@ -45,14 +45,14 @@ export async function GET(request: Request) {
 
         const newToken = data.access_token
         const newExpiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString()
-        
-        const { encrypted, iv } = encrypt(newToken)
+
+        const encryptedData = encrypt(newToken)
 
         await adminClient
           .from('creator_instagram_tokens')
           .update({
-            encrypted_token: encrypted,
-            iv: iv,
+            encrypted_token: encryptedData?.encrypted || '',
+            iv: encryptedData?.iv || '',
             expires_at: newExpiresAt,
             updated_at: new Date().toISOString(),
           })
@@ -66,6 +66,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ message: 'Cron job completed', results })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Instagram Refresh Cron Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

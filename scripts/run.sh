@@ -32,13 +32,21 @@ docker run -d \
   -e CRON_SECRET="24f525879220359b23fe8b312a9a9fcf24ab0abc222342a2f93318c18ba2de68" \
   -e INSTAGRAM_APP_ID="1949346015949599" \
   -e INSTAGRAM_APP_SECRET="3b9da31ebec993c75529931d56a965d6" \
+  -e INSTAGRAM_CLIENT_ID="1844374976242880" \
+  -e INSTAGRAM_CLIENT_SECRET="e3dc546a1370a20d2a3010fd02563acd" \
   -e INSTAGRAM_REDIRECT_URI="https://zip.fotosfolio.com/api/auth/instagram/callback" \
   -e TOKEN_ENCRYPTION_KEY="4d47a1eee73a4fc05718375fe118daa30d6d3cfd9615a6b300a1196d1674f129" \
   "$IMAGE_TAG"
 
-if [ $? -eq 0 ]; then
+# Wait a few seconds and check if container is still running
+sleep 3
+if [ "$(docker inspect -f '{{.State.Running}}' prompthub 2>/dev/null)" = "true" ]; then
   echo "✅ PromptHub is running successfully!"
+  echo "Container ID: $(docker ps -qf name=prompthub)"
 else
-  echo "❌ Failed to start PromptHub container."
+  echo "❌ Failed to start PromptHub container or it crashed immediately."
+  echo "Check logs with: docker logs prompthub"
   exit 1
 fi
+
+

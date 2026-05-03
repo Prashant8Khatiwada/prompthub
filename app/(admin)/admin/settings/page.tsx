@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
 import ControlCenter from '@/components/admin/ControlCenter'
+import { fetchInstagramUser, fetchInstagramFeed } from '@/lib/instagram'
 
 export default async function SettingsPage() {
   const cookieStore = await cookies()
@@ -40,6 +41,10 @@ export default async function SettingsPage() {
     creator = newCreator
   }
 
+  // 2. Fetch Instagram Data for Preview
+  const igUser = await fetchInstagramUser(user.id)
+  const igFeed = await fetchInstagramFeed(user.id)
+
   return (
     <div className="space-y-10 max-w-5xl">
       <div className="flex flex-col gap-1">
@@ -47,7 +52,11 @@ export default async function SettingsPage() {
         <p className="text-zinc-500 text-sm">Configure your hub, manage integrations, and organize categories.</p>
       </div>
 
-      <ControlCenter creator={creator!} />
+      <ControlCenter 
+        creator={creator!} 
+        igUser={igUser} 
+        igFeed={igFeed} 
+      />
     </div>
   )
 }

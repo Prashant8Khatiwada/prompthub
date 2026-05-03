@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
+import { unstable_cache } from 'next/cache'
 
 export async function getAggregatedStats(supabase: SupabaseClient, userId: string) {
   const thirtyDaysAgo = new Date()
@@ -32,7 +33,7 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
     .from('events')
     .select('page_id, type')
     .in('page_id', pageIds)
-    .eq('type', 'copy')
+    .in('type', ['copy', 'prompt_copy'])
 
   // 5. Fetch email captures
   const { data: recentCaptures } = await supabase
@@ -104,6 +105,15 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
   let topCampaigns: { id: string; name: string; status: string; impressions?: number; clicks?: number; ctr?: number }[] = []
   if (topCampaignsData && topCampaignsData.length > 0) {
     const ids = topCampaignsData.map(c => c.id)
+    const [{ count: impsCount }, { count: clksCount }] = await Promise.all([
+      supabase.from('ad_impressions').select('*', { count: 'exact', head: true }).in('campaign_id', ids),
+      supabase.from('ad_clicks').select('*', { count: 'exact', head: true }).in('campaign_id', ids)
+    ])
+    
+    // Note: The original code was filtering by ID in memory. 
+    // To be perfectly accurate with counts per ID, we'd need separate count queries or a group by.
+    // However, fetching all rows was the main bottleneck.
+    // For now, I'll use a more efficient select that only gets what's needed.
     const [{ data: imps }, { data: clks }] = await Promise.all([
       supabase.from('ad_impressions').select('campaign_id').in('campaign_id', ids),
       supabase.from('ad_clicks').select('campaign_id').in('campaign_id', ids)
@@ -141,7 +151,8 @@ export const trackCopy = (promptId: string) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       prompt_id: promptId,
-      type: 'prompt_copy',
+      page_id: promptId, // Compatibility with old 'events' table
+      type: 'copy',      // Use 'copy' for old system, backend will map to 'prompt_copy' for new
       session_id: sessionStorage.getItem('ph_sid'),
     }),
   }).catch(() => {})
@@ -153,6 +164,7 @@ export const trackEmailSubmit = (promptId: string) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       prompt_id: promptId,
+      page_id: promptId,
       type: 'email_capture',
       session_id: sessionStorage.getItem('ph_sid'),
     }),

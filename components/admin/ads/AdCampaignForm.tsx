@@ -15,11 +15,22 @@ interface Props {
   prompts: { id: string; title: string; slug: string }[]
   categories: { id: string; name: string }[]
   initialClientId?: string
+  onSuccess?: () => void
+  onCancel?: () => void
 }
 
 type FieldErrors = Record<string, string[]>
 
-export default function AdCampaignForm({ defaultValues, campaignId, clients, prompts, categories, initialClientId }: Props) {
+export default function AdCampaignForm({ 
+  defaultValues, 
+  campaignId, 
+  clients, 
+  prompts, 
+  categories, 
+  initialClientId,
+  onSuccess,
+  onCancel
+}: Props) {
   const router = useRouter()
   const isEdit = !!campaignId
 
@@ -44,14 +55,14 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
   const existingGlobal = defaultValues?.ad_placements?.find(p => p.is_global)
   const existingSpecific = defaultValues?.ad_placements?.filter(p => !p.is_global) ?? []
 
-  const [selectedPrompts, setSelectedPrompts] = useState<Record<string, 'below_video' | 'above_gate' | 'below_gate'>>(
+  const [selectedPrompts, setSelectedPrompts] = useState<Record<string, AdPlacementPosition>>(
     existingSpecific.filter(p => p.prompt_id).reduce((acc, p) => ({ ...acc, [p.prompt_id!]: p.position }), {})
   )
-  const [selectedCategories, setSelectedCategories] = useState<Record<string, 'below_video' | 'above_gate' | 'below_gate'>>(
+  const [selectedCategories, setSelectedCategories] = useState<Record<string, AdPlacementPosition>>(
     existingSpecific.filter(p => p.category_id).reduce((acc, p) => ({ ...acc, [p.category_id!]: p.position }), {})
   )
 
-  const [globalPosition, setGlobalPosition] = useState<'below_video' | 'above_gate' | 'below_gate'>(existingGlobal?.position ?? 'below_video')
+  const [globalPosition, setGlobalPosition] = useState<AdPlacementPosition>(existingGlobal?.position ?? 'above_prompt')
 
   const [placementType, setPlacementType] = useState<'global' | 'prompts' | 'categories'>(
     existingGlobal ? 'global' : (existingSpecific.some(p => p.category_id) ? 'categories' : (isEdit ? 'prompts' : 'global'))
@@ -146,8 +157,12 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
       return
     }
 
-    router.push('/admin/ads/campaigns')
-    router.refresh()
+    if (onSuccess) {
+      onSuccess()
+    } else {
+      router.push('/admin/ads/campaigns')
+      router.refresh()
+    }
   }
 
   return (
@@ -336,9 +351,10 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
             <div>
               <label className={labelCls}>Display Position</label>
               <select value={globalPosition} onChange={e => setGlobalPosition(e.target.value as AdPlacementPosition)} className={inputCls + ' max-w-sm'}>
-                <option value="below_video">Below Video / Top of Content</option>
-                <option value="above_gate">Above Content Gate (Sign-up Required)</option>
-                <option value="below_gate">Below Content Gate / Bottom of Page</option>
+                <option value="above_prompt">Above Prompt</option>
+                <option value="below_prompt">Below Prompt</option>
+                <option value="popup">Popup</option>
+                <option value="creator_page">Creator Page (Profile)</option>
               </select>
             </div>
           </div>
@@ -357,7 +373,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
                       checked={isSelected}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedCategories(prev => ({ ...prev, [c.id]: 'below_video' }))
+                          setSelectedCategories(prev => ({ ...prev, [c.id]: 'above_prompt' }))
                         } else {
                           const next = { ...selectedCategories }
                           delete next[c.id]
@@ -374,9 +390,10 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
                       onChange={e => setSelectedCategories(prev => ({ ...prev, [c.id]: e.target.value as AdPlacementPosition }))}
                       className="px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-white focus:ring-indigo-500 min-w-[140px]"
                     >
-                      <option value="below_video">Below Video</option>
-                      <option value="above_gate">Above Gate</option>
-                      <option value="below_gate">Below Gate</option>
+                      <option value="above_prompt">Above Prompt</option>
+                      <option value="below_prompt">Below Prompt</option>
+                      <option value="popup">Popup</option>
+                      <option value="creator_page">Creator Page</option>
                     </select>
                   )}
                 </div>
@@ -398,7 +415,7 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
                       checked={isSelected}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedPrompts(prev => ({ ...prev, [p.id]: 'below_video' }))
+                          setSelectedPrompts(prev => ({ ...prev, [p.id]: 'above_prompt' }))
                         } else {
                           const next = { ...selectedPrompts }
                           delete next[p.id]
@@ -418,9 +435,10 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
                       onChange={e => setSelectedPrompts(prev => ({ ...prev, [p.id]: e.target.value as AdPlacementPosition }))}
                       className="px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-white focus:ring-indigo-500 min-w-[140px]"
                     >
-                      <option value="below_video">Below Video</option>
-                      <option value="above_gate">Above Gate</option>
-                      <option value="below_gate">Below Gate</option>
+                      <option value="above_prompt">Above Prompt</option>
+                      <option value="below_prompt">Below Prompt</option>
+                      <option value="popup">Popup</option>
+                      <option value="creator_page">Creator Page</option>
                     </select>
                   )}
                 </div>
@@ -455,7 +473,13 @@ export default function AdCampaignForm({ defaultValues, campaignId, clients, pro
 
       {/* Submit */}
       <div className="flex gap-3 pt-6 border-t border-zinc-800 justify-end">
-        <button type="button" onClick={() => router.back()} className="px-6 py-3 rounded-xl border border-zinc-700 text-sm font-semibold text-zinc-400 hover:text-white hover:border-zinc-600 transition-all">Cancel</button>
+        <button 
+          type="button" 
+          onClick={() => onCancel ? onCancel() : router.back()} 
+          className="px-6 py-3 rounded-xl border border-zinc-700 text-sm font-semibold text-zinc-400 hover:text-white hover:border-zinc-600 transition-all"
+        >
+          Cancel
+        </button>
         <button
           type="submit"
           disabled={saving || !bannerUrl || (placementType === 'prompts' && Object.keys(selectedPrompts).length === 0) || (placementType === 'categories' && Object.keys(selectedCategories).length === 0)}

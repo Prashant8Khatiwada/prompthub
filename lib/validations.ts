@@ -25,8 +25,9 @@ export const emailCaptureSchema = z.object({
 export const creatorSettingsSchema = z.object({
   name: z.string().min(1, 'Name is required').max(60),
   handle: z.string().min(1).regex(/^@?[\w.]+$/).max(30),
+  avatar_url: z.string().url().optional().nullable().or(z.literal('')),
   bio: z.string().max(300).optional().nullable(),
-  brand_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color'),
+  brand_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color').optional().nullable().or(z.literal('')),
   instagram_url: z.string().url().optional().nullable().or(z.literal('')),
   tiktok_url: z.string().url().optional().nullable().or(z.literal('')),
   instagram_api_key: z.string().optional().nullable().or(z.literal('')),

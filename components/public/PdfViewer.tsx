@@ -21,7 +21,7 @@ export default function PdfViewer({ url }: Props) {
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col w-full h-[600px]">
+    <div className="flex flex-col w-full h-[600px]">
       <div className="flex-1 overflow-auto bg-zinc-950 flex justify-center p-4">
         <Document
           file={url}

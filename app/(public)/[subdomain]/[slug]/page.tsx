@@ -12,12 +12,24 @@ import { fetchInstagramMedia, fetchInstagramUser, fetchInstagramFeed } from '@/l
 import InstagramPost from '@/components/public/InstagramPost'
 import InstagramProfile from '@/components/public/InstagramProfile'
 import InstagramFeed from '@/components/public/InstagramFeed'
+import PublicProfileTabs from '@/components/public/PublicProfileTabs'
+import InstagramView from '@/components/public/InstagramView'
+import { AdPlacementPosition } from '@/types'
+import { AdPlacementData } from '@/components/public/AdBanner'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const revalidate = 3600 // 1 hour
 
 interface Params {
   params: Promise<{ subdomain: string; slug: string }>
+}
+
+interface AdPlacement extends Omit<AdPlacementData, 'position'> {
+  position: AdPlacementPosition
+  category_id?: string | null
+  campaign: AdPlacementData['campaign'] & {
+    starts_at?: string | null
+    ends_at?: string | null
+  }
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
@@ -38,7 +50,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   const title = `${prompt.title} by ${creator.name}`
   const description = prompt.description ?? `${prompt.ai_tool} prompt by ${creator.name}`
-  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'prompthub.app'
+  const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
+  const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
 
   return {
     title,
@@ -59,47 +72,41 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   }
 }
 
+import EnhancedPublicPromptUI from '@/components/public/EnhancedPublicPromptUI'
+
+import { getCachedCreator, getCachedPrompt, getCachedRelatedPrompts } from '@/lib/data/public-prompts'
+
 export default async function PublicPromptPage({ params }: Params) {
   const { subdomain, slug } = await params
-  const supabase = await createClient()
 
-  // 1. Fetch creator by subdomain
-  const { data: creator } = await supabase
-    .from('creators').select('*').eq('subdomain', subdomain).single()
+  // 1. Fetch creator by subdomain (Cached)
+  const creator = await getCachedCreator(subdomain)
   if (!creator) notFound()
 
-  // 2. Fetch published prompt
-  const { data: prompt } = await supabase
-    .from('prompts').select('*')
-    .eq('creator_id', creator.id)
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .single()
+  // 2. Fetch published prompt (Cached)
+  const prompt = await getCachedPrompt(creator.id, slug)
   if (!prompt) notFound()
 
-  // 3. Fetch related prompts (up to 3, excluding current)
-  const { data: related } = await supabase
-    .from('prompts')
-    .select('id,title,slug,ai_tool,output_type,thumbnail_url')
-    .eq('creator_id', creator.id)
-    .eq('status', 'published')
-    .neq('id', prompt.id)
-    .limit(3)
+  console.log('PROMPT FETCHED (Possibly Cached):', { id: prompt.id, title: prompt.title })
 
-  // 4. Track page view (removed dependency on non-existent 'pages' table)
-  // We now use prompt_id directly as the primary identifier for events
-  const oEmbedHtml = prompt.video_url
-    ? await fetchInstagramOEmbed(prompt.video_url)
-    : null
+  // 3. Fetch related prompts (Cached)
+  const related = await getCachedRelatedPrompts(creator.id, prompt.id)
+
+  const isRawHtml = !!prompt.embed_html || prompt.video_url?.trim().startsWith('<')
+  const oEmbedHtml = prompt.embed_html || (prompt.video_url?.trim().startsWith('<')
+    ? prompt.video_url
+    : (prompt.video_url ? await fetchInstagramOEmbed(prompt.video_url) : null))
+
+  console.log({ oEmbedHtml, videoUrl: prompt.video_url, isRawHtml })
 
   // 5b. Fetch Rich Instagram Data for native rendering
-  const igMedia = prompt.video_url
-    ? await fetchInstagramMedia(prompt.video_url)
+  const igMedia = (prompt.video_url && !isRawHtml)
+    ? await fetchInstagramMedia(prompt.video_url, creator.id)
     : null
 
   // 5c. Fetch User and Feed Data
-  const igUser = await fetchInstagramUser()
-  const igFeed = await fetchInstagramFeed(12)
+  const igUser = await fetchInstagramUser(creator.id)
+  const igFeed = await fetchInstagramFeed(creator.id)
 
   const AI_TOOL_COLORS: Record<string, string> = {
     Midjourney: '#1b6ef3',
@@ -116,7 +123,6 @@ export default async function PublicPromptPage({ params }: Params) {
   const toolColor = AI_TOOL_COLORS[prompt.ai_tool] ?? '#6366f1'
 
   // 6. Fetch active ad placements for this prompt
-  // Fetch placements directly via adminClient (instead of internal fetch to avoid baseUrl issues)
   const now = new Date().toISOString()
   const filters = [
     `prompt_id.eq.${prompt.id}`,
@@ -126,7 +132,7 @@ export default async function PublicPromptPage({ params }: Params) {
     filters.push(`category_id.eq.${prompt.category_id}`)
   }
 
-  const { data: rawPlacements, error: placementError } = await adminClient
+  const { data: rawPlacements } = await adminClient
     .from('ad_placements')
     .select(`
       id,
@@ -138,14 +144,15 @@ export default async function PublicPromptPage({ params }: Params) {
     `)
     .or(filters.join(','))
 
-  const placements = (rawPlacements ?? [])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((p: any) => ({
-      ...p,
-      campaign: Array.isArray(p.campaign) ? p.campaign[0] : p.campaign
-    }))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((p: any) => {
+  const placements: AdPlacement[] = (rawPlacements ?? [])
+    .map((p) => {
+      const raw = p as any
+      return {
+        ...raw,
+        campaign: Array.isArray(raw.campaign) ? raw.campaign[0] : raw.campaign
+      } as AdPlacement
+    })
+    .filter((p) => {
       const cam = p.campaign
       if (!cam || cam.status !== 'active') return false
       if (cam.starts_at && cam.starts_at > now) return false
@@ -153,102 +160,36 @@ export default async function PublicPromptPage({ params }: Params) {
       return true
     })
 
+  console.log('PLACEMENTS LOADED:', placements.length)
+
   return (
     <main
       style={{ '--brand': creator.brand_color } as React.CSSProperties}
-      className="min-h-screen bg-white text-zinc-900 pb-16"
+      className="min-h-screen bg-zinc-950 text-white"
     >
-      {/* Track page view */}
       <ViewTracker pageId={prompt.id} promptId={prompt.id} creatorId={creator.id} />
 
-      {/* Sticky creator header */}
-      {/* <CreatorBar creator={creator} /> */}
-
-      {/* Instagram Profile Header */}
-      {igUser && <InstagramProfile user={igUser} creator={creator} />}
-
-      {/* Media Section (Post or Embed) */}
-      <div className="w-full mt-8">
-        {igMedia ? (
-          <div className="max-w-2xl mx-auto px-4">
-            <InstagramPost media={igMedia} />
-          </div>
-        ) : (prompt.embed_html || prompt.video_url) ? (
-          <div className="max-w-2xl mx-auto px-4">
-            <VideoEmbed
-              html={prompt.embed_html || oEmbedHtml}
-              fallbackThumbnail={prompt.thumbnail_url}
-              url={prompt.video_url}
-            />
-          </div>
-        ) : null}
-      </div>
-
-      <section className="max-w-2xl mx-auto px-4 pt-8">
-        {/* Title & tags */}
-        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 mb-4 leading-tight">
-          {prompt.title}
-        </h1>
-        <div className="flex flex-wrap gap-2 mb-6">
-          <span
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
-            style={{ background: `${toolColor}11`, color: toolColor, border: `1px solid ${toolColor}33` }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: toolColor }} />
-            {prompt.ai_tool}
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 shadow-sm">
-            {prompt.output_type}
-          </span>
-        </div>
-        {prompt.description && (
-          <p className="text-zinc-600 text-base leading-relaxed mb-8">{prompt.description}</p>
-        )}
-
-        {/* Ad: Above Gate */}
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {placements.some((p: any) => p.position === 'above_gate') && (
-          <div className="mb-6">
-            <AdBanner placements={placements} position="above_gate" promptId={prompt.id} creatorId={creator.id} />
-          </div>
-        )}
-
-        {/* Gate */}
-        <PromptGate prompt={prompt} />
-
-        {/* Ad: Below Gate */}
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {placements.some((p: any) => p.position === 'below_gate') && (
-          <div className="mt-6">
-            <AdBanner placements={placements} position="below_gate" promptId={prompt.id} creatorId={creator.id} />
-          </div>
-        )}
-      </section>
-
-      {/* Render Feed Grid with "Show More" functionality */}
-      {igFeed.length > 0 && (
-        <div className="w-full mt-8">
-          <InstagramFeed feed={igFeed} excludeId={igMedia?.id} />
-        </div>
-      )}
-
-
-      {/* Ad: Below Video */}
-
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {placements.some((p: any) => p.position === 'below_video') && (
-        <div className="max-w-2xl mx-auto px-4 mt-8">
-          <AdBanner placements={placements} position="below_video" promptId={prompt.id} creatorId={creator.id} />
-        </div>
-      )}
-
-      {/* Prompt content */}
-
-
-      {/* Related prompts */}
-      {related && related.length > 0 && (
-        <RelatedPrompts prompts={related} subdomain={subdomain} />
-      )}
+      <EnhancedPublicPromptUI
+        creator={creator}
+        prompt={prompt}
+        igUser={igUser}
+        igMedia={igMedia}
+        igFeed={igFeed}
+        relatedData={related ?? []}
+        adAbovePrompt={
+          placements.some((p: AdPlacement) => p.position === 'above_prompt') && (
+            <AdBanner placements={placements} position="above_prompt" promptId={prompt.id} creatorId={creator.id} />
+          )
+        }
+        adBelowPrompt={
+          placements.some((p: AdPlacement) => p.position === 'below_prompt') && (
+            <AdBanner placements={placements} position="below_prompt" promptId={prompt.id} creatorId={creator.id} />
+          )
+        }
+        adPopupPlacements={placements.filter((p: AdPlacement) => p.position === 'popup')}
+        oEmbedHtml={oEmbedHtml}
+      />
     </main>
   )
 }
+
