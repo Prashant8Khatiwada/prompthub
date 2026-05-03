@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
 import RefreshStatsButton from '@/components/admin/RefreshStatsButton'
 import { AnalyticsOverviewResponse, TopPromptData, TopCampaignData } from '@/lib/analytics/types'
+import { useQuery } from '@tanstack/react-query'
 
 export default function AnalyticsPage() {
   const [range, setRange] = useState('7d')
@@ -12,43 +13,35 @@ export default function AnalyticsPage() {
   const [search, setSearch] = useState('')
   const [gateType, setGateType] = useState('')
   const [categoryId, setCategoryId] = useState('')
-  const [categories, setCategories] = useState<{ id: string, name: string }[]>([])
-  const [data, setData] = useState<AnalyticsOverviewResponse | null>(null)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetch('/api/categories').then(res => res.json()).then(setCategories)
-  }, [])
+  // Fetch categories with caching
+  const { data: categories = [] } = useQuery<{ id: string, name: string }[]>({
+    queryKey: ['categories'],
+    queryFn: () => fetch('/api/categories').then(res => res.json()),
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours
+  })
 
-  useEffect(() => {
-    let isMounted = true
-    const params = new URLSearchParams({
-      range,
-      month,
-      search,
-      gate_type: gateType,
-      category_id: categoryId
-    })
-    
-    fetch(`/api/analytics/overview?${params.toString()}`)
-      .then(res => res.json())
-      .then(json => {
-        if (isMounted) {
-          setData(json)
-          setLoading(false)
-        }
-      })
-    return () => { isMounted = false }
-  }, [range, month, search, gateType, categoryId])
+  // Fetch analytics data with caching
+  const params = new URLSearchParams({
+    range,
+    month,
+    search,
+    gate_type: gateType,
+    category_id: categoryId
+  })
+
+  const { data, isLoading: loading } = useQuery<AnalyticsOverviewResponse>({
+    queryKey: ['analytics', range, month, search, gateType, categoryId],
+    queryFn: () => fetch(`/api/analytics/overview?${params.toString()}`).then(res => res.json()),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
 
   function handleRangeChange(r: string) {
-    setLoading(true)
     setRange(r)
     setMonth('')
   }
 
   function handleMonthChange(m: string) {
-    setLoading(true)
     setMonth(m)
     setRange('')
   }

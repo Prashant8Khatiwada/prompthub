@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
-import { Creator } from '@/types'
 
 export async function GET() {
   const cookieStore = await cookies()
@@ -17,7 +16,7 @@ export async function GET() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawCreators = creatorsRes.data || []
   const creators = await Promise.all(
-    rawCreators.map(async (c: any) => {
+    rawCreators.map(async (c: { id: string, avatar_url?: string | null }) => {
       if (c.avatar_url) {
         return c
       }
@@ -41,5 +40,9 @@ export async function GET() {
     categories: categoriesRes.data || [],
     creators,
     prompts: promptsRes.data || []
+  }, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
+    }
   })
 }

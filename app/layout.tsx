@@ -10,11 +10,15 @@ export const metadata: Metadata = {
   metadataBase: new URL(`https://${(process.env.NEXT_PUBLIC_BASE_DOMAIN || 'localhost:3000').replace(/^https?:\/\//, '')}`),
 }
 
+import QueryProvider from '@/components/providers/QueryProvider'
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-zinc-950 text-zinc-50 antialiased">
-        {children}
+        <QueryProvider>
+          {children}
+        </QueryProvider>
       </body>
     </html>
   )

@@ -1,53 +1,36 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
 import RefreshStatsButton from '@/components/admin/RefreshStatsButton'
 import { PromptAnalyticsResponse } from '@/lib/analytics/types'
+import { useQuery } from '@tanstack/react-query'
 
 export default function PromptAnalyticsPage() {
   const params = useParams()
   const id = params?.id as string
 
   const [range, setRange] = useState('7d')
-  const [data, setData] = useState<PromptAnalyticsResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (!id) return
-    let isMounted = true
-    fetch(`/api/analytics/prompts/${id}?range=${range}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load data')
-        return res.json()
-      })
-      .then(json => {
-        if (isMounted) {
-          setData(json)
-          setLoading(false)
-          setError('')
-        }
-      })
-      .catch(err => {
-        if (isMounted) {
-          setError(err.message)
-          setLoading(false)
-        }
-      })
-    return () => { isMounted = false }
-  }, [id, range])
+  const { data, isLoading: loading, error: queryError } = useQuery<PromptAnalyticsResponse>({
+    queryKey: ['analytics', 'prompt', id, range],
+    queryFn: () => fetch(`/api/analytics/prompts/${id}?range=${range}`).then(res => {
+      if (!res.ok) throw new Error('Failed to load data')
+      return res.json()
+    }),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
 
   function handleRangeChange(r: string) {
-    setLoading(true)
     setRange(r)
   }
 
-  if (error) {
-    return <div className="p-10 text-center text-red-400 font-bold">{error}</div>
+  if (queryError) {
+    return <div className="p-10 text-center text-red-400 font-bold">{(queryError as Error).message}</div>
   }
 
   if (!data) {

@@ -408,5 +408,9 @@ export async function GET(req: NextRequest) {
     traffic_sources,
     top_prompts,
     top_campaigns
+  }, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+    }
   })
 }
