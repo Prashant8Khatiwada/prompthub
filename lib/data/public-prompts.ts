@@ -14,7 +14,7 @@ export const getCachedCreator = (subdomain: string) =>
       return data as Creator
     },
     ['creator', subdomain],
-    { revalidate: 3600, tags: [`creator-${subdomain}`] }
+    { revalidate: 1, tags: [`creator-${subdomain}`] }
   )()
 
 export const getCachedPrompt = (creatorId: string, slug: string) => 
@@ -31,7 +31,7 @@ export const getCachedPrompt = (creatorId: string, slug: string) =>
       return data as Prompt
     },
     ['prompt', creatorId, slug],
-    { revalidate: 3600, tags: [`prompt-${creatorId}-${slug}`] }
+    { revalidate: 1, tags: [`prompt-${creatorId}-${slug}`] }
   )()
 
 export interface RelatedPromptType {
@@ -56,5 +56,5 @@ export const getCachedRelatedPrompts = (creatorId: string, currentPromptId: stri
       return (data || []) as RelatedPromptType[]
     },
     ['related-prompts', creatorId, currentPromptId],
-    { revalidate: 3600 }
+    { revalidate: 1 }
   )()

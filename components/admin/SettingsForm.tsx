@@ -118,6 +118,20 @@ export default function SettingsForm({ defaultValues, section }: Props) {
                 className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none"
               />
             </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Subdomain (Discovery URL)</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.subdomain || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none pr-32"
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 text-xs font-medium">
+                  .prompthub.app
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
