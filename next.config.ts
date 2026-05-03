@@ -32,6 +32,33 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        // Apply to all public creator/prompt pages
+        source: '/:subdomain/:slug*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            // Publicly cacheable, 1 hour fresh, 24 hour stale-while-revalidate
+            // This tells TikTok/WhatsApp/etc. the page is safe to open in-app
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        // Also cover subdomain-only profile pages
+        source: '/:subdomain',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 export default nextConfig
+

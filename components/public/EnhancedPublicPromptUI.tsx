@@ -20,7 +20,7 @@ const InstagramIcon = ({ className }: { className?: string }) => (
     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
   </svg>
 )
-import InstagramPost from './InstagramPost'
+
 import PromptGate from './PromptGate'
 import RelatedPrompts from './RelatedPrompts'
 import AdPopup from './AdPopup'
@@ -28,7 +28,7 @@ import type { AdPlacementData } from './AdBanner'
 import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
 import type { Creator, Prompt, Category } from '@/types'
 
-import VideoEmbed from './VideoEmbed'
+
 
 interface RelatedPromptType {
   id: string
@@ -416,22 +416,34 @@ export default function EnhancedPublicPromptUI({
             {activeTab === 'prompt' ? (
               <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 transition-opacity ${isPromptLoading ? 'opacity-50' : 'opacity-100'}`}>
                 <div className="px-5 py-8 md:px-12 text-white">
-                  {/* Embedding Section at the very top of prompt detail */}
-                  {(igMedia || oEmbedHtml || currentPrompt.video_url) && (
-                    <div className="mb-8 animate-in fade-in duration-700">
-                      {igMedia ? (
-                        <div className="flex justify-center">
-                          <InstagramPost media={igMedia} />
-                        </div>
-                      ) : (
-                        <VideoEmbed
-                          html={oEmbedHtml || null}
-                          url={currentPrompt.video_url || ''}
-                          fallbackThumbnail={currentPrompt.thumbnail_url}
-                        />
-                      )}
-                    </div>
-                  )}
+                  {/* Media Section — clean inline video/image, no social chrome */}
+                  {(() => {
+                    const mediaUrl = igMedia?.media_url || currentPrompt.video_url || null
+                    const isVideo = igMedia?.media_type === 'VIDEO' || (mediaUrl && !igMedia && /\.(mp4|mov|webm)/i.test(mediaUrl))
+                    const thumbUrl = igMedia?.thumbnail_url || currentPrompt.thumbnail_url || null
+
+                    if (!mediaUrl && !thumbUrl) return null
+
+                    return (
+                      <div className="mb-8 animate-in fade-in duration-700 w-full rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/40">
+                        {isVideo && mediaUrl ? (
+                          <video
+                            src={mediaUrl}
+                            poster={thumbUrl ?? undefined}
+                            controls
+                            playsInline
+                            className="w-full max-h-[520px] object-contain bg-black"
+                          />
+                        ) : (
+                          <img
+                            src={mediaUrl || thumbUrl!}
+                            alt={currentPrompt.title}
+                            className="w-full max-h-[520px] object-contain bg-black"
+                          />
+                        )}
+                      </div>
+                    )
+                  })()}
 
                   {adAbovePrompt && <div className="mb-6">{adAbovePrompt}</div>}
 
