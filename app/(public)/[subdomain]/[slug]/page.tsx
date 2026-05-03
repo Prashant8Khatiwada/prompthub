@@ -40,26 +40,38 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     .single()
   if (!prompt) return { title: 'Not Found' }
 
-  const title = `${prompt.title} by ${creator.name}`
-  const description = prompt.description ?? `${prompt.ai_tool} prompt by ${creator.name}`
+  const title = `${prompt.title} | ${creator.name}`
+  const description = prompt.description ?? `Check out this ${prompt.ai_tool} prompt by ${creator.name}.`
   const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
   const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
+  
+  // Construct the correct sharing URL (Defaulting to path-based as it is more universal)
+  const shareUrl = `https://${baseDomain}/${subdomain}/${slug}`
 
   return {
     title,
     description,
     openGraph: {
-      title: `${prompt.title} | PromptHub`,
+      title,
       description,
-      images: prompt.thumbnail_url ? [{ url: prompt.thumbnail_url }] : [],
-      type: 'website',
-      url: `https://${subdomain}.${baseDomain}/${slug}`,
+      images: prompt.thumbnail_url ? [
+        {
+          url: prompt.thumbnail_url,
+          width: 1200,
+          height: 630,
+          alt: prompt.title,
+        }
+      ] : [],
+      type: 'article',
+      url: shareUrl,
+      siteName: 'PromptHub',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${prompt.title} | PromptHub`,
+      title,
       description,
       images: prompt.thumbnail_url ? [prompt.thumbnail_url] : [],
+      creator: creator.handle || `@${subdomain}`,
     },
   }
 }

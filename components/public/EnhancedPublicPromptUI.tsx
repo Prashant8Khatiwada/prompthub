@@ -266,7 +266,9 @@ export default function EnhancedPublicPromptUI({
               <span>Back</span>
             </button>
             <a
-              href="mailto:contact@creatopedia.tech?subject=Sponsorship%20Inquiry"
+              href="https://creatopedia.tech/reach-us"
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-3.5 py-2.5 bg-zinc-900/60 hover:bg-zinc-800/80 backdrop-blur-md border border-white/10 hover:border-white/20 text-white rounded-full flex items-center gap-2 text-xs font-mono tracking-wider transition-all duration-300 shadow-xl select-none"
             >
               <Globe className="w-4 h-4 text-white" />
