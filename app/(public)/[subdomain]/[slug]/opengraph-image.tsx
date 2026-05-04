@@ -39,15 +39,10 @@ export default async function Image({ params }: Props) {
   const creatorName = creator?.name ?? subdomain
   const aiTool = prompt?.ai_tool ?? 'AI'
 
-  // Only use uploaded thumbnails (Supabase storage) for OG image.
-  // Instagram CDN URLs are blocked by most social crawlers, so we skip them.
-  const isUploadedThumbnail =
-    !!prompt?.thumbnail_url &&
-    (prompt.thumbnail_url.includes('supabase.co') || prompt.thumbnail_url.includes('supabase.in'))
-
-  // Fetch the thumbnail as base64 so bots can embed it directly
+  // Fetch the thumbnail as base64 so bots can embed it directly.
+  // We proxy it through our server to ensure it's included in the generated image.
   let thumbnailData: string | null = null
-  if (isUploadedThumbnail && prompt?.thumbnail_url) {
+  if (prompt?.thumbnail_url) {
     try {
       const res = await fetch(prompt.thumbnail_url, {
         headers: {
@@ -250,6 +245,26 @@ export default async function Image({ params }: Props) {
                   objectFit: 'cover',
                 }}
               />
+              {/* "WITH AI" Badge Overlay */}
+              <div style={{
+                position: 'absolute',
+                bottom: '24px',
+                right: '24px',
+                background: '#000000cc',
+                padding: '8px 16px',
+                borderRadius: '12px',
+                border: `1px solid ${brandColor}66`,
+                color: 'white',
+                fontSize: '18px',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+              }}>
+                <span style={{ color: brandColor, opacity: 0.9 }}>WITH</span> 
+                <span style={{ color: 'white' }}>AI</span>
+              </div>
             </div>
           )}
 
@@ -259,17 +274,72 @@ export default async function Image({ params }: Props) {
               style={{
                 width: '380px',
                 height: '380px',
-                borderRadius: '20px',
-                background: `${brandColor}22`,
-                border: `2px solid ${brandColor}33`,
+                borderRadius: '24px',
+                background: `linear-gradient(145deg, ${brandColor}33, #151515)`,
+                border: `2px solid ${brandColor}44`,
                 flexShrink: 0,
                 alignSelf: 'center',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
+                gap: '24px',
+                boxShadow: `0 20px 40px rgba(0,0,0,0.4), 0 0 60px ${brandColor}11`,
+                position: 'relative',
+                overflow: 'hidden',
               }}
             >
-              <span style={{ fontSize: '80px', color: brandColor }}>✦</span>
+              {/* Decorative inner glow */}
+              <div style={{
+                position: 'absolute',
+                top: '-50%',
+                left: '-50%',
+                width: '200%',
+                height: '200%',
+                background: `radial-gradient(circle at center, ${brandColor}11 0%, transparent 70%)`,
+                display: 'flex',
+              }} />
+              
+              <div style={{
+                width: '140px',
+                height: '140px',
+                borderRadius: '40px',
+                background: brandColor,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: `0 10px 30px ${brandColor}66`,
+                zIndex: 2,
+              }}>
+                <span style={{ fontSize: '70px', color: 'white' }}>✦</span>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+                zIndex: 2,
+              }}>
+                <span style={{ 
+                  fontSize: '28px', 
+                  fontWeight: 800, 
+                  color: 'white',
+                  letterSpacing: '0.05em',
+                }}>
+                  {aiTool.toUpperCase()}
+                </span>
+                <span style={{ 
+                  fontSize: '14px', 
+                  fontWeight: 600, 
+                  color: `${brandColor}`,
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
+                  opacity: 0.8,
+                }}>
+                  Premium Prompt
+                </span>
+              </div>
             </div>
           )}
         </div>

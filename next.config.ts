@@ -44,6 +44,18 @@ const nextConfig: NextConfig = {
             // This tells TikTok/WhatsApp/etc. the page is safe to open in-app
             value: 'public, s-maxage=3600, stale-while-revalidate=86400',
           },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
         ],
       },
       {

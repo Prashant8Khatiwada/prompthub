@@ -564,8 +564,18 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
             )}
           </div>
           {thumbnailUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={thumbnailUrl} alt="Thumbnail" className="w-20 h-14 object-cover rounded-lg border border-zinc-700 flex-shrink-0" />
+            <div className="relative group flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={thumbnailUrl} alt="Thumbnail" className="w-20 h-20 object-cover rounded-xl border border-zinc-700 shadow-lg" />
+              <button
+                type="button"
+                onClick={() => setThumbnailUrl('')}
+                className="absolute -top-2 -right-2 p-1.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg active:scale-90"
+                title="Remove thumbnail"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
           )}
         </div>
       </div>

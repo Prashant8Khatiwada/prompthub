@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { LayoutGrid, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 const InstagramIcon = ({ className }: { className?: string }) => (
   <svg
@@ -653,6 +654,16 @@ export default function EnhancedPublicPromptUI({
           </div>
         </div>
       )}
+      {/* Mini Footer for Trust & Compliance (Helps with TikTok/FB In-App Browsers) */}
+      <footer className="mt-12 mb-8 px-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-1000 delay-500">
+        <div className="flex items-center justify-center gap-6 text-[10px] font-mono tracking-widest text-white/20 uppercase">
+          <Link href="/privacy-policy" className="hover:text-white/40 transition-colors">Privacy</Link>
+          <span className="w-1 h-1 rounded-full bg-white/10" />
+          <Link href="/terms" className="hover:text-white/40 transition-colors">Terms</Link>
+          <span className="w-1 h-1 rounded-full bg-white/10" />
+          <Link href="/" className="hover:text-white/40 transition-colors">© PromptHub</Link>
+        </div>
+      </footer>
     </div>
   )
 }
