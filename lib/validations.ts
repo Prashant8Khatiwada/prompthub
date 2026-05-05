@@ -13,6 +13,7 @@ export const promptSchema = z.object({
   video_url: z.string().url().optional().nullable().or(z.literal('')),
   embed_html: z.string().optional().nullable().or(z.literal('')),
   thumbnail_url: z.string().url().optional().nullable().or(z.literal('')),
+  share_image_url: z.string().url().optional().nullable().or(z.literal('')),
   status: z.enum(['draft', 'published']),
   featured: z.boolean().default(false),
   content_type: z.enum(['prompt', 'pdf']).default('prompt'),

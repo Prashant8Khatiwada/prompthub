@@ -48,6 +48,7 @@ export interface Prompt {
   video_url: string | null
   embed_html: string | null
   thumbnail_url: string | null
+  share_image_url: string | null
   ai_tool: string
   output_type: OutputType
   gate_type: GateType

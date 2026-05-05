@@ -64,6 +64,7 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
   const [videoUrl, setVideoUrl] = useState(defaultValues?.video_url ?? '')
   const [embedHtml, setEmbedHtml] = useState(defaultValues?.embed_html ?? '')
   const [thumbnailUrl, setThumbnailUrl] = useState(defaultValues?.thumbnail_url ?? '')
+  const [shareImageUrl, setShareImageUrl] = useState(defaultValues?.share_image_url ?? '')
   const [status, setStatus] = useState<'draft' | 'published'>(defaultValues?.status ?? 'published')
   const [featured, setFeatured] = useState(defaultValues?.featured ?? false)
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!defaultValues?.slug)
@@ -95,7 +96,7 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
     fetchCategories()
   }, [])
 
-  async function handleThumbnailUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleThumbnailUpload(e: React.ChangeEvent<HTMLInputElement>, isShareImage = false) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
@@ -105,7 +106,11 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
     const data = await res.json()
     setUploading(false)
     if (data.url) {
-      setThumbnailUrl(data.url)
+      if (isShareImage) {
+        setShareImageUrl(data.url)
+      } else {
+        setThumbnailUrl(data.url)
+      }
     } else {
       setServerError(data.error ?? 'Upload failed')
     }
@@ -133,7 +138,8 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
     setIsAutoFilling(true)
 
     setVideoUrl(post.permalink)
-    setThumbnailUrl(post.media_type === 'VIDEO' ? (post.thumbnail_url || post.media_url) : post.media_url)
+    const url = post.media_type === 'VIDEO' ? (post.thumbnail_url || post.media_url) : post.media_url
+    setThumbnailUrl(url)
 
     if (post.caption) {
       const firstLine = post.caption.split('\n')[0].trim().substring(0, 60)
@@ -197,6 +203,7 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
       video_url: videoUrl || null,
       embed_html: embedHtml || null,
       thumbnail_url: thumbnailUrl || null,
+      share_image_url: shareImageUrl || null,
       status,
       is_featured: featured,
     }
@@ -546,37 +553,96 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
         {errors.slug && <p className="text-red-400 text-xs mt-1">{errors.slug[0]}</p>}
       </div>
 
-      {/* Thumbnail */}
-      <div>
-        <label className={labelCls}>Thumbnail Image</label>
-        <div className="flex gap-4 items-start">
-          <div className="flex-1">
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleThumbnailUpload}
-              className="block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 transition-all cursor-pointer"
-            />
-            <p className="text-zinc-600 text-xs mt-1">JPEG, PNG or WebP. Max 5MB.</p>
-            {uploading && <p className="text-indigo-400 text-xs mt-1">Uploading…</p>}
-            {thumbnailUrl && !uploading && (
-              <p className="text-emerald-400 text-xs mt-1 truncate">✓ {thumbnailUrl}</p>
+      {/* Thumbnail & Share Image */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Main Thumbnail */}
+        <div className="space-y-4">
+          <label className={labelCls}>Website Thumbnail</label>
+          <div className="flex gap-4 items-start p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
+            <div className="flex-1 min-w-0">
+              <input
+                id="thumbnail-upload"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => handleThumbnailUpload(e, false)}
+                className="hidden"
+              />
+              <label
+                htmlFor="thumbnail-upload"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer active:scale-95"
+              >
+                Choose File
+              </label>
+              <p className="text-zinc-600 text-[10px] mt-2 font-medium">JPEG, PNG or WebP. Max 5MB.</p>
+              {uploading && <p className="text-indigo-400 text-[10px] mt-1 animate-pulse">Uploading…</p>}
+              {thumbnailUrl && !uploading && (
+                <div className="flex items-center gap-1.5 mt-2 overflow-hidden bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20">
+                  <span className="text-emerald-400 text-[10px] shrink-0">✓</span>
+                  <p className="text-emerald-400 text-[10px] truncate font-mono" title={thumbnailUrl}>{thumbnailUrl}</p>
+                </div>
+              )}
+            </div>
+            {thumbnailUrl && (
+              <div className="relative group flex-shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={thumbnailUrl} alt="Thumbnail" className="w-20 h-20 object-cover rounded-lg border border-zinc-700 shadow-xl" />
+                <button
+                  type="button"
+                  onClick={() => setThumbnailUrl('')}
+                  className="absolute -top-2 -right-2 p-1.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg active:scale-90"
+                  title="Remove thumbnail"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
             )}
           </div>
-          {thumbnailUrl && (
-            <div className="relative group flex-shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={thumbnailUrl} alt="Thumbnail" className="w-20 h-20 object-cover rounded-xl border border-zinc-700 shadow-lg" />
-              <button
-                type="button"
-                onClick={() => setThumbnailUrl('')}
-                className="absolute -top-2 -right-2 p-1.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg active:scale-90"
-                title="Remove thumbnail"
+          <p className="text-[10px] text-zinc-500">This thumbnail is shown on the website listing and prompt page.</p>
+        </div>
+
+        {/* Share Image */}
+        <div className="space-y-4">
+          <label className={labelCls}>Social Share Thumbnail (OG Image)</label>
+          <div className="flex gap-4 items-start p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
+            <div className="flex-1 min-w-0">
+              <input
+                id="share-image-upload"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => handleThumbnailUpload(e, true)}
+                className="hidden"
+              />
+              <label
+                htmlFor="share-image-upload"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold transition-all cursor-pointer active:scale-95"
               >
-                <Trash2 className="w-3 h-3" />
-              </button>
+                Choose File
+              </label>
+              <p className="text-zinc-600 text-[10px] mt-2 font-medium">JPEG, PNG or WebP. Max 5MB.</p>
+              {uploading && <p className="text-indigo-400 text-[10px] mt-1 animate-pulse">Uploading…</p>}
+              {shareImageUrl && !uploading && (
+                <div className="flex items-center gap-1.5 mt-2 overflow-hidden bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20">
+                  <span className="text-emerald-400 text-[10px] shrink-0">✓</span>
+                  <p className="text-emerald-400 text-[10px] truncate font-mono" title={shareImageUrl}>{shareImageUrl}</p>
+                </div>
+              )}
             </div>
-          )}
+            {shareImageUrl && (
+              <div className="relative group flex-shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={shareImageUrl} alt="Share Image" className="w-20 h-20 object-cover rounded-lg border border-zinc-700 shadow-xl" />
+                <button
+                  type="button"
+                  onClick={() => setShareImageUrl('')}
+                  className="absolute -top-2 -right-2 p-1.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg active:scale-90"
+                  title="Remove share image"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
+          <p className="text-[10px] text-zinc-500">This thumbnail is shown when you share the link on WhatsApp, Instagram, etc.</p>
         </div>
       </div>
 

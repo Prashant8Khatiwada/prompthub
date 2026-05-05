@@ -28,7 +28,7 @@ export default async function Image({ params }: Props) {
   // Fetch prompt
   const { data: prompt } = await supabase
     .from('prompts')
-    .select('title, description, thumbnail_url, ai_tool')
+    .select('*')
     .eq('slug', slug)
     .eq('status', 'published')
     .single()
@@ -40,11 +40,13 @@ export default async function Image({ params }: Props) {
   const aiTool = prompt?.ai_tool ?? 'AI'
 
   // Fetch the thumbnail as base64 so bots can embed it directly.
-  // We proxy it through our server to ensure it's included in the generated image.
+  // We prioritize share_image_url, then thumbnail_url.
   let thumbnailData: string | null = null
-  if (prompt?.thumbnail_url) {
+  const imageUrl = prompt?.share_image_url || prompt?.thumbnail_url
+  
+  if (imageUrl) {
     try {
-      const res = await fetch(prompt.thumbnail_url, {
+      const res = await fetch(imageUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; PromptHubBot/1.0)',
           Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
