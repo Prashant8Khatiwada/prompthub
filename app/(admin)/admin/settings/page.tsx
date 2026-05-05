@@ -8,7 +8,7 @@ export default async function SettingsPage() {
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
   const { data: { user } } = await supabase.auth.getUser()
-  
+
   if (!user) return null
 
   // 1. Fetch or Silently Initialize Creator Profile
@@ -29,12 +29,14 @@ export default async function SettingsPage() {
       subdomain: base,
       brand_color: '#6366f1'
     }).select().single()
-    
+
     if (initError) {
+      console.error('Creator init error:', initError)
       return (
         <div className="p-12 bg-red-500/10 border border-red-500/20 rounded-3xl text-center">
           <h2 className="text-red-500 font-bold text-xl mb-2">Database Connection Error</h2>
           <p className="text-zinc-400">Please ensure you have run the SQL migration to create the <code>creators</code> table.</p>
+          <p className="text-zinc-500 text-sm mt-4">Error: {initError.message}</p>
         </div>
       )
     }
@@ -52,11 +54,11 @@ export default async function SettingsPage() {
         <p className="text-zinc-500 text-sm">Configure your hub, manage integrations, and organize categories.</p>
       </div>
 
-      <ControlCenter 
-        creator={creator!} 
+      <ControlCenter
+        creator={creator!}
         userEmail={user.email!}
-        igUser={igUser} 
-        igFeed={igFeed} 
+        igUser={igUser}
+        igFeed={igFeed}
       />
     </div>
   )
