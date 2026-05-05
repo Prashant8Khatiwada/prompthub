@@ -165,9 +165,10 @@ export default async function PublicPromptPage({ params }: Params) {
       style={{ '--brand': creator.brand_color } as React.CSSProperties}
       className="min-h-screen bg-zinc-950 text-white"
     >
-      <ViewTracker pageId={prompt.id} promptId={prompt.id} creatorId={creator.id} />
+      <ViewTracker key={`tracker-${prompt.id}`} pageId={prompt.id} promptId={prompt.id} creatorId={creator.id} />
 
       <EnhancedPublicPromptUI
+        key={prompt.id}
         creator={creator}
         prompt={prompt}
         igUser={igUser}

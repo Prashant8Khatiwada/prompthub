@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 import { LayoutGrid, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -81,7 +82,7 @@ const GATE_LABELS: Record<string, { label: string; color: string }> = {
 
 export default function EnhancedPublicPromptUI({
   creator,
-  prompt: initialPrompt,
+  prompt,
   igUser,
   igMedia,
   relatedData,
@@ -90,54 +91,35 @@ export default function EnhancedPublicPromptUI({
   adPopupPlacements,
   oEmbedHtml
 }: Props) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<'prompt' | 'profile'>('prompt')
-  const [currentSlug, setCurrentSlug] = useState(initialPrompt.slug)
   const [showDebug, setShowDebug] = useState(false)
   const supabase = createClient()
 
-  // ─── Query for the Active Prompt ───
-  const { data: currentPrompt, isLoading: isPromptLoading } = useQuery({
-    queryKey: ['public-prompt', creator.id, currentSlug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('prompts')
-        .select('*')
-        .eq('slug', currentSlug)
-        .eq('creator_id', creator.id)
-        .eq('status', 'published')
-        .single()
-
-      if (error || !data) throw new Error(error?.message || 'Prompt not found')
-      return data as Prompt
-    },
-    initialData: currentSlug === initialPrompt.slug ? initialPrompt : undefined,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  })
-
-  // ─── Query for Related Prompts (Updates when currentPrompt changes) ───
+  // ─── Query for Related Prompts (Updates when prompt changes) ───
   const { data: dynamicRelatedData } = useQuery({
-    queryKey: ['related-prompts', creator.id, currentPrompt?.id],
+    queryKey: ['related-prompts', creator.id, prompt.id],
     queryFn: async () => {
-      if (!currentPrompt?.id) return []
+      if (!prompt.id) return []
       const { data, error } = await supabase
         .from('prompts')
         .select('id, title, slug, ai_tool, output_type, thumbnail_url')
         .eq('creator_id', creator.id)
         .eq('status', 'published')
-        .neq('id', currentPrompt.id) // Exclude current prompt
+        .neq('id', prompt.id) // Exclude current prompt
         .limit(6)
 
       return (data || []) as RelatedPromptType[]
     },
-    initialData: currentPrompt?.id === initialPrompt.id ? relatedData : undefined,
-    enabled: !!currentPrompt?.id,
+    initialData: relatedData,
+    enabled: !!prompt.id,
     staleTime: 1000 * 60 * 5,
   })
 
   // Use the filtered list for rendering
   const finalRelatedData = useMemo(() => {
-    return (dynamicRelatedData || []).filter(p => p.id !== currentPrompt?.id)
-  }, [dynamicRelatedData, currentPrompt?.id])
+    return (dynamicRelatedData || []).filter(p => p.id !== prompt.id)
+  }, [dynamicRelatedData, prompt.id])
 
   const [libraryPrompts, setLibraryPrompts] = useState<Prompt[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -225,10 +207,7 @@ export default function EnhancedPublicPromptUI({
   const handlePromptClick = (clickedPrompt: RelatedPromptType) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
 
-    // Update state to trigger useQuery
-    setCurrentSlug(clickedPrompt.slug)
-
-    // Update URL without reload
+    // Use Next.js router for proper navigation
     const newPath = (() => {
       const hostname = window.location.hostname
       const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN?.replace(/^https?:\/\//, '') || 'creatopedia.tech'
@@ -238,12 +217,11 @@ export default function EnhancedPublicPromptUI({
       }
       return `/${clickedPrompt.slug}`
     })()
-    window.history.pushState(null, '', newPath)
+    
+    router.push(newPath)
   }
 
-  if (!currentPrompt) return null
-
-  const toolColor = AI_TOOL_COLORS[currentPrompt.ai_tool.split(',')[0].trim()] ?? '#6366f1'
+  const toolColor = AI_TOOL_COLORS[prompt.ai_tool.split(',')[0].trim()] ?? '#6366f1'
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] pb-20 text-white select-none relative overflow-hidden">
@@ -365,7 +343,7 @@ export default function EnhancedPublicPromptUI({
                 href={creator.instagram_url || `https://instagram.com/${creator.handle?.replace('@', '') || creator.subdomain}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 md:flex-initial px-5 py-2.5 bg-white text-zinc-950 font-bold text-xs rounded-full shadow-lg hover:bg-white/90 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 select-none"
+                className="flex-1 md:flex-initial px-5 py-2.5 bg-white text-zinc-950 font-bold text-xs rounded-full shadow-lg hover:bg-white/90 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 select-none"
               >
                 <InstagramIcon className="w-3.5 h-3.5 text-zinc-950" />
                 <span>Follow</span>
@@ -413,13 +391,13 @@ export default function EnhancedPublicPromptUI({
           {/* Tab Content */}
           <div className="relative select-none">
             {activeTab === 'prompt' ? (
-              <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 transition-opacity ${isPromptLoading ? 'opacity-50' : 'opacity-100'}`}>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 transition-opacity">
                 <div className="px-5 py-8 md:px-12 text-white">
                   {/* Media Section — clean inline video/image, no social chrome */}
                   {(() => {
-                    const mediaUrl = igMedia?.media_url || currentPrompt.video_url || null
+                    const mediaUrl = igMedia?.media_url || prompt.video_url || null
                     const isVideo = igMedia?.media_type === 'VIDEO' || (mediaUrl && !igMedia && /\.(mp4|mov|webm)/i.test(mediaUrl))
-                    const thumbUrl = igMedia?.thumbnail_url || currentPrompt.thumbnail_url || null
+                    const thumbUrl = igMedia?.thumbnail_url || prompt.thumbnail_url || null
 
                     if (!mediaUrl && !thumbUrl) return null
 
@@ -436,7 +414,7 @@ export default function EnhancedPublicPromptUI({
                         ) : (
                           <img
                             src={mediaUrl || thumbUrl!}
-                            alt={currentPrompt.title}
+                            alt={prompt.title}
                             className="w-full max-h-[520px] object-contain bg-black"
                           />
                         )}
@@ -447,31 +425,31 @@ export default function EnhancedPublicPromptUI({
                   {adAbovePrompt && <div className="mb-6">{adAbovePrompt}</div>}
 
                   <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white mb-4 leading-tight">
-                    {currentPrompt.title}
+                    {prompt.title}
                   </h1>
                   <div className="flex flex-wrap gap-2 mb-6">
                     <span
                       className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 rounded-full border bg-zinc-900/60 border-white/10 text-white/90 backdrop-blur-md"
                     >
                       <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: toolColor }} />
-                      AI Tool: {currentPrompt.ai_tool}
+                      AI Tool: {prompt.ai_tool}
                     </span>
                     <span className="inline-flex items-center gap-1.5 text-[10px] font-mono tracking-wider px-3 py-1.5 rounded-full border bg-zinc-900/60 border-white/10 text-white/70">
-                      Output: {currentPrompt.output_type}
+                      Output: {prompt.output_type}
                     </span>
                   </div>
-                  {currentPrompt.description && (
-                    <p className="text-zinc-400 text-sm md:text-base leading-relaxed mb-8 font-light">{currentPrompt.description}</p>
+                  {prompt.description && (
+                    <p className="text-zinc-400 text-sm md:text-base leading-relaxed mb-8 font-light">{prompt.description}</p>
                   )}
 
                   {/* Gate component with premium dynamic forms */}
-                  <PromptGate prompt={currentPrompt} key={currentPrompt.id} />
+                  <PromptGate prompt={prompt} key={prompt.id} />
 
                   {adBelowPrompt && <div className="mt-8">{adBelowPrompt}</div>}
                 </div>
 
                 {adPopupPlacements && adPopupPlacements.length > 0 && (
-                  <AdPopup placements={adPopupPlacements} promptId={currentPrompt.id} creatorId={creator.id} />
+                  <AdPopup placements={adPopupPlacements} promptId={prompt.id} creatorId={creator.id} />
                 )}
 
                 {/* Related Prompts Section */}
@@ -629,13 +607,13 @@ export default function EnhancedPublicPromptUI({
               <p className="text-zinc-500 mb-1 border-b border-zinc-800 pb-1">Prompt Metadata</p>
               <pre className="text-zinc-300">
                 {JSON.stringify({
-                  id: currentPrompt.id,
-                  title: currentPrompt.title,
-                  gate_type: currentPrompt.gate_type,
-                  has_content: !!currentPrompt.content,
-                  content_type: currentPrompt.content_type,
-                  video_url: currentPrompt.video_url,
-                  thumbnail_url: currentPrompt.thumbnail_url
+                  id: prompt.id,
+                  title: prompt.title,
+                  gate_type: prompt.gate_type,
+                  has_content: !!prompt.content,
+                  content_type: prompt.content_type,
+                  video_url: prompt.video_url,
+                  thumbnail_url: prompt.thumbnail_url
                 }, null, 2)}
               </pre>
             </div>
@@ -644,7 +622,6 @@ export default function EnhancedPublicPromptUI({
               <pre className="text-zinc-300">
                 {JSON.stringify({
                   activeTab,
-                  isLoading: isPromptLoading,
                   hasIgUser: !!igUser,
                   hasIgMedia: !!igMedia,
                   hasOEmbed: !!oEmbedHtml
