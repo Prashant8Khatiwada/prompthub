@@ -11,6 +11,8 @@ import {
   CloudOff,
   MoreHorizontal,
   ExternalLink,
+  Copy,
+  Check,
 } from 'lucide-react'
 import type { Prompt } from '@/types'
 import PromptModal from './PromptModal'
@@ -50,9 +52,21 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
   const [editingPrompt, setEditingPrompt] = useState<PromptWithCategory | null>(null)
   const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({})
 
   const siteUrl = (slug: string) => `/${subdomain}/${slug}`
+
+  async function handleCopyLink(p: PromptWithCategory) {
+    const fullUrl = `${window.location.origin}${siteUrl(p.slug)}`
+    try {
+      await navigator.clipboard.writeText(fullUrl)
+      setCopiedId(p.id)
+      setTimeout(() => setCopiedId(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy', err)
+    }
+  }
 
   async function handleToggleStatus(p: PromptWithCategory) {
     setTogglingId(p.id)
@@ -132,16 +146,29 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
                   {p.status}
                 </span>
               </td>
-              <td className="px-4 py-4 text-center">
-                <a
-                  href={siteUrl(p.slug)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-zinc-900/50 text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-zinc-800/50 hover:border-indigo-500/20 transition-all"
-                  title="View Published Prompt"
-                >
-                  <ExternalLink size={16} />
-                </a>
+              <td className="px-4 py-4">
+                <div className="flex items-center justify-center gap-2">
+                  <a
+                    href={siteUrl(p.slug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-zinc-900/50 text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-zinc-800/50 hover:border-indigo-500/20 transition-all"
+                    title="Open Link"
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                  <button
+                    onClick={() => handleCopyLink(p)}
+                    className={`w-9 h-9 inline-flex items-center justify-center rounded-lg border transition-all ${
+                      copiedId === p.id 
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                        : 'bg-zinc-900/50 text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border-zinc-800/50 hover:border-indigo-500/20'
+                    }`}
+                    title="Copy Link"
+                  >
+                    {copiedId === p.id ? <Check size={16} /> : <Copy size={16} />}
+                  </button>
+                </div>
               </td>
               <td className="px-4 py-4 hidden xl:table-cell">
                 <span className="text-xs text-zinc-500">{formatDate(p.created_at)}</span>
