@@ -205,7 +205,7 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
       thumbnail_url: thumbnailUrl || null,
       share_image_url: shareImageUrl || null,
       status,
-      is_featured: featured,
+      featured,
     }
 
     const url = isEdit ? `/api/prompts/${promptId}` : '/api/prompts'

@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { promptSchema } from '@/lib/validations'
-import { revalidateTag } from 'next/cache'
+import { revalidateTag, revalidatePath } from 'next/cache'
 import { Prompt } from '@/types'
 import { SupabaseClient, User } from '@supabase/supabase-js'
 
@@ -60,12 +60,33 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   if (error || !data) return NextResponse.json({ error: error?.message || 'Failed to update' }, { status: 400 })
   
-  // Invalidate cache
+  // Invalidate cache tags
   revalidateTag(`prompt-${user.id}-${data.slug}`, 'max')
   revalidateTag(`prompts-list-${user.id}`, 'max')
+  
   // Also invalidate the old slug if it changed
   if (prompt.slug !== data.slug) {
     revalidateTag(`prompt-${user.id}-${prompt.slug}`, 'max')
+  }
+
+  // FORCE PATH REVALIDATION
+  // This ensures the actual page at /subdomain/slug is updated immediately
+  try {
+    const { data: creator } = await supabase
+      .from('creators')
+      .select('subdomain')
+      .eq('id', user.id)
+      .single()
+    
+    if (creator) {
+      const revalidateUrl = `/${creator.subdomain}/${data.slug}`
+      revalidatePath(revalidateUrl)
+      if (prompt.slug !== data.slug) {
+        revalidatePath(`/${creator.subdomain}/${prompt.slug}`)
+      }
+    }
+  } catch (e) {
+    console.error('Failed to revalidate path:', e)
   }
 
   // If newly published, ensure page record exists
