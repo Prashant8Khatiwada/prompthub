@@ -255,10 +255,11 @@ export default function EnhancedPublicPromptUI({
             </a>
           </div>
           <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/60 to-transparent z-10" />
-          <img
-            src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80"
-            alt="Cover"
-            className="w-full h-full object-cover select-none opacity-30 hover:scale-105 transition-all duration-700"
+          <div 
+            className="absolute inset-0 select-none opacity-40 transition-all duration-700"
+            style={{
+              background: `linear-gradient(135deg, ${creator.brand_color || '#6366f1'}33 0%, #09090b 100%)`
+            }}
           />
         </div>
 
