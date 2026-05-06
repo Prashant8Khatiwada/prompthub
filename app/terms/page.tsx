@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Terms & Conditions | PromptHub',
-  description: 'Terms and conditions for using the PromptHub platform.',
+  title: 'Terms & Conditions | Creatopedia',
+  description: 'Terms and conditions for using the Creatopedia platform.',
 }
 
 export default function TermsAndConditions() {
@@ -39,7 +39,7 @@ export default function TermsAndConditions() {
             <section className="space-y-6">
               <h2 className="text-2xl font-bold">1. Acceptance of Terms</h2>
               <p>
-                By accessing and using PromptHub (&quot;the Platform&quot;), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our services.
+                By accessing and using Creatopedia (&quot;the Platform&quot;), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our services.
               </p>
             </section>
 
@@ -56,11 +56,11 @@ export default function TermsAndConditions() {
             <section className="space-y-6">
               <h2 className="text-2xl font-bold">3. Content and Intellectual Property</h2>
               <p>
-                PromptHub allows creators to share AI prompts. By posting content on the Platform:
+                Creatopedia allows creators to share AI prompts. By posting content on the Platform:
               </p>
               <ul className="list-disc pl-6 space-y-3 text-zinc-400">
                 <li>You retain ownership of your original prompts.</li>
-                <li>You grant PromptHub a non-exclusive, worldwide, royalty-free license to display and distribute your content.</li>
+                <li>You grant Creatopedia a non-exclusive, worldwide, royalty-free license to display and distribute your content.</li>
                 <li>You represent that you have the right to share the content and that it does not violate any third-party rights.</li>
               </ul>
             </section>
@@ -91,7 +91,7 @@ export default function TermsAndConditions() {
             <section className="space-y-6">
               <h2 className="text-2xl font-bold">6. Limitation of Liability</h2>
               <p>
-                PromptHub is provided &quot;as is&quot; without warranties of any kind. We shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the Platform.
+                Creatopedia is provided &quot;as is&quot; without warranties of any kind. We shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the Platform.
               </p>
             </section>
 
@@ -108,8 +108,8 @@ export default function TermsAndConditions() {
                 For questions regarding these Terms, please contact us at:
               </p>
               <div className="bg-zinc-900/50 border border-zinc-800 p-8 rounded-3xl">
-                <p className="text-white font-bold mb-1">PromptHub Support</p>
-                <p className="text-zinc-500 text-sm italic">support@prompthub.app</p>
+                <p className="text-white font-bold mb-1">Creatopedia Support</p>
+                <p className="text-zinc-500 text-sm italic">support@Creatopedia.app</p>
               </div>
             </section>
           </div>
@@ -119,11 +119,11 @@ export default function TermsAndConditions() {
       {/* Footer */}
       <footer className="py-20 px-6 border-t border-white/5 bg-zinc-950">
         <div className="max-w-7xl mx-auto text-center space-y-8">
-           <div className="flex items-center justify-center gap-2.5">
-              <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center font-bold text-zinc-400 border border-zinc-800">P</div>
-              <span className="text-sm font-bold text-white">PromptHub</span>
-           </div>
-           <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">© 2024 PromptHub Platform. Built for the AI Generation.</p>
+          <div className="flex items-center justify-center gap-2.5">
+            <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center font-bold text-zinc-400 border border-zinc-800">P</div>
+            <span className="text-sm font-bold text-white">Creatopedia</span>
+          </div>
+          <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">© 2024 Creatopedia Platform. Built for the AI Generation.</p>
         </div>
       </footer>
     </div>

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# PromptHub Docker Build and Push Script
+# Creatopedia Docker Build and Push Script
 # This script uses the production keys provided to build and push the Docker image.
 
 # Load environment variables from .env if it exists

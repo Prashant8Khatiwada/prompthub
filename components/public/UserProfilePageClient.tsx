@@ -110,7 +110,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
         return `/${creator.subdomain}/${slug}`
       }
 
-      // If we are already on a subdomain (e.g. milan.prompthub.app), we just use /slug
+      // If we are already on a subdomain (e.g. milan.Creatopedia.app), we just use /slug
       return `/${slug}`
     }
 
@@ -148,7 +148,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
         </div>
 
         {/* Profile Details overlapping cover image */}
-        <div className="max-w-4xl mx-auto px-6 flex flex-col items-center text-center -mt-14 md:-mt-20 relative z-20 pb-8 select-none">
+        <div className="w-full max-w-6xl mx-auto px-4 flex flex-col items-center text-center -mt-20 md:-mt-28 relative z-20 pb-4 select-none">
           {/* Large Avatar */}
           <div className="relative group select-none flex flex-col items-center">
             <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full p-[3px] bg-gradient-to-tr from-[#3b82f6] via-[#a855f7] to-[#ec4899] shadow-2xl hover:scale-105 transition-transform duration-500 select-none">
@@ -183,8 +183,8 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
           </div>
 
           {/* Name & Bio from Screenshot Layout */}
-          <div className="mt-5 flex flex-col items-center gap-1 select-none">
-            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight select-none">
+          <div className="mt-4 flex flex-col items-center gap-0.5 select-none">
+            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight select-none">
               {creator.name}
             </h1>
             <span className="text-xs sm:text-sm font-mono text-white/50 tracking-wide font-light">
@@ -198,7 +198,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
           </div>
 
           {/* Action Buttons Row */}
-          <div className="flex items-center gap-3 mt-6">
+          <div className="flex items-center gap-2 mt-4">
             <a
               href={creator.instagram_url || `https://instagram.com/${creator.handle?.replace('@', '') || creator.subdomain}`}
               target="_blank"
@@ -221,22 +221,22 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
           </div>
 
           {/* Followers / Following / Posts Counts at the bottom exactly like reference image */}
-          <div className="w-full max-w-sm mx-auto flex items-center justify-between mt-8 pt-6 border-t border-white/5 font-mono select-none">
+          <div className="w-full max-w-sm mx-auto flex items-center justify-between mt-2 pt-3 border-t border-white/5 font-mono select-none">
             <div className="flex flex-col items-center">
-              <span className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-wider font-light">Followers</span>
-              <span className="text-sm md:text-lg font-black text-white mt-1">
+              <span className="text-[8px] text-white/40 uppercase tracking-wider font-light">Followers</span>
+              <span className="text-xs md:text-sm font-black text-white mt-0.5">
                 {igUser?.followers_count ? `${(igUser.followers_count / 1000).toFixed(1)}k` : '252k'}
               </span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-wider font-light">Following</span>
-              <span className="text-sm md:text-lg font-black text-white mt-1">
+              <span className="text-[8px] text-white/40 uppercase tracking-wider font-light">Following</span>
+              <span className="text-xs md:text-sm font-black text-white mt-0.5">
                 {igUser?.follows_count ?? '378'}
               </span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-wider font-light">Posts</span>
-              <span className="text-sm md:text-lg font-black text-white mt-1">
+              <span className="text-[8px] text-white/40 uppercase tracking-wider font-light">Posts</span>
+              <span className="text-xs md:text-sm font-black text-white mt-0.5">
                 {igUser?.media_count ?? '115'}
               </span>
             </div>
@@ -244,7 +244,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pb-24">
+      <div className="max-w-6xl mx-auto px-4 pb-12">
         {/* ─── Glass Tabs Controller ─── */}
         {/* <div className="mt-6 mb-10 max-w-sm mx-auto p-1.5 bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-2xl flex items-center gap-1 select-none">
           <button
@@ -278,10 +278,10 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
 
         {/* ─── CREATION TAB CONTENT ─── */}
         {activeTab === 'creation' && (
-          <div className="space-y-12 animate-in fade-in duration-500">
+          <div className="space-y-4 animate-in fade-in duration-500">
             {/* Categories Pills Bar */}
             {activeCategoryIds.length > 0 && (
-              <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto select-none">
+              <div className="flex flex-wrap items-center justify-center gap-1 w-full mx-auto select-none pt-0">
                 <button
                   onClick={() => setActiveCategory(null)}
                   className={`px-5 py-2.5 rounded-md sm:rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${activeCategory === null
@@ -318,7 +318,10 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                 <p className="text-sm">No prompts in this category yet.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-3 animate-in fade-in duration-500">
+              <div
+                className="grid gap-2 sm:gap-3 justify-items-center animate-in fade-in duration-500"
+                style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}
+              >
                 {(() => {
                   const items = []
                   const isAdsEnabled = creator.ads_enabled !== false // Default to true if undefined
@@ -336,7 +339,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                       <Link
                         href={href}
                         key={prompt.id}
-                        className="group relative aspect-[3/4.2] sm:h-[440px] rounded-[32px] sm:rounded-[32px] lg:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-7 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
+                        className="group relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-5 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
                       >
                         {/* Background immersive image with darker glass overlay */}
                         <div className="absolute inset-0 z-0 select-none">

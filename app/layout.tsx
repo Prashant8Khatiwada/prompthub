@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: { default: 'PromptHub', template: '%s | PromptHub' },
+  title: { default: 'Creatopedia', template: '%s | Creatopedia' },
   description: 'The branded prompt-delivery platform for AI content creators.',
   metadataBase: new URL(`https://${(process.env.NEXT_PUBLIC_BASE_DOMAIN || 'localhost:3000').replace(/^https?:\/\//, '')}`),
 }

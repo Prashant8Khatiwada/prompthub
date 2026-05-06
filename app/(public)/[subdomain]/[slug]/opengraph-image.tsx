@@ -43,12 +43,12 @@ export default async function Image({ params }: Props) {
   // We prioritize share_image_url, then thumbnail_url.
   let thumbnailData: string | null = null
   const imageUrl = prompt?.share_image_url || prompt?.thumbnail_url
-  
+
   if (imageUrl) {
     try {
       const res = await fetch(imageUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; PromptHubBot/1.0)',
+          'User-Agent': 'Mozilla/5.0 (compatible; CreatopediaBot/1.0)',
           Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
         },
         signal: AbortSignal.timeout(5000),
@@ -168,7 +168,7 @@ export default async function Image({ params }: Props) {
                 <span style={{ color: 'white', fontSize: '16px', fontWeight: 700 }}>P</span>
               </div>
               <span style={{ color: '#888', fontSize: '16px', letterSpacing: '0.05em' }}>
-                PromptHub
+                Creatopedia
               </span>
             </div>
 
@@ -281,7 +281,7 @@ export default async function Image({ params }: Props) {
               background: `radial-gradient(circle at center, ${brandColor}11 0%, transparent 70%)`,
               display: 'flex',
             }} />
-            
+
             <div style={{
               width: '140px',
               height: '140px',
@@ -295,7 +295,7 @@ export default async function Image({ params }: Props) {
             }}>
               <span style={{ fontSize: '70px', color: 'white' }}>✦</span>
             </div>
-            
+
             <div style={{
               display: 'flex',
               flexDirection: 'column',
@@ -303,17 +303,17 @@ export default async function Image({ params }: Props) {
               gap: '8px',
               zIndex: 2,
             }}>
-              <span style={{ 
-                fontSize: '28px', 
-                fontWeight: 800, 
+              <span style={{
+                fontSize: '28px',
+                fontWeight: 800,
                 color: 'white',
                 letterSpacing: '0.05em',
               }}>
                 {aiTool.toUpperCase()}
               </span>
-              <span style={{ 
-                fontSize: '14px', 
-                fontWeight: 600, 
+              <span style={{
+                fontSize: '14px',
+                fontWeight: 600,
                 color: `${brandColor}`,
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',

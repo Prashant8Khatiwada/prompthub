@@ -33,10 +33,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
 
   return {
-    title: `${creator.name} – PromptHub`,
-    description: creator.bio ?? `Browse AI prompts by ${creator.name} on PromptHub.`,
+    title: `${creator.name} – Creatopedia`,
+    description: creator.bio ?? `Browse AI prompts by ${creator.name} on Creatopedia.`,
     openGraph: {
-      title: `${creator.name} on PromptHub`,
+      title: `${creator.name} on Creatopedia`,
       description: creator.bio ?? `Browse AI prompts by ${creator.name}.`,
       images: avatarUrl ? [{ url: avatarUrl }] : [],
       type: 'profile',
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     },
     twitter: {
       card: 'summary',
-      title: `${creator.name} on PromptHub`,
+      title: `${creator.name} on Creatopedia`,
       description: creator.bio ?? `Browse AI prompts by ${creator.name}.`,
       images: avatarUrl ? [avatarUrl] : [],
     },
@@ -79,10 +79,10 @@ export default async function UserProfilePage({ params }: Params) {
 
   const { data: categories } = categoryIds.length > 0
     ? await supabase
-        .from('categories')
-        .select('*')
-        .in('id', categoryIds)
-        .order('name')
+      .from('categories')
+      .select('*')
+      .in('id', categoryIds)
+      .order('name')
     : { data: [] }
 
   // 4. Fetch Instagram data

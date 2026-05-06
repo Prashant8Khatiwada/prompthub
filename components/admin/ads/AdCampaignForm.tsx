@@ -21,12 +21,12 @@ interface Props {
 
 type FieldErrors = Record<string, string[]>
 
-export default function AdCampaignForm({ 
-  defaultValues, 
-  campaignId, 
-  clients, 
-  prompts, 
-  categories, 
+export default function AdCampaignForm({
+  defaultValues,
+  campaignId,
+  clients,
+  prompts,
+  categories,
   initialClientId,
   onSuccess,
   onCancel
@@ -323,8 +323,8 @@ export default function AdCampaignForm({
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onClick={() => setPlacementType(type.id as any)}
               className={`p-4 rounded-2xl border text-left transition-all ${placementType === type.id
-                  ? 'bg-indigo-600 border-indigo-500 shadow-lg shadow-indigo-500/20'
-                  : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
+                ? 'bg-indigo-600 border-indigo-500 shadow-lg shadow-indigo-500/20'
+                : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
                 }`}
             >
               <div className={`mb-3 w-10 h-10 rounded-xl flex items-center justify-center ${placementType === type.id ? 'bg-white/20 text-white' : 'bg-zinc-800 text-zinc-400'}`}>
@@ -473,9 +473,9 @@ export default function AdCampaignForm({
 
       {/* Submit */}
       <div className="flex gap-3 pt-6 border-t border-zinc-800 justify-end">
-        <button 
-          type="button" 
-          onClick={() => onCancel ? onCancel() : router.back()} 
+        <button
+          type="button"
+          onClick={() => onCancel ? onCancel() : router.back()}
           className="px-6 py-3 rounded-xl border border-zinc-700 text-sm font-semibold text-zinc-400 hover:text-white hover:border-zinc-600 transition-all"
         >
           Cancel

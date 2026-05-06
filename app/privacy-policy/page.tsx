@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Privacy Policy | PromptHub',
-  description: 'Privacy Policy for PromptHub platform and Instagram integrations.',
+  title: 'Privacy Policy | Creatopedia',
+  description: 'Privacy Policy for Creatopedia platform and Instagram integrations.',
 }
 
 export default function PrivacyPolicy() {
@@ -39,7 +39,7 @@ export default function PrivacyPolicy() {
             <section className="space-y-6">
               <h2 className="text-2xl font-bold">1. Introduction</h2>
               <p>
-                Welcome to PromptHub. We value your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our platform and our Instagram integration services.
+                Welcome to Creatopedia. We value your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our platform and our Instagram integration services.
               </p>
             </section>
 
@@ -67,7 +67,7 @@ export default function PrivacyPolicy() {
             <section className="space-y-6">
               <h2 className="text-2xl font-bold">4. Instagram API Data Usage</h2>
               <p>
-                PromptHub uses the Instagram Graph API to provide automated features for creators. We strictly adhere to Meta&apos;s Developer Policies:
+                Creatopedia uses the Instagram Graph API to provide automated features for creators. We strictly adhere to Meta&apos;s Developer Policies:
               </p>
               <ul className="list-disc pl-6 space-y-3 text-zinc-400">
                 <li>We only request the permissions necessary to display your content (e.g., <code>instagram_business_basic</code>, <code>instagram_manage_media</code>).</li>
@@ -79,7 +79,7 @@ export default function PrivacyPolicy() {
             <section className="space-y-6">
               <h2 className="text-2xl font-bold">5. Data Retention and Deletion</h2>
               <p>
-                We retain your personal information for as long as your account is active. If you wish to delete your account and all associated data, including any data retrieved from Instagram, you may contact us at support@prompthub.app.
+                We retain your personal information for as long as your account is active. If you wish to delete your account and all associated data, including any data retrieved from Instagram, you may contact us at support@Creatopedia.app.
               </p>
             </section>
 
@@ -96,8 +96,8 @@ export default function PrivacyPolicy() {
                 If you have any questions about this Privacy Policy, please contact us at:
               </p>
               <div className="bg-zinc-900/50 border border-zinc-800 p-8 rounded-3xl">
-                <p className="text-white font-bold mb-1">PromptHub Legal Team</p>
-                <p className="text-zinc-500 text-sm italic">legal@prompthub.app</p>
+                <p className="text-white font-bold mb-1">Creatopedia Legal Team</p>
+                <p className="text-zinc-500 text-sm italic">legal@Creatopedia.app</p>
               </div>
             </section>
           </div>
@@ -107,11 +107,11 @@ export default function PrivacyPolicy() {
       {/* Footer */}
       <footer className="py-20 px-6 border-t border-white/5 bg-zinc-950">
         <div className="max-w-7xl mx-auto text-center space-y-8">
-           <div className="flex items-center justify-center gap-2.5">
-              <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center font-bold text-zinc-400 border border-zinc-800">P</div>
-              <span className="text-sm font-bold text-white">PromptHub</span>
-           </div>
-           <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">© 2024 PromptHub Platform. Built for the AI Generation.</p>
+          <div className="flex items-center justify-center gap-2.5">
+            <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center font-bold text-zinc-400 border border-zinc-800">P</div>
+            <span className="text-sm font-bold text-white">Creatopedia</span>
+          </div>
+          <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">© 2024 Creatopedia Platform. Built for the AI Generation.</p>
         </div>
       </footer>
     </div>
