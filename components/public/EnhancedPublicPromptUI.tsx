@@ -3,9 +3,15 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { LayoutGrid, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3 } from 'lucide-react'
+import { LayoutGrid, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, BadgeCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+
+const InstagramVerifiedBadge = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" aria-label="Verified account" className={`${className} fill-[#0095f6] text-white shrink-0`}>
+    <path d="M12.12 3.83l.07-.07.07.07a.9.9 0 001.27 0l1.32-1.32a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 00.9.26.9.9 0 00.6-.6l.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 00.9.26 1.88 1.88 0 011.66 1.66.9.9 0 00.26.9l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 000 1.27l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 000 1.27l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 00-.26.9 1.88 1.88 0 01-1.66 1.66.9.9 0 00-.9.26l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-1.27 0l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-1.27 0l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-.9-.26 1.88 1.88 0 01-1.66-1.66.9.9 0 00-.26-.9l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 000-1.27l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 000-1.27l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 00.26-.9 1.88 1.88 0 011.66-1.66.9.9 0 00.9-.26l.33-.33a1.88 1.88 0 012.66 0l1.33 1.33a.9.9 0 001.27 0l.33-.33a1.88 1.88 0 012.66 0l1.33 1.33a.9.9 0 001.27 0l.33-.33a1.88 1.88 0 012.66 0zM10.58 16.85l7.12-7.12-1.27-1.27-5.85 5.85-2.85-2.85-1.27 1.27 4.12 4.12z"></path>
+  </svg>
+)
 
 const InstagramIcon = ({ className }: { className?: string }) => (
   <svg
@@ -296,10 +302,8 @@ export default function EnhancedPublicPromptUI({
                 </div>
 
                 {/* Verification Badge */}
-                <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center border-2 border-zinc-950 shadow-lg">
-                  <svg className="w-2.5 h-2.5 text-white fill-current" viewBox="0 0 24 24">
-                    <path d="M12 0L14.59 4.36L19.5 5.5L16.5 10L17.91 14.86L13.5 13.14L9.09 14.86L10.5 10L7.5 5.5L12.41 4.36L12 0ZM11.19 12.83L14.71 8.33L13.43 7.33L10.96 10.49L9.5 9.03L8.43 10.11L11.19 12.83Z" />
-                  </svg>
+                <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-[#0095f6] flex items-center justify-center border-2 border-zinc-950 shadow-lg">
+                  <InstagramVerifiedBadge className="w-3 h-3" />
                 </div>
               </div>
 
@@ -307,8 +311,9 @@ export default function EnhancedPublicPromptUI({
               <div className="flex flex-col gap-2 sm:gap-3 select-none flex-1">
                 <div>
                   <div className="flex items-center justify-start gap-2">
-                    <h1 className="text-xl md:text-3xl font-black text-white tracking-tight select-none leading-tight">
+                    <h1 className="text-xl md:text-3xl font-black text-white tracking-tight select-none leading-tight flex items-center gap-2 md:gap-3">
                       {creator.name}
+                      <InstagramVerifiedBadge className="w-4 h-4 md:w-6 md:h-6" />
                     </h1>
                   </div>
                   <span className="text-[11px] md:text-xs font-mono text-white/50 tracking-wide font-light">
@@ -507,7 +512,7 @@ export default function EnhancedPublicPromptUI({
                     <p className="text-sm">No prompts in this category yet.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-in fade-in duration-500">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
                     {filteredLibraryPrompts.map(p => {
                       const toolColor = AI_TOOL_COLORS[p.ai_tool.split(',')[0].trim()] ?? '#6366f1'
                       const gate = GATE_LABELS[p.gate_type] ?? GATE_LABELS.open

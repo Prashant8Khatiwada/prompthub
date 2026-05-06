@@ -63,6 +63,12 @@ const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
+const InstagramVerifiedBadge = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" aria-label="Verified account" className={`${className} fill-[#0095f6] text-white shrink-0`}>
+    <path d="M12.12 3.83l.07-.07.07.07a.9.9 0 001.27 0l1.32-1.32a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 00.9.26.9.9 0 00.6-.6l.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 00.9.26 1.88 1.88 0 011.66 1.66.9.9 0 00.26.9l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 000 1.27l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 000 1.27l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 00-.26.9 1.88 1.88 0 01-1.66 1.66.9.9 0 00-.9.26l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-1.27 0l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-1.27 0l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-.9-.26 1.88 1.88 0 01-1.66-1.66.9.9 0 00-.26-.9l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 000-1.27l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 000-1.27l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 00.26-.9 1.88 1.88 0 011.66-1.66.9.9 0 00.9-.26l.33-.33a1.88 1.88 0 012.66 0l1.33 1.33a.9.9 0 001.27 0l.33-.33a1.88 1.88 0 012.66 0l1.33 1.33a.9.9 0 001.27 0l.33-.33a1.88 1.88 0 012.66 0zM10.58 16.85l7.12-7.12-1.27-1.27-5.85 5.85-2.85-2.85-1.27 1.27 4.12 4.12z"></path>
+  </svg>
+)
+
 export default function UserProfilePageClient({ creator, igUser, igFeed, categories, prompts, adPlacements = [] }: Props) {
   const [activeTab, setActiveTab] = useState<'creation' | 'profile'>('creation')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -177,15 +183,16 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
             </div>
 
             {/* Premium Theme Verification Pill/Badge */}
-            <div className="absolute bottom-1 right-2 w-5 h-5 md:w-6 md:h-6 rounded-full bg-blue-500 flex items-center justify-center border-2 border-zinc-950 shadow-lg">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            <div className="absolute bottom-1 right-2 w-5 h-5 md:w-6 md:h-6 rounded-full bg-[#0095f6] flex items-center justify-center border-2 border-zinc-950 shadow-lg">
+              <InstagramVerifiedBadge className="w-3 h-3 md:w-4 md:h-4" />
             </div>
           </div>
 
           {/* Name & Bio from Screenshot Layout */}
           <div className="mt-4 flex flex-col items-center gap-0.5 select-none">
-            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight select-none">
+            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight select-none flex items-center gap-2 md:gap-3">
               {creator.name}
+              <InstagramVerifiedBadge className="w-5 h-5 md:w-8 md:h-8" />
             </h1>
             <span className="text-xs sm:text-sm font-mono text-white/50 tracking-wide font-light">
               {creator.handle || `@${creator.subdomain}`}
@@ -198,7 +205,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
           </div>
 
           {/* Action Buttons Row */}
-          <div className="flex items-center gap-2 mt-4">
+          <div className="flex items-center gap-3 mt-6">
             <a
               href={creator.instagram_url || `https://instagram.com/${creator.handle?.replace('@', '') || creator.subdomain}`}
               target="_blank"
@@ -221,24 +228,26 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
           </div>
 
           {/* Followers / Following / Posts Counts at the bottom exactly like reference image */}
-          <div className="w-full max-w-sm mx-auto flex items-center justify-between mt-2 pt-3 border-t border-white/5 font-mono select-none">
-            <div className="flex flex-col items-center">
-              <span className="text-[8px] text-white/40 uppercase tracking-wider font-light">Followers</span>
-              <span className="text-xs md:text-sm font-black text-white mt-0.5">
+          <div className="w-full max-w-sm mx-auto flex items-center justify-between mt-6 pt-6 border-t border-white/5 font-sans text-white/80 select-none">
+            <div className="flex items-center gap-1.5">
+              <span className="font-black text-white text-xs md:text-sm">
                 {igUser?.followers_count ? `${(igUser.followers_count / 1000).toFixed(1)}k` : '252k'}
               </span>
+              <span className="text-[10px] text-white/40 uppercase tracking-wider font-light">Followers</span>
             </div>
-            <div className="flex flex-col items-center">
-              <span className="text-[8px] text-white/40 uppercase tracking-wider font-light">Following</span>
-              <span className="text-xs md:text-sm font-black text-white mt-0.5">
+            <span className="text-white/10">|</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-black text-white text-xs md:text-sm">
                 {igUser?.follows_count ?? '378'}
               </span>
+              <span className="text-[10px] text-white/40 uppercase tracking-wider font-light">Following</span>
             </div>
-            <div className="flex flex-col items-center">
-              <span className="text-[8px] text-white/40 uppercase tracking-wider font-light">Posts</span>
-              <span className="text-xs md:text-sm font-black text-white mt-0.5">
+            <span className="text-white/10">|</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-black text-white text-xs md:text-sm">
                 {igUser?.media_count ?? '115'}
               </span>
+              <span className="text-[10px] text-white/40 uppercase tracking-wider font-light">Posts</span>
             </div>
           </div>
         </div>
@@ -319,8 +328,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
               </div>
             ) : (
               <div
-                className="grid gap-2 sm:gap-3 justify-items-center animate-in fade-in duration-500"
-                style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 animate-in fade-in duration-500"
               >
                 {(() => {
                   const items = []
