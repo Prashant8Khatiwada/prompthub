@@ -38,7 +38,14 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     openGraph: {
       title: `${creator.name} on Creatopedia`,
       description: creator.bio ?? `Browse AI prompts by ${creator.name}.`,
-      images: avatarUrl ? [{ url: avatarUrl }] : [],
+      images: avatarUrl ? [
+        {
+          url: avatarUrl,
+          width: 400,
+          height: 400,
+          alt: creator.name,
+        }
+      ] : [],
       type: 'profile',
       url: `https://${baseDomain}/${creator.handle || creator.subdomain}`,
     },

@@ -39,59 +39,7 @@ export default async function Image({ params }: Props) {
   const creatorName = creator?.name ?? subdomain
   const aiTool = prompt?.ai_tool ?? 'AI'
 
-  // Fetch the thumbnail as base64 so bots can embed it directly.
-  // We prioritize share_image_url, then thumbnail_url.
-  let thumbnailData: string | null = null
-  const imageUrl = prompt?.share_image_url || prompt?.thumbnail_url
-
-  if (imageUrl) {
-    try {
-      const res = await fetch(imageUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; CreatopediaBot/1.0)',
-          Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
-        },
-        signal: AbortSignal.timeout(5000),
-      })
-      if (res.ok) {
-        const buf = await res.arrayBuffer()
-        const mime = res.headers.get('content-type') ?? 'image/jpeg'
-        thumbnailData = `data:${mime};base64,${Buffer.from(buf).toString('base64')}`
-      }
-    } catch {
-      // Silently fall back to no image
-    }
-  }
-
-  // If we have an image, return it RAW and full-screen as requested.
-  if (thumbnailData) {
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            width: '1200px',
-            height: '630px',
-            display: 'flex',
-            background: '#0a0a0a',
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={thumbnailData}
-            alt={title}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
-        </div>
-      ),
-      { ...size }
-    )
-  }
-
-  // Fallback: Branded template for when NO image is provided.
+  // Fallback: Branded template for when NO image is provided or handled by direct URL.
   return new ImageResponse(
     (
       <div
