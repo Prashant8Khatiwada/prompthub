@@ -3,15 +3,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { LayoutGrid, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, BadgeCheck } from 'lucide-react'
+import { LayoutGrid, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, BadgeCheck, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { InstagramVerifiedBadge } from '@/components/ui/InstagramVerifiedBadge'
 
-const InstagramVerifiedBadge = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" aria-label="Verified account" className={`${className} fill-[#0095f6] text-white shrink-0`}>
-    <path d="M12.12 3.83l.07-.07.07.07a.9.9 0 001.27 0l1.32-1.32a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 00.9.26.9.9 0 00.6-.6l.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 00.9.26 1.88 1.88 0 011.66 1.66.9.9 0 00.26.9l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 000 1.27l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 000 1.27l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 00-.26.9 1.88 1.88 0 01-1.66 1.66.9.9 0 00-.9.26l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-1.27 0l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-1.27 0l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-.9-.26 1.88 1.88 0 01-1.66-1.66.9.9 0 00-.26-.9l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 000-1.27l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 000-1.27l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 00.26-.9 1.88 1.88 0 011.66-1.66.9.9 0 00.9-.26l.33-.33a1.88 1.88 0 012.66 0l1.33 1.33a.9.9 0 001.27 0l.33-.33a1.88 1.88 0 012.66 0l1.33 1.33a.9.9 0 001.27 0l.33-.33a1.88 1.88 0 012.66 0zM10.58 16.85l7.12-7.12-1.27-1.27-5.85 5.85-2.85-2.85-1.27 1.27 4.12 4.12z"></path>
-  </svg>
-)
+
+
+
 
 const InstagramIcon = ({ className }: { className?: string }) => (
   <svg
@@ -223,7 +222,7 @@ export default function EnhancedPublicPromptUI({
       }
       return `/${clickedPrompt.slug}`
     })()
-    
+
     router.push(newPath)
   }
 
@@ -261,7 +260,7 @@ export default function EnhancedPublicPromptUI({
             </a>
           </div>
           <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/60 to-transparent z-10" />
-          <div 
+          <div
             className="absolute inset-0 select-none opacity-40 transition-all duration-700"
             style={{
               background: `linear-gradient(135deg, ${creator.brand_color || '#6366f1'}33 0%, #09090b 100%)`
@@ -276,7 +275,7 @@ export default function EnhancedPublicPromptUI({
             <div className="flex flex-row items-center gap-4 sm:gap-6 text-left w-full md:w-auto">
               {/* Large Avatar with Verification Badge */}
               <div className="relative group select-none shrink-0">
-                <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-linear-to-tr from-[#3b82f6] via-[#a855f7] to-[#ec4899] shadow-2xl hover:scale-105 transition-transform duration-500 select-none">
+                <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-[#3b82f6] via-[#a855f7] to-[#ec4899] shadow-2xl hover:scale-105 transition-transform duration-500 select-none">
                   <div className="w-full h-full rounded-full bg-zinc-950 p-1">
                     {creator.avatar_url ? (
                       <img
@@ -301,10 +300,7 @@ export default function EnhancedPublicPromptUI({
                   </div>
                 </div>
 
-                {/* Verification Badge */}
-                <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-[#0095f6] flex items-center justify-center border-2 border-zinc-950 shadow-lg">
-                  <InstagramVerifiedBadge className="w-3 h-3" />
-                </div>
+
               </div>
 
               {/* Name and stats */}
@@ -536,7 +532,7 @@ export default function EnhancedPublicPromptUI({
                                 <Sparkles className="w-10 h-10 text-white/20" />
                               </div>
                             )}
-                            <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/45 to-transparent z-10" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/45 to-transparent z-10" />
                           </div>
 
                           {/* Badges on top */}

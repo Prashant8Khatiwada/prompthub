@@ -5,8 +5,9 @@ import Link from 'next/link'
 import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
 import type { Creator, Category, Prompt } from '@/types'
 import InstagramProfile from './InstagramProfile'
-import { Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, LayoutGrid, Globe, Camera, ArrowLeft, BadgeCheck } from 'lucide-react'
+import { Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, LayoutGrid, Globe, Camera, ArrowLeft, BadgeCheck, Check } from 'lucide-react'
 import AdBanner, { AdPlacementData } from './AdBanner'
+import { InstagramVerifiedBadge } from '@/components/ui/InstagramVerifiedBadge'
 
 interface PromptWithCategory extends Prompt {
   categories?: { name: string } | null
@@ -63,11 +64,10 @@ const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
-const InstagramVerifiedBadge = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" aria-label="Verified account" className={`${className} fill-[#0095f6] text-white shrink-0`}>
-    <path d="M12.12 3.83l.07-.07.07.07a.9.9 0 001.27 0l1.32-1.32a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 00.9.26.9.9 0 00.6-.6l.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 001.27 0l1.33-1.33a1.88 1.88 0 012.66 0l.33.33a.9.9 0 00.9.26 1.88 1.88 0 011.66 1.66.9.9 0 00.26.9l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 000 1.27l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 000 1.27l.33.33a1.88 1.88 0 010 2.66l-1.33 1.33a.9.9 0 00-.26.9 1.88 1.88 0 01-1.66 1.66.9.9 0 00-.9.26l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-1.27 0l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-1.27 0l-.33.33a1.88 1.88 0 01-2.66 0l-1.33-1.33a.9.9 0 00-.9-.26 1.88 1.88 0 01-1.66-1.66.9.9 0 00-.26-.9l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 000-1.27l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 000-1.27l-.33-.33a1.88 1.88 0 010-2.66l1.33-1.33a.9.9 0 00.26-.9 1.88 1.88 0 011.66-1.66.9.9 0 00.9-.26l.33-.33a1.88 1.88 0 012.66 0l1.33 1.33a.9.9 0 001.27 0l.33-.33a1.88 1.88 0 012.66 0l1.33 1.33a.9.9 0 001.27 0l.33-.33a1.88 1.88 0 012.66 0zM10.58 16.85l7.12-7.12-1.27-1.27-5.85 5.85-2.85-2.85-1.27 1.27 4.12 4.12z"></path>
-  </svg>
-)
+
+
+
+
 
 export default function UserProfilePageClient({ creator, igUser, igFeed, categories, prompts, adPlacements = [] }: Props) {
   const [activeTab, setActiveTab] = useState<'creation' | 'profile'>('creation')
@@ -182,10 +182,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
               </div>
             </div>
 
-            {/* Premium Theme Verification Pill/Badge */}
-            <div className="absolute bottom-1 right-2 w-5 h-5 md:w-6 md:h-6 rounded-full bg-[#0095f6] flex items-center justify-center border-2 border-zinc-950 shadow-lg">
-              <InstagramVerifiedBadge className="w-3 h-3 md:w-4 md:h-4" />
-            </div>
+
           </div>
 
           {/* Name & Bio from Screenshot Layout */}
