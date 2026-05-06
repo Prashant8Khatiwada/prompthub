@@ -381,7 +381,7 @@ export async function GET(req: NextRequest) {
     ; (trafficData || []).forEach(row => {
       try {
         const urlStr = row.referrer || ''
-        const isInternal = urlStr.includes('prompthub.app') || urlStr.startsWith('/')
+        const isInternal = urlStr.includes('creatopedia.tech') || urlStr.startsWith('/')
         const src = isInternal ? 'Internal' : (urlStr ? new URL(urlStr).hostname : 'Direct')
         if (!sourceMap[src]) sourceMap[src] = new Set()
         sourceMap[src].add(row.session_id)

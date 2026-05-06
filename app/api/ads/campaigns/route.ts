@@ -17,7 +17,7 @@ const campaignSchema = z.object({
   banner_url: z.string().url('Banner URL required'),
   banner_alt: z.string().max(200).optional().nullable().or(z.literal('')),
   target_url: z.string().url('Destination URL required'),
-  utm_source: z.string().default('prompthub'),
+  utm_source: z.string().default('creatopedia'),
   utm_medium: z.string().default('banner'),
   utm_campaign: z.string().optional().nullable().or(z.literal('')),
   client_webhook_url: z.string().url().optional().nullable().or(z.literal('')),

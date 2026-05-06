@@ -639,7 +639,7 @@ export default function EnhancedPublicPromptUI({
           <span className="w-1 h-1 rounded-full bg-white/10" />
           <Link href="/terms" className="hover:text-white/40 transition-colors">Terms</Link>
           <span className="w-1 h-1 rounded-full bg-white/10" />
-          <Link href="/" className="hover:text-white/40 transition-colors">© PromptHub</Link>
+          <Link href="/" className="hover:text-white/40 transition-colors">© Creatopedia</Link>
         </div>
       </footer>
     </div>

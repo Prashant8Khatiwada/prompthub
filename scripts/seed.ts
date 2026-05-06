@@ -14,7 +14,7 @@ async function seed() {
 
   // 1. Create or get auth user
   let userId: string
-  const email = 'milan@prompthub.app'
+  const email = 'milan@creatopedia.tech'
   
   const { data: existingUsers } = await supabase.auth.admin.listUsers()
   const user = existingUsers.users.find(u => u.email === email)
@@ -98,7 +98,7 @@ async function seed() {
   const { error: promptsError } = await supabase.from('prompts').upsert(prompts, { onConflict: 'creator_id,slug' })
   if (promptsError) { console.error('❌ Prompts error:', promptsError.message); return }
 
-  console.log('\n✨ Seed complete! Login: milan@prompthub.app / milan123!')
+  console.log('\n✨ Seed complete! Login: milan@creatopedia.tech / milan123!')
 }
 
 seed()

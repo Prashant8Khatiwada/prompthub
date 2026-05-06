@@ -80,7 +80,7 @@ export default function AdCampaignsTable({ campaigns: initial, clients, prompts,
   }
 
   function copyReportLink(token: string) {
-    const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'prompthub.app'
+    const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
     navigator.clipboard.writeText(`https://${baseDomain}/ads/report/${token}`)
   }
 

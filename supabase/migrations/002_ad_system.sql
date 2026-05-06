@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS ad_campaigns (
   banner_url          TEXT NOT NULL,
   banner_alt          TEXT,
   target_url          TEXT NOT NULL,
-  utm_source          TEXT DEFAULT 'prompthub',
+  utm_source          TEXT DEFAULT 'creatopedia',
   utm_medium          TEXT DEFAULT 'banner',
   utm_campaign        TEXT,
   client_webhook_url  TEXT,

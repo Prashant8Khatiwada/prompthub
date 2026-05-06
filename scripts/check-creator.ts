@@ -9,9 +9,9 @@ const supabase = createClient(
 
 async function check() {
   const { data: { users } } = await supabase.auth.admin.listUsers()
-  const milan = users.find(u => u.email === 'milan@prompthub.app')
+  const milan = users.find(u => u.email === 'milan@creatopedia.tech')
   if (!milan) {
-    console.log('User milan@prompthub.app not found')
+    console.log('User milan@creatopedia.tech not found')
     return
   }
 

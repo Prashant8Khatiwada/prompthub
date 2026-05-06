@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     const username = userData.username
 
-    // Step 4: Get authenticated PromptHub user from session cookie
+    // Step 4: Get authenticated Creatopedia user from session cookie
     const cookieStore = await cookies()
     const supabase = createClient(cookieStore)
     const { data: { user } } = await supabase.auth.getUser()

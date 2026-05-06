@@ -44,7 +44,7 @@ export default function AdCampaignForm({
   const [bannerAlt, setBannerAlt] = useState(defaultValues?.banner_alt ?? '')
   const [targetUrl, setTargetUrl] = useState(defaultValues?.target_url ?? '')
 
-  const [utmSource, setUtmSource] = useState(defaultValues?.utm_source ?? 'prompthub')
+  const [utmSource, setUtmSource] = useState(defaultValues?.utm_source ?? 'creatopedia')
   const [utmMedium, setUtmMedium] = useState(defaultValues?.utm_medium ?? 'banner')
   const [utmCampaign, setUtmCampaign] = useState(defaultValues?.utm_campaign ?? '')
 
@@ -100,7 +100,7 @@ export default function AdCampaignForm({
   }
 
   function copyReportLink() {
-    const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'prompthub.app'
+    const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
     navigator.clipboard.writeText(`https://${baseDomain}/ads/report/${reportToken}`)
     alert('Report link copied to clipboard!')
   }

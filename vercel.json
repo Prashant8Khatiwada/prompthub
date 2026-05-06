@@ -5,7 +5,7 @@
       "has": [
         {
           "type": "host",
-          "value": "(?<subdomain>[^.]+)\\.prompthub\\.app"
+          "value": "(?<subdomain>[^.]+)\\.creatopedia\\.tech"
         }
       ],
       "destination": "/:path*"
