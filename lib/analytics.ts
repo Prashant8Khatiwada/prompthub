@@ -1,5 +1,4 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { unstable_cache } from 'next/cache'
 
 export interface AnalyticsStats {
   dailyViews: { date: string; views: number }[]
@@ -7,7 +6,22 @@ export interface AnalyticsStats {
   topByViews: { id: string; title: string; slug: string; view_count: number }[]
   topByConversion: { id: string; title: string; slug: string; view_count: number; conversion_rate: string }[]
   topCampaigns: { id: string; name: string; status: string; impressions: number; clicks: number }[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   recentCaptures: any[]
+  systemStats: {
+    totalUsers?: number
+    totalPrompts: number
+    activePrompts: number
+    totalCategories: number
+    activeCampaigns: number
+  }
+  engagement: {
+    avgConversionRate: number
+    totalUniqueVisitors: number
+    totalRevenue: number
+  }
+  trendingPrompts: { id: string; title: string; slug: string; growth: number }[]
+  trafficSources: { source: string; count: number }[]
 }
 
 export async function getAggregatedStats(supabase: SupabaseClient, userId: string): Promise<AnalyticsStats> {
@@ -33,7 +47,7 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
   // 3. Fetch from NEW analytics_events table
   const { data: newEvents } = await supabase
     .from('analytics_events')
-    .select('event_type, created_at, prompt_id, campaign_id')
+    .select('event_type, created_at, prompt_id, campaign_id, session_id')
     .eq('creator_id', userId)
     .gte('created_at', thirtyDaysAgo.toISOString())
 
@@ -58,6 +72,17 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
     .in('prompt_id', promptIds)
     .order('captured_at', { ascending: false })
     .limit(10)
+
+  // 7. Fetch system wide counts
+  const [
+    { count: activePrompts },
+    { count: totalCategories },
+    { count: activeCampaigns }
+  ] = await Promise.all([
+    supabase.from('prompts').select('*', { count: 'exact', head: true }).eq('creator_id', userId).eq('status', 'published'),
+    supabase.from('categories').select('*', { count: 'exact', head: true }),
+    supabase.from('ad_campaigns').select('*', { count: 'exact', head: true }).eq('creator_id', userId).eq('status', 'active'),
+  ])
 
   // ─── COMBINE DATA ───────────────────────────────────────────
 
@@ -100,7 +125,7 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
   const promptStats = prompts?.map(p => {
     const pCopies = unifiedCopies.filter(e => e.prompt_id === p.id).length
     const pCaptures = recentCaptures?.filter(ec => ec.prompt_id === p.id).length || 0
-    
+
     return {
       title: p.title,
       copies: pCopies,
@@ -146,6 +171,21 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
     }
   }).sort((a, b) => b.clicks - a.clicks).slice(0, 5)
 
+  // Calculate engagement metrics
+  const totalUniqueVisitors = new Set(newEvents?.filter(e => e.session_id).map(e => e.session_id)).size ||
+    new Set(legacyViews?.map(v => v.page_id)).size // Fallback for legacy
+
+  const totalCaptures = recentCaptures?.length || 0
+  const avgConversionRate = unifiedViews.length > 0 ? (totalCaptures / unifiedViews.length) * 100 : 0
+
+  // Traffic sources
+  const sourceMap: Record<string, number> = {}
+  newEvents?.forEach(e => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const source = (e as any).metadata?.referrer || 'Direct'
+    sourceMap[source] = (sourceMap[source] || 0) + 1
+  })
+
   return {
     dailyViews,
     promptStats,
@@ -155,7 +195,20 @@ export async function getAggregatedStats(supabase: SupabaseClient, userId: strin
     recentCaptures: (recentCaptures || []).map(c => ({
       ...c,
       prompts: prompts?.find(p => p.id === c.prompt_id)
-    }))
+    })),
+    systemStats: {
+      totalPrompts: prompts?.length || 0,
+      activePrompts: activePrompts || 0,
+      totalCategories: totalCategories || 0,
+      activeCampaigns: activeCampaigns || 0
+    },
+    engagement: {
+      avgConversionRate,
+      totalUniqueVisitors,
+      totalRevenue: 0 // Placeholder until revenue is implemented
+    },
+    trendingPrompts: topByViews.slice(0, 3).map(p => ({ ...p, growth: Math.floor(Math.random() * 20) + 5 })), // Mock growth for now
+    trafficSources: Object.entries(sourceMap).map(([source, count]) => ({ source, count })).sort((a, b) => b.count - a.count).slice(0, 5)
   }
 }
 
@@ -173,7 +226,7 @@ export const trackCopy = (promptId: string) => {
       type: 'copy',      // Use 'copy' for old system, backend will map to 'prompt_copy' for new
       session_id: sessionStorage.getItem('ph_sid'),
     }),
-  }).catch(() => {})
+  }).catch(() => { })
 }
 
 export const trackEmailSubmit = (promptId: string) => {
@@ -186,5 +239,5 @@ export const trackEmailSubmit = (promptId: string) => {
       type: 'email_capture',
       session_id: sessionStorage.getItem('ph_sid'),
     }),
-  }).catch(() => {})
+  }).catch(() => { })
 }
