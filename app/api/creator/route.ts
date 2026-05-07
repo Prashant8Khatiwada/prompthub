@@ -22,7 +22,7 @@ export async function PATCH(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const parsed = creatorSettingsSchema.safeParse(body)
+  const parsed = creatorSettingsSchema.partial().safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
 
   const { data, error } = await supabase.from('creators')

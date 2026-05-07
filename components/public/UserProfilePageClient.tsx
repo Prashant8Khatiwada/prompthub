@@ -276,11 +276,24 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
         </div> */}
 
         {/* ─── Creator Page Ad Placement ─── */}
-        {adPlacements.some(p => p.position === 'creator_page') && (
-          <div className="mb-12 max-w-4xl mx-auto">
-            <AdBanner placements={adPlacements} position="creator_page" creatorId={creator.id} />
-          </div>
-        )}
+        {(() => {
+          // Find header banner placement
+          const headerBanner = adPlacements.find(p => (p.position as string) === 'discovery_header_banner')
+          const fallbackBanner = adPlacements.find(p => (p.position as string) === 'creator_page')
+          
+          if (creator.ads_enabled !== false && (headerBanner || fallbackBanner)) {
+             return (
+               <div className="mb-12 max-w-4xl mx-auto">
+                 <AdBanner 
+                   placements={headerBanner ? [headerBanner] : [fallbackBanner!]} 
+                   position={headerBanner ? 'discovery_header_banner' : 'creator_page'} 
+                   creatorId={creator.id} 
+                 />
+               </div>
+             )
+          }
+          return null
+        })()}
 
         {/* ─── CREATION TAB CONTENT ─── */}
         {activeTab === 'creation' && (
@@ -329,10 +342,24 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
               >
                 {(() => {
                   const items = []
-                  const isAdsEnabled = creator.ads_enabled !== false // Default to true if undefined
+                  const isAdsEnabled = creator.ads_enabled !== false
                   const frequency = creator.ad_frequency || 4
-                  const hasPageAd = adPlacements.some(p => p.position === 'creator_page')
-                  let adsInjected = 0
+                  
+                  // Organize placements for easy lookup
+                  const gridSlots: Record<number, AdPlacementData> = {}
+                  let headerBanner: AdPlacementData | null = null
+                  
+                  adPlacements.forEach(p => {
+                    if ((p.position as string) === 'discovery_header_banner') {
+                      headerBanner = p
+                    } else {
+                      const match = (p.position as string).match(/discovery_slot_(\d+)/)
+                      if (match) gridSlots[parseInt(match[1])] = p
+                    }
+                  })
+
+                  // Use creator_page as fallback campaign if no specific slot campaign found
+                  const fallbackAd = adPlacements.find(p => p.position === 'creator_page') || adPlacements[0]
 
                   for (let i = 0; i < filteredPrompts.length; i++) {
                     const prompt = filteredPrompts[i]
@@ -340,13 +367,27 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                     const gate = GATE_LABELS[prompt.gate_type] ?? GATE_LABELS.open
                     const href = promptUrl(prompt.slug)
 
+                    // 1. Check for manual grid slot BEFORE the prompt
+                    if (isAdsEnabled && gridSlots[i]) {
+                      items.push(
+                        <div key={`ad-slot-${i}`} className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
+                          <AdBanner
+                            placements={[gridSlots[i]]}
+                            position={gridSlots[i].position}
+                            creatorId={creator.id}
+                          />
+                        </div>
+                      )
+                    }
+
+                    // 2. Add the prompt itself
                     items.push(
                       <Link
                         href={href}
                         key={prompt.id}
                         className="group relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-5 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
                       >
-                        {/* Background immersive image with darker glass overlay */}
+                        {/* Immersive background image */}
                         <div className="absolute inset-0 z-0 select-none">
                           {(() => {
                             const igDisplayUrl = prompt.video_url ? igFeedMap[prompt.video_url] : null
@@ -366,44 +407,23 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/45 to-transparent z-10" />
                         </div>
 
-                        {/* Badges on top */}
+                        {/* Top badges */}
                         <div className="relative z-10 flex justify-between items-start">
-                          <span
-                            className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-full border bg-zinc-900/70 border-white/10 text-white/90 backdrop-blur-md"
-                          >
+                          <span className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-full border bg-zinc-900/70 border-white/10 text-white/90 backdrop-blur-md">
                             <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: toolColor }} />
                             {prompt.ai_tool?.split(',')[0].trim()}
                           </span>
-
                           <div className="flex gap-1 sm:gap-2">
                             {prompt.content_type === 'pdf' && (
-                              <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 bg-pink-600/20 text-pink-300 border border-pink-500/30 rounded-md sm:rounded-full font-mono uppercase tracking-wide">
-                                PDF
-                              </span>
+                              <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 bg-pink-600/20 text-pink-300 border border-pink-500/30 rounded-md sm:rounded-full font-mono uppercase tracking-wide">PDF</span>
                             )}
-                            <span
-                              className="text-[8px] sm:text-[9px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-full font-mono uppercase tracking-wide"
-                              style={{ background: `${gate.color}22`, color: gate.color, border: `1px solid ${gate.color}44` }}
-                            >
-                              {gate.label}
-                            </span>
+                            <span className="text-[8px] sm:text-[9px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-full font-mono uppercase tracking-wide" style={{ background: `${gate.color}22`, color: gate.color, border: `1px solid ${gate.color}44` }}>{gate.label}</span>
                           </div>
                         </div>
 
-                        {/* Content text grouped at bottom */}
+                        {/* Text Content */}
                         <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-2 sm:space-y-4">
-                          <div className="space-y-1 sm:space-y-2 select-none">
-                            <h3 className="text-base sm:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-2">
-                              {prompt.title}
-                            </h3>
-                            {/* {prompt.description && (
-                              <p className="text-[10px] sm:text-xs text-white/45 leading-relaxed line-clamp-2 font-light hidden sm:block">
-                                {prompt.description}
-                              </p>
-                            )} */}
-                          </div>
-
-                          {/* Card footer */}
+                          <h3 className="text-base sm:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-2">{prompt.title}</h3>
                           <div className="w-full flex items-center justify-between border-t border-white/10 pt-2 sm:pt-4 select-none">
                             <div className="flex items-center gap-2">
                               <span className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] text-zinc-500 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-full bg-zinc-800/80 border border-zinc-700/60 font-mono">
@@ -411,7 +431,6 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                                 {prompt.output_type}
                               </span>
                             </div>
-
                             <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-md sm:rounded-full bg-white text-zinc-950 font-sans font-bold text-xs shadow-lg group-hover:scale-105 transition-all duration-500 hover:bg-white/90 flex-shrink-0 select-none">
                               <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950" />
                             </div>
@@ -420,32 +439,15 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                       </Link>
                     )
 
-                    // Inject ad if frequency reached AND we actually have a placement
-                    if (isAdsEnabled && hasPageAd && (i + 1) % frequency === 0 && i !== filteredPrompts.length - 1) {
-                      adsInjected++
+                    // 3. Fallback frequency injection (only if no manual slots defined for the whole grid)
+                    const hasManualSlots = Object.keys(gridSlots).length > 0
+                    if (isAdsEnabled && !hasManualSlots && fallbackAd && (i + 1) % frequency === 0 && i !== filteredPrompts.length - 1) {
                       items.push(
-                        <div key={`ad-${i}`} className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
-                          <AdBanner
-                            placements={adPlacements}
-                            position="creator_page"
-                            creatorId={creator.id}
-                          />
+                        <div key={`ad-freq-${i}`} className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
+                          <AdBanner placements={[fallbackAd]} position={fallbackAd.position} creatorId={creator.id} />
                         </div>
                       )
                     }
-                  }
-
-                  // If no ads were injected (small grid) but ads are enabled, show one at the end
-                  if (isAdsEnabled && hasPageAd && adsInjected === 0 && items.length > 0) {
-                    items.push(
-                      <div key="ad-final" className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
-                        <AdBanner
-                          placements={adPlacements}
-                          position="creator_page"
-                          creatorId={creator.id}
-                        />
-                      </div>
-                    )
                   }
 
                   return items

@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { fetchInstagramUser, fetchInstagramFeed } from '@/lib/instagram'
 import UserProfilePageClient from '@/components/public/UserProfilePageClient'
 import { adminClient } from '@/lib/supabase/admin'
+import { AdCampaign } from '@/types'
+import { AdPlacementData } from '@/components/public/AdBanner'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -31,7 +33,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
   const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
-  
+
   // Primary URL should be the subdomain one
   const shareUrl = `https://${creator.subdomain}.${baseDomain}`
 
@@ -110,17 +112,20 @@ export default async function UserProfilePage({ params }: Params) {
   const { data: rawPlacements } = await adminClient
     .from('ad_placements')
     .select('id, position, is_global, creator_id, campaign:ad_campaigns(*)')
-    .eq('position', 'creator_page')
-    .or(`is_global.eq.true,creator_id.eq.${creator.id}`) // Assuming placements might be specific to creator
+    .or(`position.eq.creator_page,position.eq.discovery_header_banner,position.like.discovery_slot_%`)
+    .or(`is_global.eq.true,creator_id.eq.${creator.id}`)
 
-  const placements = (rawPlacements ?? [])
+  const placements: AdPlacementData[] = (rawPlacements ?? [])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((p: any) => ({
-      ...p,
-      campaign: Array.isArray(p.campaign) ? p.campaign[0] : p.campaign
-    }))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((p: any) => {
+    .map((p: any) => {
+      // Supabase join might return an array or object
+      const campaign = Array.isArray(p.campaign) ? p.campaign[0] : p.campaign
+      return {
+        ...p,
+        campaign: campaign as AdCampaign
+      }
+    })
+    .filter((p) => {
       const cam = p.campaign
       if (!cam || cam.status !== 'active') return false
       if (cam.starts_at && cam.starts_at > now) return false

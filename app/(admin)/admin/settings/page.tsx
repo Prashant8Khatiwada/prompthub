@@ -47,6 +47,19 @@ export default async function SettingsPage() {
   const igUser = await fetchInstagramUser(user.id)
   const igFeed = await fetchInstagramFeed(user.id)
 
+  // 3. Fetch Ad Data for the Ads Grid
+  const [
+    { data: campaigns },
+    { data: clients },
+    { data: prompts },
+    { data: categories }
+  ] = await Promise.all([
+    supabase.from('ad_campaigns').select('*, client:ad_clients(id, name)').eq('creator_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('ad_clients').select('id, name').eq('creator_id', user.id),
+    supabase.from('prompts').select('id, title, slug').eq('creator_id', user.id).eq('status', 'published'),
+    supabase.from('categories').select('id, name'),
+  ])
+
   return (
     <div className="space-y-10 max-w-5xl">
       <div className="flex flex-col gap-1">
@@ -59,6 +72,10 @@ export default async function SettingsPage() {
         userEmail={user.email!}
         igUser={igUser}
         igFeed={igFeed}
+        campaigns={campaigns || []}
+        clients={clients || []}
+        prompts={prompts || []}
+        categories={categories || []}
       />
     </div>
   )

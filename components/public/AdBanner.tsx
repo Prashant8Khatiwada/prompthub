@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AdPlacementPosition } from '@/types'
+import { AdPlacementPosition, AdCampaign } from '@/types'
 
 export interface AdPlacementData {
   id: string
@@ -9,18 +9,7 @@ export interface AdPlacementData {
   is_global: boolean
   prompt_id: string | null
   creator_id: string | null
-  campaign: {
-    id: string
-    name: string
-    banner_url: string
-    banner_alt: string | null
-    target_url: string
-    utm_source: string
-    utm_medium: string
-    utm_campaign: string
-    status: string
-    creator_id?: string
-  }
+  campaign: AdCampaign
 }
 
 interface Props {
