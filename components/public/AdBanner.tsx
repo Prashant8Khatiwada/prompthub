@@ -139,7 +139,7 @@ export default function AdBanner({ placements, position, promptId, creatorId, fi
   return (
     <div 
       ref={containerRef} 
-      className={`relative w-full overflow-hidden transition-transform hover:scale-[1.01] ${fill ? 'h-full' : 'rounded-xl bg-zinc-900 border border-zinc-800'}`}
+      className={`relative w-full overflow-hidden transition-transform hover:scale-[1.01] ${fill ? 'h-full' : 'rounded-2xl sm:rounded-3xl bg-zinc-900 border border-zinc-800'}`}
     >
       <a href={baseClickUrl} onClick={handleClick} target="_blank" rel="noopener noreferrer" className={`block w-full ${fill ? 'h-full' : ''}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}

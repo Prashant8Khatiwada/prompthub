@@ -394,7 +394,7 @@ export default function EnhancedPublicPromptUI({
           <div className="relative select-none">
             {activeTab === 'prompt' ? (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 transition-opacity">
-                <div className="px-5 py-8 md:px-12 text-white">
+                <div className="px-4 py-8 md:px-8 text-white">
                   {/* Media Section — clean inline video/image, no social chrome */}
                   {(() => {
                     const mediaUrl = igMedia?.media_url || prompt.video_url || null
@@ -455,8 +455,8 @@ export default function EnhancedPublicPromptUI({
                 )}
 
                 {/* Related Prompts Section */}
-                <div className="px-4 sm:px-6 pb-12 bg-zinc-950/40 pt-8 border-t border-white/5">
-                  <div className="max-w-2xl mx-auto">
+                <div className="px-4 md:px-8 pb-12 bg-zinc-950/40 pt-8 border-t border-white/5">
+                  <div className="w-full">
                     {relatedData && relatedData.length > 0 && (
                       <RelatedPrompts
                         prompts={finalRelatedData}

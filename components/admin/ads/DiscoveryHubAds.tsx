@@ -152,13 +152,8 @@ export default function DiscoveryHubAds({
 
   return (
     <div className="space-y-10">
-      {/* Header with Title and Save Button */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-zinc-800">
-        <div>
-          <h2 className="text-2xl font-black text-white tracking-tight">Discovery Hub Ads</h2>
-          <p className="text-sm text-zinc-500 mt-1">Configure monetization and ad placements for your public gallery.</p>
-        </div>
-        
+      {/* Save Action Row */}
+      <div className="flex justify-end">
         <button
           onClick={handleSave}
           disabled={saving}

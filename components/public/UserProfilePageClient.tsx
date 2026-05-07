@@ -250,7 +250,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 pb-12">
+      <div className="max-w-7xl mx-auto px-4 pb-12">
         {/* ─── Glass Tabs Controller ─── */}
         {/* <div className="mt-6 mb-10 max-w-sm mx-auto p-1.5 bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-2xl flex items-center gap-1 select-none">
           <button
@@ -283,7 +283,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
           
           if (creator.ads_enabled !== false && (headerBanner || fallbackBanner)) {
              return (
-               <div className="mb-12 max-w-4xl mx-auto">
+               <div className="mb-12 w-full">
                  <AdBanner 
                    placements={headerBanner ? [headerBanner] : [fallbackBanner!]} 
                    position={headerBanner ? 'discovery_header_banner' : 'creator_page'} 
@@ -338,7 +338,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
               </div>
             ) : (
               <div
-                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 animate-in fade-in duration-500"
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 animate-in fade-in duration-500"
               >
                 {(() => {
                   const items = []
