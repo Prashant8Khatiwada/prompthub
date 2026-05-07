@@ -28,7 +28,7 @@ interface AdPlacement extends Omit<AdPlacementData, 'position'> {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { subdomain, slug } = await params
-  const supabase = await createClient()
+  const supabase = await adminClient // Use admin client to ensure we can always fetch metadata regardless of RLS
 
   const { data: creator } = await supabase
     .from('creators').select('name,handle,brand_color').eq('subdomain', subdomain).single()
@@ -44,14 +44,29 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   const title = `${prompt.title} | ${creator.name}`
   const description = prompt.description ?? `Check out this ${prompt.ai_tool} prompt by ${creator.name}.`
-  const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
+  
+  // Robust base domain detection
+  const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
   const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
-
-  // Construct the correct sharing URL (Defaulting to path-based as it is more universal)
-  const shareUrl = `https://${baseDomain}/${subdomain}/${slug}`
-
-  // Image prioritization
-  const ogImageUrl = prompt.share_image_url || prompt.thumbnail_url || `https://${baseDomain}/${subdomain}/${slug}/opengraph-image`
+  
+  // Construct URLs - using the subdomain format which is the primary way these are accessed
+  const domain = `${subdomain}.${baseDomain}`
+  const shareUrl = `https://${domain}/${slug}`
+  
+  // Image prioritization: 
+  // 1. Explicit share image
+  // 2. Thumbnail
+  // 3. Fallback to the generated opengraph-image route
+  let ogImageUrl = prompt.share_image_url || prompt.thumbnail_url
+  
+  if (!ogImageUrl) {
+    // If no custom image, use the dynamic one. 
+    // We use the full absolute URL to ensure scrapers can find it.
+    ogImageUrl = `https://${domain}/${slug}/opengraph-image`
+  } else if (!ogImageUrl.startsWith('http')) {
+    // Ensure relative URLs are made absolute (if any)
+    ogImageUrl = `https://${baseDomain}${ogImageUrl.startsWith('/') ? '' : '/'}${ogImageUrl}`
+  }
 
   return {
     title,
@@ -65,13 +80,15 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       url: shareUrl,
       siteName: 'Creatopedia',
       locale: 'en_US',
-      type: 'website',
+      type: 'article', // Using article can sometimes help with rich previews
+      authors: [creator.name],
       images: [
         {
           url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: title,
+          type: 'image/png', // Explicitly setting type helps WhatsApp
         },
       ],
     },

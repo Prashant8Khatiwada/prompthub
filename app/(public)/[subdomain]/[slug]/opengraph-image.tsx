@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { createClient } from '@/lib/supabase/server'
+import { adminClient as supabase } from '@/lib/supabase/admin'
 
 export const runtime = 'nodejs'
 
@@ -16,22 +16,24 @@ interface Props {
 
 export default async function Image({ params }: Props) {
   const { subdomain, slug } = await params
-  const supabase = await createClient()
 
-  // Fetch creator
-  const { data: creator } = await supabase
-    .from('creators')
-    .select('name, handle, brand_color, avatar_url')
-    .eq('subdomain', subdomain)
-    .single()
+  // Fetch creator and prompt in parallel for speed
+  const [creatorRes, promptRes] = await Promise.all([
+    supabase
+      .from('creators')
+      .select('name, handle, brand_color, avatar_url')
+      .eq('subdomain', subdomain)
+      .single(),
+    supabase
+      .from('prompts')
+      .select('*')
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single()
+  ])
 
-  // Fetch prompt
-  const { data: prompt } = await supabase
-    .from('prompts')
-    .select('*')
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .single()
+  const creator = creatorRes.data
+  const prompt = promptRes.data
 
   const brandColor = creator?.brand_color ?? '#6366f1'
   const title = prompt?.title ?? 'Untitled Prompt'

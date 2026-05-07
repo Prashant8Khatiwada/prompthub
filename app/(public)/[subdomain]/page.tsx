@@ -14,7 +14,7 @@ interface Params {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { subdomain } = await params
-  const supabase = await createClient()
+  const supabase = adminClient // Use admin client to ensure we can always fetch metadata regardless of RLS
 
   // Find creator by subdomain OR handle
   const { data: creator } = await supabase
@@ -31,10 +31,16 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
   const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
+  
+  // Primary URL should be the subdomain one
+  const shareUrl = `https://${creator.subdomain}.${baseDomain}`
 
   return {
     title: `${creator.name} – Creatopedia`,
     description: creator.bio ?? `Browse AI prompts by ${creator.name} on Creatopedia.`,
+    alternates: {
+      canonical: shareUrl,
+    },
     openGraph: {
       title: `${creator.name} on Creatopedia`,
       description: creator.bio ?? `Browse AI prompts by ${creator.name}.`,
@@ -44,10 +50,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
           width: 400,
           height: 400,
           alt: creator.name,
+          type: 'image/jpeg', // Standard for profile pics
         }
       ] : [],
       type: 'profile',
-      url: `https://${baseDomain}/${creator.handle || creator.subdomain}`,
+      url: shareUrl,
     },
     twitter: {
       card: 'summary',
