@@ -7,7 +7,7 @@ import { z } from 'zod'
 const placementSchema = z.object({
   prompt_id: z.string().uuid().nullable().optional(),
   category_id: z.string().uuid().nullable().optional(),
-  position: z.enum(['above_prompt', 'below_prompt', 'popup', 'creator_page']).default('above_prompt'),
+  position: z.enum(['above_media', 'above_prompt', 'below_prompt', 'popup', 'creator_page']).default('above_prompt'),
   is_global: z.boolean().default(false),
 })
 
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
   if (placements.length > 0) {
     const { data: pData, error: placementError } = await adminClient.from('ad_placements').insert(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      placements.map((p: any) => ({ ...p, campaign_id: campaign.id }))
+      placements.map((p: any) => ({ ...p, campaign_id: campaign.id, creator_id: user.id }))
     ).select()
     
     if (placementError) {

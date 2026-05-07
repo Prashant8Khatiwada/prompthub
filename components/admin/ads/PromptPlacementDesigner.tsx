@@ -1,7 +1,7 @@
 'use client'
 
 import { AdPlacementPosition } from '@/types'
-import { LayoutGrid, FileText, Image as ImageIcon, Video, User, Sparkles, Globe } from 'lucide-react'
+import { LayoutGrid, FileText, Image as ImageIcon, Video, User, Sparkles } from 'lucide-react'
 
 interface Props {
   selectedPosition: AdPlacementPosition
@@ -16,7 +16,6 @@ export default function PromptPlacementDesigner({ selectedPosition, onChange, ba
     { id: 'above_prompt', label: 'Middle', icon: LayoutGrid },
     { id: 'below_prompt', label: 'Bottom', icon: FileText },
     { id: 'popup', label: 'Popup', icon: Sparkles },
-    { id: 'creator_page', label: 'Profile', icon: Globe },
   ]
 
   return (

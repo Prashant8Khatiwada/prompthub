@@ -167,6 +167,7 @@ export default async function PublicPromptPage({ params }: Params) {
       creator_id,
       campaign:ad_campaigns(*)
     `)
+    .eq('creator_id', creator.id)
     .or(filters.join(','))
 
   const placements: AdPlacement[] = (rawPlacements ?? [])

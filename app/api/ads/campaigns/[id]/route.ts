@@ -7,7 +7,7 @@ import { z } from 'zod'
 const placementSchema = z.object({
   prompt_id: z.string().uuid().nullable().optional(),
   category_id: z.string().uuid().nullable().optional(),
-  position: z.enum(['above_prompt', 'below_prompt', 'popup', 'creator_page']).default('above_prompt'),
+  position: z.enum(['above_media', 'above_prompt', 'below_prompt', 'popup', 'creator_page']).default('above_prompt'),
   is_global: z.boolean().default(false),
 })
 
@@ -78,7 +78,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await adminClient.from('ad_placements').delete().eq('campaign_id', id)
     if (placements.length > 0) {
       const { data: pData } = await adminClient.from('ad_placements').insert(
-        placements.map((p) => ({ ...p, campaign_id: id }))
+        placements.map((p) => ({ ...p, campaign_id: id, creator_id: user.id }))
       ).select()
       updatedPlacements = pData ?? []
     }

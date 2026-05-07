@@ -112,8 +112,8 @@ export default async function UserProfilePage({ params }: Params) {
   const { data: rawPlacements } = await adminClient
     .from('ad_placements')
     .select('id, position, is_global, creator_id, campaign:ad_campaigns(*)')
+    .eq('creator_id', creator.id)
     .or(`position.eq.creator_page,position.eq.discovery_header_banner,position.like.discovery_slot_%`)
-    .or(`is_global.eq.true,creator_id.eq.${creator.id}`)
 
   const placements: AdPlacementData[] = (rawPlacements ?? [])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
