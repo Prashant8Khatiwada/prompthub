@@ -202,6 +202,11 @@ export default async function PublicPromptPage({ params }: Params) {
         igMedia={igMedia}
         igFeed={igFeed}
         relatedData={related ?? []}
+        adHero={
+          placements.some((p: AdPlacement) => p.position === 'above_media') && (
+            <AdBanner placements={placements} position="above_media" promptId={prompt.id} creatorId={creator.id} />
+          )
+        }
         adAbovePrompt={
           placements.some((p: AdPlacement) => p.position === 'above_prompt') && (
             <AdBanner placements={placements} position="above_prompt" promptId={prompt.id} creatorId={creator.id} />

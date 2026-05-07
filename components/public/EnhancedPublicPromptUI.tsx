@@ -53,6 +53,7 @@ interface Props {
   igMedia: InstagramMedia | null
   igFeed: InstagramMedia[]
   relatedData: RelatedPromptType[]
+  adHero?: React.ReactNode
   adAbovePrompt?: React.ReactNode
   adBelowPrompt?: React.ReactNode
   adPopupPlacements?: AdPlacementData[]
@@ -91,6 +92,7 @@ export default function EnhancedPublicPromptUI({
   igUser,
   igMedia,
   relatedData,
+  adHero,
   adAbovePrompt,
   adBelowPrompt,
   adPopupPlacements,
@@ -362,8 +364,15 @@ export default function EnhancedPublicPromptUI({
         </div>
       </div>
 
+      {/* Premium Hero Ad Slot */}
+      {adHero && (
+        <div className="max-w-4xl mx-auto px-6 mb-4 animate-in fade-in duration-700">
+          {adHero}
+        </div>
+      )}
+
       {/* Main Glassmorphic Wrapper */}
-      <div className="max-w-4xl mx-auto px-6 pt-4 md:pt-8 animate-in fade-in duration-500">
+      <div className="max-w-4xl mx-auto px-6 pt-0 animate-in fade-in duration-500">
         <div className="w-full bg-zinc-900/40 backdrop-blur-md rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] overflow-hidden border border-white/5">
 
           {/* Tabs Switcher */}

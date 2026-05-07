@@ -78,7 +78,7 @@ export interface EmailCapture {
 
 export type AdClientStatus = 'active' | 'inactive'
 export type AdCampaignStatus = 'active' | 'paused' | 'ended' | 'scheduled'
-export type AdPlacementPosition = 'above_prompt' | 'below_prompt' | 'popup' | 'creator_page' | 'marketplace' | 'discovery_hub' | 'discovery_header_banner' | string
+export type AdPlacementPosition = 'above_media' | 'above_prompt' | 'below_prompt' | 'popup' | 'creator_page' | 'marketplace' | 'discovery_hub' | 'discovery_header_banner' | string
 
 export interface AdClient {
   id: string

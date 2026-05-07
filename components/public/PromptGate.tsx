@@ -180,7 +180,9 @@ function PdfPlaceholder({ prompt }: { prompt: Prompt }) {
         </div>
         <a
           href={prompt.pdf_url || '#'}
-          download
+          download={filename}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-bold transition-all active:scale-95 shadow"
           style={{ background: 'var(--brand, #6366f1)' }}
         >
@@ -257,7 +259,9 @@ function PdfPlaceholder({ prompt }: { prompt: Prompt }) {
         <div className="relative flex gap-3 flex-wrap justify-center">
           <a
             href={prompt.pdf_url || '#'}
-            download
+            download={filename}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all active:scale-95 shadow-lg"
             style={{ background: 'var(--brand, #6366f1)' }}
           >
@@ -345,16 +349,27 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
         />
       </div>
       
-      <div className={`p-6 font-mono text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap break-words select-text ${!isExpanded ? 'line-clamp-2 overflow-hidden' : ''}`}>
-        {currentContent}
+      <div className="relative">
+        <div className={`p-6 font-mono text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap break-words select-text transition-all duration-300 ${!isExpanded ? 'max-h-[80px] overflow-hidden' : 'max-h-none'}`}>
+          {currentContent}
+        </div>
+        
+        {/* Gradient fade when collapsed */}
+        {!isExpanded && hasMoreContent && (
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-zinc-900 to-transparent pointer-events-none" />
+        )}
       </div>
 
       {hasMoreContent && (
         <div className="px-6 pb-4 pt-1 flex justify-start">
           <button
             type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-xs font-bold text-sky-400 hover:text-sky-300 transition-colors select-none"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
+            className="text-xs font-bold text-sky-400 hover:text-sky-300 transition-colors select-none relative z-10"
           >
             {isExpanded ? 'Show less' : 'Show more'}
           </button>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { AdCampaign, AdCampaignStatus, AdPlacementPosition } from '@/types'
+import PromptPlacementDesigner from './PromptPlacementDesigner'
 
 const inputCls = 'w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm'
 const labelCls = 'block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2'
@@ -343,31 +344,26 @@ export default function AdCampaignForm({
         </div>
 
         {placementType === 'global' && (
-          <div className="p-6 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-4">
+          <div className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-6">
             <div className="flex items-center gap-3 text-indigo-400 mb-2">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <p className="text-sm font-semibold uppercase tracking-wider">Global Configuration</p>
+              <p className="text-sm font-semibold uppercase tracking-wider">Visual Placement Designer</p>
             </div>
-            <div>
-              <label className={labelCls}>Display Position</label>
-              <select value={globalPosition} onChange={e => setGlobalPosition(e.target.value as AdPlacementPosition)} className={inputCls + ' max-w-sm'}>
-                <option value="above_prompt">Above Prompt</option>
-                <option value="below_prompt">Below Prompt</option>
-                <option value="popup">Popup</option>
-                <option value="creator_page">Creator Page (Profile)</option>
-              </select>
-            </div>
+            <PromptPlacementDesigner 
+              selectedPosition={globalPosition} 
+              onChange={setGlobalPosition}
+              bannerUrl={bannerUrl}
+            />
           </div>
         )}
 
         {placementType === 'categories' && (
-          <div className="pl-4 border-l-2 border-zinc-800 mt-4 space-y-3">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <div className="pl-4 border-l-2 border-zinc-800 mt-4 space-y-6">
             {(categories as any[]).map(c => {
               const isSelected = !!selectedCategories[c.id]
               return (
-                <div key={c.id} className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${isSelected ? 'bg-indigo-600/5 border-indigo-500/20' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'}`}>
-                  <label className="flex items-center gap-3 cursor-pointer flex-1">
+                <div key={c.id} className={`p-6 rounded-2xl border flex flex-col gap-6 transition-all ${isSelected ? 'bg-indigo-600/5 border-indigo-500/20' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'}`}>
+                  <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -380,21 +376,20 @@ export default function AdCampaignForm({
                           setSelectedCategories(next)
                         }
                       }}
-                      className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 bg-zinc-800 border-zinc-700"
+                      className="w-6 h-6 rounded-lg text-indigo-600 focus:ring-indigo-500 bg-zinc-800 border-zinc-700"
                     />
-                    <p className="font-semibold text-sm text-white">{c.name}</p>
+                    <p className="font-bold text-lg text-white">{c.name}</p>
                   </label>
+                  
                   {isSelected && (
-                    <select
-                      value={selectedCategories[c.id]}
-                      onChange={e => setSelectedCategories(prev => ({ ...prev, [c.id]: e.target.value as AdPlacementPosition }))}
-                      className="px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-white focus:ring-indigo-500 min-w-[140px]"
-                    >
-                      <option value="above_prompt">Above Prompt</option>
-                      <option value="below_prompt">Below Prompt</option>
-                      <option value="popup">Popup</option>
-                      <option value="creator_page">Creator Page</option>
-                    </select>
+                    <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800">
+                      <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Placement for {c.name}</p>
+                      <PromptPlacementDesigner 
+                        selectedPosition={selectedCategories[c.id]} 
+                        onChange={(pos) => setSelectedCategories(prev => ({ ...prev, [c.id]: pos }))}
+                        bannerUrl={bannerUrl}
+                      />
+                    </div>
                   )}
                 </div>
               )
@@ -404,12 +399,12 @@ export default function AdCampaignForm({
         )}
 
         {placementType === 'prompts' && (
-          <div className="pl-4 border-l-2 border-zinc-800 mt-4 space-y-3 max-h-96 overflow-y-auto pr-4">
+          <div className="pl-4 border-l-2 border-zinc-800 mt-4 space-y-6">
             {prompts.map(p => {
               const isSelected = !!selectedPrompts[p.id]
               return (
-                <div key={p.id} className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${isSelected ? 'bg-indigo-600/5 border-indigo-500/20' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'}`}>
-                  <label className="flex items-center gap-3 cursor-pointer flex-1">
+                <div key={p.id} className={`p-6 rounded-2xl border flex flex-col gap-6 transition-all ${isSelected ? 'bg-indigo-600/5 border-indigo-500/20' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'}`}>
+                  <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -422,24 +417,23 @@ export default function AdCampaignForm({
                           setSelectedPrompts(next)
                         }
                       }}
-                      className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 bg-zinc-800 border-zinc-700"
+                      className="w-6 h-6 rounded-lg text-indigo-600 focus:ring-indigo-500 bg-zinc-800 border-zinc-700"
                     />
                     <div>
-                      <p className="font-semibold text-sm text-white">{p.title}</p>
-                      <p className="text-xs text-zinc-500">/{p.slug}</p>
+                      <p className="font-bold text-lg text-white">{p.title}</p>
+                      <p className="text-xs text-zinc-500 font-mono">/{p.slug}</p>
                     </div>
                   </label>
+
                   {isSelected && (
-                    <select
-                      value={selectedPrompts[p.id]}
-                      onChange={e => setSelectedPrompts(prev => ({ ...prev, [p.id]: e.target.value as AdPlacementPosition }))}
-                      className="px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-white focus:ring-indigo-500 min-w-[140px]"
-                    >
-                      <option value="above_prompt">Above Prompt</option>
-                      <option value="below_prompt">Below Prompt</option>
-                      <option value="popup">Popup</option>
-                      <option value="creator_page">Creator Page</option>
-                    </select>
+                    <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800">
+                      <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Placement for {p.title}</p>
+                      <PromptPlacementDesigner 
+                        selectedPosition={selectedPrompts[p.id]} 
+                        onChange={(pos) => setSelectedPrompts(prev => ({ ...prev, [p.id]: pos }))}
+                        bannerUrl={bannerUrl}
+                      />
+                    </div>
                   )}
                 </div>
               )
