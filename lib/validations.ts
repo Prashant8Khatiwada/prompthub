@@ -36,6 +36,8 @@ export const creatorSettingsSchema = z.object({
   instagram_api_key: z.string().optional().nullable().or(z.literal('')),
   tiktok_api_key: z.string().optional().nullable().or(z.literal('')),
   subdomain: z.string().min(1).regex(/^[a-z0-9-]+$/, 'Subdomain must be lowercase letters, numbers, hyphens only').max(30),
+  ads_enabled: z.boolean().optional(),
+  ad_frequency: z.number().int().min(1).max(20).optional().nullable(),
 })
 
 export const categorySchema = z.object({

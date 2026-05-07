@@ -152,6 +152,37 @@ export default function DiscoveryHubAds({
 
   return (
     <div className="space-y-10">
+      {/* Header with Title and Save Button */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-zinc-800">
+        <div>
+          <h2 className="text-2xl font-black text-white tracking-tight">Discovery Hub Ads</h2>
+          <p className="text-sm text-zinc-500 mt-1">Configure monetization and ad placements for your public gallery.</p>
+        </div>
+        
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className={`group flex items-center gap-3 px-8 py-3.5 rounded-2xl font-bold text-sm text-white shadow-2xl transition-all active:scale-95 disabled:opacity-50 min-w-[200px] justify-center ${success ? 'bg-emerald-600 shadow-emerald-500/20' : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20'}`}
+        >
+          {saving ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <span>Saving Changes...</span>
+            </>
+          ) : success ? (
+            <>
+              <span className="text-lg">✓</span>
+              <span>Saved Successfully</span>
+            </>
+          ) : (
+            <>
+              <span className="opacity-50 group-hover:opacity-100 transition-opacity">💾</span>
+              <span>Save All Changes</span>
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Quick Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex items-center justify-between p-6 rounded-2xl bg-zinc-950 border border-zinc-800">
@@ -186,112 +217,148 @@ export default function DiscoveryHubAds({
 
       {/* Header Banner Slot */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-white">Upper Section Ad (Banner)</h3>
-        <div className={`p-6 rounded-3xl border-2 transition-all ${headerCampaignId ? 'border-indigo-500 bg-indigo-500/5' : 'border-dashed border-zinc-800 bg-zinc-950'}`}>
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <div className={`w-full sm:w-64 h-24 rounded-xl flex items-center justify-center border ${headerCampaignId ? 'border-indigo-500/50 bg-indigo-500/10' : 'border-zinc-800 bg-zinc-900'}`}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            Upper Section Ad (Banner)
+          </h3>
+          {headerCampaignId && (
+            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest px-2 py-1 bg-indigo-500/10 rounded-full border border-indigo-500/20">Active</span>
+          )}
+        </div>
+        <div className={`group relative p-1 rounded-[32px] border-2 transition-all duration-500 ${headerCampaignId ? 'border-indigo-500/50 bg-indigo-500/5 shadow-2xl shadow-indigo-500/10' : 'border-dashed border-zinc-800 bg-zinc-950/50 hover:border-zinc-700'}`}>
+          <div className="flex flex-col lg:flex-row items-stretch gap-6 p-4">
+            <div className={`relative flex-1 h-48 sm:h-64 rounded-2xl flex items-center justify-center border overflow-hidden transition-all duration-500 ${headerCampaignId ? 'border-indigo-500/30 bg-zinc-900' : 'border-zinc-800/50 bg-zinc-900/30'}`}>
               {headerCampaignId ? (
-                <div className="relative w-full h-full">
-                  <img src={campaigns.find(c => c.id === headerCampaignId)?.banner_url} alt="Banner" className="w-full h-full object-cover rounded-xl opacity-60" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] font-black text-indigo-400 uppercase">Banner Active</span>
+                <>
+                  <img 
+                    src={campaigns.find(c => c.id === headerCampaignId)?.banner_url} 
+                    alt="Banner Preview" 
+                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent" />
+                  <div className="relative z-10 text-center">
+                    <span className="text-xs font-black text-white/40 uppercase tracking-[0.2em]">Banner Preview</span>
                   </div>
-                </div>
+                </>
               ) : (
-                <span className="text-zinc-600 text-xs font-bold uppercase">No Banner Assigned</span>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-800/50 flex items-center justify-center border border-zinc-700/50">
+                    <span className="text-2xl opacity-20">🖼️</span>
+                  </div>
+                  <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest">No Banner Assigned</span>
+                </div>
               )}
             </div>
-            <div className="flex-1 space-y-4 w-full">
-              <div className="space-y-1">
+            
+            <div className="w-full lg:w-80 flex flex-col justify-between py-2 gap-6">
+              <div className="space-y-2">
                 <p className="text-sm font-bold text-white">Featured Header Ad</p>
-                <p className="text-xs text-zinc-500">This ad appears as a large banner above your prompt gallery.</p>
+                <p className="text-xs text-zinc-500 leading-relaxed">This ad appears as a full-width featured banner at the top of your discovery hub, above all prompts.</p>
               </div>
-              <select
-                value={headerCampaignId}
-                onChange={(e) => setHeaderCampaignId(e.target.value)}
-                className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500/50"
-              >
-                <option value="">(Disable Header Ad)</option>
-                {campaigns.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Select Campaign</label>
+                <select
+                  value={headerCampaignId}
+                  onChange={(e) => setHeaderCampaignId(e.target.value)}
+                  className="w-full bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all cursor-pointer hover:border-zinc-700"
+                >
+                  <option value="">(None - Disabled)</option>
+                  {campaigns.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
+ 
       {/* Grid Designer */}
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold text-white">Grid Placement Designer</h3>
-            <p className="text-sm text-zinc-500">Choose exact positions for your ads in the 3-column discovery hub.</p>
+            <p className="text-sm text-zinc-500">Assign ad slots to specific positions in your prompt gallery.</p>
           </div>
-
-          <div className="flex items-center gap-2 p-1 bg-zinc-950 border border-zinc-800 rounded-xl">
+          
+          <div className="flex items-center gap-2 p-1.5 bg-zinc-950 border border-zinc-800 rounded-2xl">
             {(['every3', 'every4', 'every5', 'custom'] as Pattern[]).map((p) => (
               <button
                 key={p}
                 onClick={() => applyPattern(p)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${selectedPattern === p ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${selectedPattern === p ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50'}`}
               >
                 {p === 'custom' ? 'Custom' : p.replace('every', 'Every ')}
               </button>
             ))}
           </div>
         </div>
-
+ 
         {loading ? (
-          <div className="h-64 flex items-center justify-center bg-zinc-950/50 rounded-3xl border border-dashed border-zinc-800">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+          <div className="h-96 flex items-center justify-center bg-zinc-950/50 rounded-[40px] border border-dashed border-zinc-800">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.3)]"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4 bg-zinc-950/50 p-6 rounded-3xl border border-zinc-800">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2 sm:p-0">
             {Array.from({ length: 12 }).map((_, i) => {
               const isAd = slots[i] !== undefined
               const campaignId = slots[i]
               const campaign = campaigns.find(c => c.id === campaignId)
-
+ 
               return (
-                <div key={i} className="space-y-2">
+                <div key={i} className="relative group aspect-[3/4] sm:aspect-[4/5] rounded-[28px] overflow-hidden transition-all duration-500">
                   <button
                     onClick={() => toggleSlot(i)}
-                    className={`relative w-full aspect-4/3 rounded-2xl border-2 transition-all group overflow-hidden ${isAd
-                      ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/10'
-                      : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700'}`}
+                    className={`absolute inset-0 w-full h-full border-2 transition-all duration-500 flex flex-col items-center justify-center gap-3 ${isAd 
+                      ? 'border-indigo-500/50 bg-zinc-900 shadow-xl shadow-indigo-500/10' 
+                      : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700 hover:bg-zinc-900/50'}`}
                   >
                     {isAd ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
+                      <>
                         {campaign?.banner_url ? (
-                          <img src={campaign.banner_url} alt="Ad" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+                          <img src={campaign.banner_url} alt="Ad" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-700" />
                         ) : null}
-                        <span className="relative z-10 text-[10px] font-black text-indigo-400 uppercase tracking-tighter">AD SLOT {i + 1}</span>
-                        <div className="relative z-10 mt-1 px-2 py-0.5 bg-indigo-500 rounded text-[8px] text-white font-bold truncate max-w-full">
-                          {campaign?.name || 'Pick Campaign'}
+                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+                        <div className="relative z-10 flex flex-col items-center gap-2 px-4 text-center">
+                          <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] drop-shadow-lg">Ad Slot {i + 1}</span>
+                          <div className="text-[11px] font-bold text-white truncate max-w-full drop-shadow-lg bg-zinc-950/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5">
+                            {campaign?.name || 'Pick Campaign'}
+                          </div>
                         </div>
-                      </div>
+                      </>
                     ) : (
-                      <div className="flex flex-col items-center justify-center opacity-20 group-hover:opacity-40 transition-opacity">
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase">Item {i + 1}</span>
+                      <div className="flex flex-col items-center gap-2 opacity-20 group-hover:opacity-60 transition-all duration-500 scale-90 group-hover:scale-100">
+                        <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                          <span className="text-lg">📄</span>
+                        </div>
+                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Item {i + 1}</span>
                       </div>
                     )}
-                    <div className="absolute top-2 right-2 w-4 h-4 rounded-full border border-white/20 flex items-center justify-center">
-                      <div className={`w-2 h-2 rounded-full transition-all ${isAd ? 'bg-indigo-400' : 'bg-transparent'}`} />
+ 
+                    {/* Status Indicator */}
+                    <div className="absolute top-4 right-4 z-20">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${isAd ? 'bg-indigo-500 border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'bg-transparent border-zinc-800 group-hover:border-zinc-600'}`}>
+                        {isAd && <span className="text-[10px] text-white font-bold">✓</span>}
+                      </div>
                     </div>
                   </button>
-
+ 
+                  {/* Absolute positioned campaign selector for active ads */}
                   {isAd && (
-                    <select
-                      value={campaignId}
-                      onChange={(e) => updateSlotCampaign(i, e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] text-white outline-none focus:ring-1 focus:ring-indigo-500"
-                    >
-                      {campaigns.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                      {campaigns.length === 0 && <option value="">No campaigns</option>}
-                    </select>
+                    <div className="absolute bottom-4 left-4 right-4 z-30 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                      <select
+                        value={campaignId}
+                        onClick={(e) => e.stopPropagation()} // Prevent toggle when clicking select
+                        onChange={(e) => updateSlotCampaign(i, e.target.value)}
+                        className="w-full bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-xl px-3 py-2 text-[10px] text-white font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-2xl"
+                      >
+                        {campaigns.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
                   )}
                 </div>
               )
@@ -363,32 +430,8 @@ export default function DiscoveryHubAds({
         </div>
       </div>
 
-      {/* Save Button */}
-      <div className="fixed bottom-8 right-8 z-50">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-white shadow-2xl transition-all active:scale-95 disabled:opacity-50 ${success ? 'bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-500'}`}
-        >
-          {saving ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              <span>Saving...</span>
-            </>
-          ) : success ? (
-            <>
-              <span>✓ Saved Successfully</span>
-            </>
-          ) : (
-            <>
-              <span>Save Changes</span>
-            </>
-          )}
-        </button>
-      </div>
-
       {error && (
-        <div className="fixed bottom-28 right-8 z-50 bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-2xl animate-in fade-in slide-in-from-bottom-4">
+        <div className="fixed bottom-12 right-8 z-50 bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-2xl animate-in fade-in slide-in-from-bottom-4">
           {error}
         </div>
       )}

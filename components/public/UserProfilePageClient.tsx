@@ -370,11 +370,12 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                     // 1. Check for manual grid slot BEFORE the prompt
                     if (isAdsEnabled && gridSlots[i]) {
                       items.push(
-                        <div key={`ad-slot-${i}`} className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
+                        <div key={`ad-slot-${i}`} className="relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/30 backdrop-blur-xl shadow-2xl">
                           <AdBanner
                             placements={[gridSlots[i]]}
                             position={gridSlots[i].position}
                             creatorId={creator.id}
+                            fill
                           />
                         </div>
                       )
@@ -443,8 +444,8 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                     const hasManualSlots = Object.keys(gridSlots).length > 0
                     if (isAdsEnabled && !hasManualSlots && fallbackAd && (i + 1) % frequency === 0 && i !== filteredPrompts.length - 1) {
                       items.push(
-                        <div key={`ad-freq-${i}`} className="relative aspect-[3/4.2] sm:h-[440px] rounded-md sm:rounded-[36px] overflow-hidden border border-dashed border-white/10 bg-zinc-900/10 flex items-center justify-center p-2">
-                          <AdBanner placements={[fallbackAd]} position={fallbackAd.position} creatorId={creator.id} />
+                        <div key={`ad-freq-${i}`} className="relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/30 backdrop-blur-xl shadow-2xl">
+                          <AdBanner placements={[fallbackAd]} position={fallbackAd.position} creatorId={creator.id} fill />
                         </div>
                       )
                     }

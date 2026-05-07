@@ -26,9 +26,13 @@ export async function PATCH(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
 
   const { data, error } = await supabase.from('creators')
-    .update(parsed.data).eq('id', user.id).select().single<Creator>()
+    .update(parsed.data)
+    .eq('id', user.id)
+    .select()
+    .maybeSingle()
   
-  if (error || !data) return NextResponse.json({ error: error?.message || 'Failed to update' }, { status: 400 })
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (!data) return NextResponse.json({ error: 'Creator profile not found' }, { status: 404 })
   
   // Invalidate cache
   revalidateTag(`creator-${data.subdomain}`, 'max')

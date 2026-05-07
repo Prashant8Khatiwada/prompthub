@@ -17,9 +17,10 @@ interface Props {
   position: AdPlacementPosition
   promptId?: string
   creatorId?: string
+  fill?: boolean
 }
 
-export default function AdBanner({ placements, position, promptId, creatorId }: Props) {
+export default function AdBanner({ placements, position, promptId, creatorId, fill }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [hasImpressed, setHasImpressed] = useState(false)
 
@@ -136,16 +137,19 @@ export default function AdBanner({ placements, position, promptId, creatorId }: 
   }
 
   return (
-    <div ref={containerRef} className="relative w-full overflow-hidden rounded-xl bg-zinc-900 border border-zinc-800 transition-transform hover:scale-[1.01]">
-      <a href={baseClickUrl} onClick={handleClick} target="_blank" rel="noopener noreferrer" className="block w-full">
+    <div 
+      ref={containerRef} 
+      className={`relative w-full overflow-hidden transition-transform hover:scale-[1.01] ${fill ? 'h-full' : 'rounded-xl bg-zinc-900 border border-zinc-800'}`}
+    >
+      <a href={baseClickUrl} onClick={handleClick} target="_blank" rel="noopener noreferrer" className={`block w-full ${fill ? 'h-full' : ''}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={placement.campaign.banner_url}
           alt={placement.campaign.banner_alt || 'Advertisement'}
-          className="w-full h-auto object-cover"
+          className={`w-full object-cover ${fill ? 'h-full' : 'h-auto'}`}
         />
       </a>
-      <span className="absolute top-1 right-1.5 px-1.5 py-0.5 rounded-md bg-zinc-950/60 backdrop-blur-md text-[10px] font-medium text-zinc-400 select-none pointer-events-none">
+      <span className="absolute top-2 right-2 px-2 py-1 rounded-md bg-zinc-950/60 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-zinc-400 select-none pointer-events-none z-20">
         Sponsored
       </span>
     </div>

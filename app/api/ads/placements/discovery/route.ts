@@ -5,7 +5,7 @@ import { adminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const slotSchema = z.object({
-  index: z.number().min(0),
+  index: z.number().min(-1),
   campaign_id: z.string().uuid(),
 })
 
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     .from('ad_placements')
     .select('*, campaign:ad_campaigns(*)')
     .eq('creator_id', creatorId)
-    .like('position', 'discovery_slot_%')
+    .or('position.like.discovery_slot_%,position.eq.discovery_header_banner')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       .from('ad_placements')
       .delete()
       .eq('creator_id', user.id)
-      .like('position', 'discovery_slot_%')
+      .or('position.like.discovery_slot_%,position.eq.discovery_header_banner')
 
     if (deleteError) throw new Error(deleteError.message)
 
