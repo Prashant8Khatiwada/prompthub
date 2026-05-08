@@ -4,16 +4,16 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { 
-  ArrowRight, 
-  Sparkles, 
-  Layers, 
-  TrendingUp, 
-  Award, 
-  CheckCircle2, 
-  ArrowLeft, 
-  MessageSquare, 
-  Globe, 
+import {
+  ArrowRight,
+  Sparkles,
+  Layers,
+  TrendingUp,
+  Award,
+  CheckCircle2,
+  ArrowLeft,
+  MessageSquare,
+  Globe,
   Mail,
   Zap,
   Target,
@@ -155,15 +155,15 @@ export default function CreatorPortfolioPage() {
   return (
     <div className="min-h-screen bg-[#070913] text-white selection:bg-pink-500/30 font-sans antialiased overflow-x-hidden relative">
       {/* ─── STUNNING BACKGROUND RADIAL GLOWS ─── */}
-      <div 
-        className="absolute inset-0 z-0 pointer-events-none opacity-40 select-none" 
-        style={{ 
+      <div
+        className="absolute inset-0 z-0 pointer-events-none opacity-40 select-none"
+        style={{
           background: `
             radial-gradient(ellipse 100% 70% at 50% 0%, rgba(28,55,170,0.35) 0%, transparent 55%), 
             radial-gradient(ellipse 60% 50% at 100% 100%, rgba(155,15,50,0.30) 0%, transparent 60%),
             radial-gradient(circle at 10% 40%, rgba(139,92,246,0.15) 0%, transparent 50%)
-          ` 
-        }} 
+          `
+        }}
       />
 
       {/* ─── STICKY GLASSMORPHIC NAVBAR ─── */}
@@ -200,116 +200,154 @@ export default function CreatorPortfolioPage() {
       </nav>
 
       {/* ─── HERO SECTION ─── */}
-      <header id="hero" className="relative py-28 md:py-36 px-6 overflow-hidden">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10 text-left">
-          {/* Left Column - Copy & CTAs */}
-          <div className="lg:col-span-7 flex flex-col items-start space-y-8">
-            {/* Pill Badge */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900/60 backdrop-blur-md border border-white/10 text-[#ff1f4b] text-[10px] font-mono uppercase tracking-[0.2em]"
-            >
-              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-              ELITE AI PROMPT ENGINEER
-            </motion.div>
+      <header
+        id="hero"
+        className="relative min-h-screen flex flex-col justify-end overflow-hidden"
+      >
+        {/* ── Full bleed deep background ── */}
+        <div className="absolute inset-0 bg-[#0a0a0a] z-0" />
 
-            {/* Main Title */}
-            <motion.h1 
-              initial={{ opacity: 0, y: 30 }}
+        {/* ── Right side dramatic red/orange fire aura (matches image) ── */}
+        <div
+          className="absolute right-0 top-0 w-full h-full z-0 pointer-events-none"
+          style={{
+            background: `
+              radial-gradient(ellipse 55% 80% at 85% 30%, rgba(200,40,10,0.85) 0%, rgba(140,20,5,0.5) 30%, transparent 65%),
+              radial-gradient(ellipse 30% 50% at 95% 10%, rgba(255,80,10,0.5) 0%, transparent 55%)
+            `,
+          }}
+        />
+        {/* Left subtle cool shadow for depth */}
+        <div
+          className="absolute left-0 top-0 w-2/3 h-full z-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse 60% 80% at -10% 50%, rgba(10,10,18,0.95) 0%, transparent 70%)',
+          }}
+        />
+
+        {/* ── Portrait — right side, full-bleed, overlaid ── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.2 }}
+          className="absolute right-0 top-0 h-full w-[55%] md:w-[50%] z-10 pointer-events-none select-none"
+        >
+          <img
+            src="/hero.jpg"
+            alt="Milan Rayamajhi"
+            className="w-full h-full object-cover object-top"
+            style={{
+              maskImage: 'linear-gradient(to right, transparent 0%, black 30%)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 30%)',
+            }}
+          />
+          {/* Left-edge portrait fade to pure black */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+          {/* Bottom fade */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
+        </motion.div>
+
+        {/* ── Main Content ── */}
+        <div className="relative z-20 max-w-7xl mx-auto w-full px-6 md:px-12 pb-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 min-h-screen items-center">
+
+            {/* Left column — headline & tagline */}
+            <div className="lg:col-span-6 flex flex-col justify-center space-y-6 pt-32 pb-16 lg:pt-0 lg:pb-0">
+
+              {/* "Hey, I'm a" label */}
+              <motion.p
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-white/50 text-sm md:text-base font-light tracking-widest"
+              >
+                Hey, I&apos;m a
+              </motion.p>
+
+              {/* Giant job title */}
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.15 }}
+                className="text-[clamp(3.5rem,9vw,7rem)] font-black leading-[0.95] tracking-tighter text-white"
+              >
+                AI Prompt<br />
+                <span className="text-white">Engineer</span>
+              </motion.h1>
+
+              {/* Right sub-column — the "Great design…" text block matching image */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="max-w-xs space-y-3"
+              >
+                <p className="text-white text-base font-semibold leading-snug">
+                  Great AI systems should feel invisible.
+                </p>
+                <p className="text-white/45 text-xs leading-relaxed font-light">
+                  From logo to language, I build prompt layers that connect and convert — production-grade systems that bridge high-fidelity creation and massive business scale.
+                </p>
+                <a
+                  href="#contact"
+                  className="inline-flex items-center gap-2 mt-2 px-5 py-2.5 bg-[#ff1f4b] hover:bg-white hover:text-zinc-950 text-white font-mono font-bold text-[10px] uppercase tracking-widest rounded-full shadow-lg transition-all duration-300"
+                >
+                  Get In Touch
+                  <ArrowRight className="w-3 h-3" />
+                </a>
+              </motion.div>
+            </div>
+
+            {/* Spacer — right col is the portrait (absolute) */}
+            <div className="lg:col-span-6 hidden lg:block" />
+          </div>
+        </div>
+
+        {/* ── Bottom numbered specialties bar ── */}
+        <div className="relative z-20 w-full border-t border-white/10 bg-[#0a0a0a]/80 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-5xl sm:text-7xl md:text-8xl font-black leading-[1.05] tracking-tight text-white"
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10"
             >
-              Milan <br />
+              {[
+                { num: '01', label: 'AI Prompt Design' },
+                { num: '02', label: 'Brand Voice Systems' },
+                { num: '03', label: 'Workflow Automation' },
+                { num: '04', label: 'Creative Direction' },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="group flex flex-col gap-1 px-6 py-5 hover:bg-white/5 transition-colors duration-300 cursor-default"
+                >
+                  <span className="text-[#ff1f4b] font-mono text-[9px] tracking-widest font-bold">{item.num}</span>
+                  <span className="text-white/60 group-hover:text-white text-[11px] font-mono tracking-wide transition-colors duration-300">
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+
+        {/* ── Trusted-by brand pill row ── */}
+        <div className="relative z-20 w-full bg-[#0a0a0a] border-t border-white/5">
+          <div className="max-w-7xl mx-auto px-6 md:px-12 py-4 flex flex-wrap items-center gap-4">
+            <span className="text-white/25 text-[9px] font-mono uppercase tracking-[0.25em] whitespace-nowrap">
+              Trusted by brands I&apos;ve helped shape
+            </span>
+            {['OpenAI', 'Anthropic', 'Midjourney', 'Zapier', 'Notion'].map((brand) => (
               <span
-                style={{
-                  background: 'linear-gradient(90deg, #ec4899 0%, #8b5cf6 50%, #ff1f4b 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
+                key={brand}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-white/50 text-[9px] font-mono tracking-widest hover:border-white/20 hover:text-white/80 transition-all duration-300"
               >
-                Rayamajhi
+                <span className="w-1 h-1 rounded-full bg-[#ff1f4b]" />
+                {brand}
               </span>
-            </motion.h1>
-
-            {/* Subtitle */}
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-base sm:text-lg text-white/50 leading-relaxed font-light max-w-2xl font-sans"
-            >
-              Designing high-impact digital storefronts and optimizing complex LLM frameworks. I build production-grade prompt layers that bridge high-fidelity creation and massive business scale.
-            </motion.p>
-
-            {/* Call to Actions */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="flex flex-wrap gap-4 pt-4"
-            >
-              <a
-                href="#works"
-                className="group px-8 py-4 bg-white hover:bg-[#ff1f4b] text-zinc-950 hover:text-white font-mono font-bold text-xs uppercase tracking-widest rounded-full shadow-lg transition-all duration-500 hover:scale-[1.03] flex items-center justify-center gap-2"
-              >
-                <span>Explore My Work</span>
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </a>
-              <a
-                href="#contact"
-                className="px-8 py-4 bg-zinc-900/60 border border-white/10 hover:border-white/25 text-white font-mono font-bold text-xs uppercase tracking-widest rounded-full transition-all duration-500 hover:scale-[1.03] flex items-center justify-center gap-2"
-              >
-                <span>Let&apos;s Talk</span>
-              </a>
-            </motion.div>
-          </div>
-
-          {/* Right Column - Premium Portrait */}
-          <div className="lg:col-span-5 flex justify-center relative">
-            {/* Ambient Background Glow behind image frame */}
-            <div className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-[#8b5cf6]/20 blur-[100px] pointer-events-none" />
-            
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8 }}
-              className="relative w-72 h-72 sm:w-96 sm:h-96 rounded-[40px] overflow-hidden p-[2px] bg-gradient-to-tr from-[#ec4899] via-[#8b5cf6] to-[#ff1f4b] shadow-2xl hover:scale-[1.02] transition-transform duration-500"
-            >
-              <div className="w-full h-full rounded-[38px] bg-[#070913] p-1.5 overflow-hidden relative">
-                {/* Glowing inside aura */}
-                <div className="absolute inset-0 z-0 bg-gradient-to-tr from-[#ec4899]/15 to-[#8b5cf6]/15 blur-2xl pointer-events-none" />
-                <img 
-                  src="/hero.jpg" 
-                  alt="Milan Rayamajhi" 
-                  className="w-full h-full rounded-[34px] object-cover relative z-10"
-                />
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Elite Metrics Overlay */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="col-span-1 lg:col-span-12 w-full grid grid-cols-2 md:grid-cols-4 gap-8 pt-20 mt-12 border-t border-white/5 text-center"
-          >
-            {[
-              { value: '1.2M+', label: 'Prompt Runs' },
-              { value: '150+', label: 'Custom Systems' },
-              { value: '10k+', label: 'Happy Users' },
-              { value: '99.9%', label: 'Precision Rate' }
-            ].map((stat, i) => (
-              <div key={i} className="space-y-2">
-                <div className="text-3xl md:text-5xl font-black text-white tracking-tight">{stat.value}</div>
-                <div className="text-[10px] font-mono text-white/40 uppercase tracking-[0.25em]">{stat.label}</div>
-              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </header>
 
@@ -405,11 +443,10 @@ export default function CreatorPortfolioPage() {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-5 py-2.5 rounded-full text-xs font-mono tracking-wider transition-all duration-300 border ${
-                  activeCategory === cat
+                className={`px-5 py-2.5 rounded-full text-xs font-mono tracking-wider transition-all duration-300 border ${activeCategory === cat
                     ? 'bg-[#ff1f4b]/10 border-[#ff1f4b]/50 text-[#ff1f4b] font-bold'
                     : 'bg-zinc-900/40 border-white/5 text-white/50 hover:text-white hover:border-white/15'
-                }`}
+                  }`}
               >
                 {cat}
               </button>
@@ -419,16 +456,16 @@ export default function CreatorPortfolioPage() {
           {/* Work Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredWorks.map((item, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className="group bg-[#111520]/50 backdrop-blur-md border border-white/5 hover:border-[#ff1f4b]/30 rounded-3xl overflow-hidden flex flex-col justify-between h-[450px] transition-all duration-500 hover:scale-[1.02]"
               >
                 <div className="space-y-6">
                   {/* Image container */}
                   <div className="h-48 w-full overflow-hidden relative">
-                    <img 
-                      src={item.image} 
-                      alt={item.title} 
+                    <img
+                      src={item.image}
+                      alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#111520] to-transparent" />
@@ -475,8 +512,8 @@ export default function CreatorPortfolioPage() {
             {VALUE_PROPS.map((prop, idx) => {
               const PropIcon = prop.icon
               return (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className="group bg-[#111520]/60 backdrop-blur-md p-10 border border-white/10 rounded-[32px] hover:scale-[1.03] transition-all duration-500 relative flex flex-col justify-between h-[320px] select-none"
                 >
                   <div className="space-y-6">
@@ -514,9 +551,9 @@ export default function CreatorPortfolioPage() {
             {TESTIMONIALS.map((t, idx) => (
               <div key={idx} className="bg-zinc-900/30 backdrop-blur-xl p-8 md:p-10 border border-white/5 hover:border-pink-500/20 transition-all duration-500 rounded-3xl flex flex-col justify-between space-y-8 relative overflow-hidden group">
                 <div className="absolute inset-0 pointer-events-none opacity-10 bg-gradient-to-tr from-transparent to-[#ec4899] blur-2xl" />
-                
+
                 <p className="text-xs sm:text-sm text-white/70 italic leading-relaxed font-light relative z-10">&ldquo;{t.quote}&rdquo;</p>
-                
+
                 <div className="flex items-center gap-4 relative z-10">
                   <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10">
                     <img src={t.avatar} alt={t.author} className="w-full h-full object-cover" />
@@ -637,21 +674,21 @@ export default function CreatorPortfolioPage() {
           <div className="flex justify-center gap-6 mt-12 pt-12 border-t border-white/5 relative z-10">
             <a href="https://instagram.com/milan_designs" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-[#ff1f4b] transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+                <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
               </svg>
             </a>
             <a href="https://twitter.com/milan_designs" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-blue-400 transition-colors">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
             </a>
             <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-blue-500 transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
-                <rect width="4" height="12" x="2" y="9"/>
-                <circle cx="4" cy="4" r="2"/>
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                <rect width="4" height="12" x="2" y="9" />
+                <circle cx="4" cy="4" r="2" />
               </svg>
             </a>
             <a href="mailto:milan@creatopedia.tech" className="text-white/40 hover:text-emerald-400 transition-colors">

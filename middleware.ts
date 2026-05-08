@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-console.log('>>> Proxy file loaded at root level')
+console.log('>>> Middleware file loaded at root level')
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const url = request.nextUrl
   const path = url.pathname
   const host = request.headers.get('host') || ''
@@ -16,7 +16,7 @@ export async function proxy(request: NextRequest) {
   const baseDomain = envBaseDomain.replace(/^https?:\/\//, '')
   const isMainDomain = hostWithoutPort === baseDomain
 
-  console.log(`[Proxy] Host: ${hostWithoutPort}, BaseDomain: ${baseDomain}, MainDomain: ${isMainDomain}, Path: ${path}`)
+  console.log(`[Middleware] Host: ${hostWithoutPort}, BaseDomain: ${baseDomain}, MainDomain: ${isMainDomain}, Path: ${path}`)
 
   // Bypass for static assets and API
   if (
@@ -28,26 +28,24 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 1. If it's the main domain (zip.fotosfolio.com), let Next.js handle all routes normally
+  // 1. If it's the main domain (creatopedia.tech), let Next.js handle all routes normally
   if (isMainDomain) {
     return NextResponse.next()
   }
 
-  // 2. If it's a subdomain (e.g., creator.zip.fotosfolio.com)
+  // 2. If it's a subdomain (e.g., creator.creatopedia.tech)
   // We assume everything else is a creator subdomain
   const subdomain = hostWithoutPort.replace(`.${baseDomain}`, '')
 
-  console.log(`[Proxy] Extracted Subdomain: ${subdomain}, HostWithoutPort: ${hostWithoutPort}, BaseDomain: ${baseDomain}`)
+  console.log(`[Middleware] Extracted Subdomain: ${subdomain}, HostWithoutPort: ${hostWithoutPort}, BaseDomain: ${baseDomain}`)
 
   if (subdomain && subdomain !== hostWithoutPort) {
-    console.log(`[Proxy] Subdomain detected: ${subdomain}, Rewriting to /[subdomain]${path}`)
+    console.log(`[Middleware] Subdomain detected: ${subdomain}, Rewriting to /[subdomain]${path}`)
     return NextResponse.rewrite(new URL(`/${subdomain}${path}`, request.url))
   }
 
   return NextResponse.next()
 }
-
-export { proxy as middleware }
 
 export const config = {
   matcher: [
