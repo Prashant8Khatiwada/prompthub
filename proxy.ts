@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 console.log('>>> Middleware file loaded at root level')
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const url = request.nextUrl
   const path = url.pathname
   const host = request.headers.get('host') || ''
