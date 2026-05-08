@@ -124,6 +124,20 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
     return `/${creator.subdomain}/${slug}`
   }
 
+  const portfolioUrl = () => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      const cleanBaseDomain = baseDomain.replace(/^https?:\/\//, '')
+      const isSubdomain = hostname.startsWith(`${creator.subdomain}.`)
+
+      if (hostname === cleanBaseDomain || hostname === 'localhost' || hostname === '127.0.0.1' || !isSubdomain) {
+        return `/${creator.subdomain}/portfolio`
+      }
+      return `/portfolio`
+    }
+    return `/${creator.subdomain}/portfolio`
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans select-none relative overflow-hidden">
       {/* ─── Hero Cover & Header Section (Aligned with Attached Reference Image) ─── */}
@@ -203,6 +217,13 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
 
           {/* Action Buttons Row */}
           <div className="flex items-center gap-3 mt-6">
+            <Link
+              href={portfolioUrl()}
+              className="px-6 py-3 bg-[#ff1f4b] hover:bg-[#ff1f4b]/90 text-white font-bold text-xs rounded-full shadow-lg active:scale-95 transition-all duration-300 flex items-center gap-2 select-none"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+              <span>View Portfolio</span>
+            </Link>
             <a
               href={creator.instagram_url || `https://instagram.com/${creator.handle?.replace('@', '') || creator.subdomain}`}
               target="_blank"

@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
@@ -113,9 +114,20 @@ export default function RisingCreatorsSection() {
                       <span className="text-2xl font-mono text-white/30 font-light tracking-tight">0{idx + 1}</span>
                     </div>
 
-                    <div className="relative z-20 p-10 flex flex-col justify-end h-full space-y-2.5 max-w-lg text-left">
-                      <h3 className="text-4xl font-black text-white uppercase tracking-wider leading-none">{creator.name}</h3>
-                      <p className="text-sm font-mono text-white/50 uppercase tracking-widest font-light">{creator.niche}</p>
+                    <div className="relative z-20 p-10 flex flex-col justify-end h-full space-y-4 max-w-lg text-left">
+                      <div>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-wider leading-none">{creator.name}</h3>
+                        <p className="text-sm font-mono text-white/50 uppercase tracking-widest font-light mt-2">{creator.niche}</p>
+                      </div>
+                      <div>
+                        <Link
+                          href={creator.name === 'Milan Ray' || creator.name === 'Milan Rayamajhi' ? '/milan/portfolio' : `/${creator.handle.replace('@', '')}/portfolio`}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-zinc-950 hover:bg-[#ff1f4b] hover:text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-full shadow-lg transition-all duration-300"
+                        >
+                          <span>Explore Portfolio</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
                     </div>
                   </>
                 ) : (

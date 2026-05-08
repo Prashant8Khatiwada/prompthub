@@ -2315,6 +2315,36 @@ __metadata:
   languageName: node
   linkType: hard
 
+"creatopedia@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "creatopedia@workspace:."
+  dependencies:
+    "@supabase/ssr": "npm:^0.10.2"
+    "@supabase/supabase-js": "npm:^2.104.1"
+    "@tailwindcss/postcss": "npm:^4"
+    "@tanstack/react-query": "npm:^5.100.8"
+    "@tanstack/react-query-devtools": "npm:^5.100.8"
+    "@types/node": "npm:^20.19.39"
+    "@types/react": "npm:^19"
+    "@types/react-dom": "npm:^19"
+    dotenv: "npm:^17.4.2"
+    eslint: "npm:^9"
+    eslint-config-next: "npm:16.2.4"
+    framer-motion: "npm:^12.38.0"
+    lucide-react: "npm:^1.11.0"
+    next: "npm:16.2.4"
+    posthog-js: "npm:^1.372.1"
+    react: "npm:19.2.4"
+    react-dom: "npm:19.2.4"
+    react-pdf: "npm:^10.4.1"
+    recharts: "npm:^3.8.1"
+    tailwindcss: "npm:^4"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5"
+    zod: "npm:^4.3.6"
+  languageName: unknown
+  linkType: soft
+
 "cross-spawn@npm:^7.0.6":
   version: 7.0.6
   resolution: "cross-spawn@npm:7.0.6"
@@ -4533,36 +4563,6 @@ __metadata:
   checksum: 10c0/b00d617431e7886c520a6f498a2e14c75ec58f6d93ba48c3b639cf241b54232d90daa05d83a9e9b9fef6baa63cb7e1e4602c2372fea5bc169668401eb127d0cd
   languageName: node
   linkType: hard
-
-"prompthub@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "prompthub@workspace:."
-  dependencies:
-    "@supabase/ssr": "npm:^0.10.2"
-    "@supabase/supabase-js": "npm:^2.104.1"
-    "@tailwindcss/postcss": "npm:^4"
-    "@tanstack/react-query": "npm:^5.100.8"
-    "@tanstack/react-query-devtools": "npm:^5.100.8"
-    "@types/node": "npm:^20.19.39"
-    "@types/react": "npm:^19"
-    "@types/react-dom": "npm:^19"
-    dotenv: "npm:^17.4.2"
-    eslint: "npm:^9"
-    eslint-config-next: "npm:16.2.4"
-    framer-motion: "npm:^12.38.0"
-    lucide-react: "npm:^1.11.0"
-    next: "npm:16.2.4"
-    posthog-js: "npm:^1.372.1"
-    react: "npm:19.2.4"
-    react-dom: "npm:19.2.4"
-    react-pdf: "npm:^10.4.1"
-    recharts: "npm:^3.8.1"
-    tailwindcss: "npm:^4"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5"
-    zod: "npm:^4.3.6"
-  languageName: unknown
-  linkType: soft
 
 "prop-types@npm:^15.8.1":
   version: 15.8.1
