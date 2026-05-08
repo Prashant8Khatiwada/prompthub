@@ -13,7 +13,7 @@ function getBaseUrl(request: NextRequest): string {
     return `${forwardedProto}://${forwardedHost}`
   }
   // Fallback: use configured base domain
-  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'zip.fotosfolio.com'
+  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
   return `https://${baseDomain}`
 }
 
