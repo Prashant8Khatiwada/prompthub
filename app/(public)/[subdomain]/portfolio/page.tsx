@@ -166,187 +166,196 @@ export default function CreatorPortfolioPage() {
         }}
       />
 
-      {/* ─── STICKY GLASSMORPHIC NAVBAR ─── */}
-      <nav className="sticky top-0 z-50 w-full bg-[#070913]/60 backdrop-blur-xl border-b border-white/5 px-6 py-4">
+      {/* ─── BLENDED NAVIGATION BAR ─── */}
+      <nav className="fixed top-0 z-50 w-full px-8 py-6 transition-all duration-300">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleBackToStore}
-              className="px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-full flex items-center gap-2 text-xs font-mono tracking-wider transition-all duration-300"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Creator Profile</span>
-            </button>
-            <span className="text-white/20 hidden sm:inline">|</span>
-            <span className="font-mono text-xs uppercase tracking-widest text-[#ff1f4b] font-bold hidden sm:inline">
-              MILAN RAYAMAJHI
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-medium tracking-tight text-white/90">
+              {subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} Studio
             </span>
           </div>
 
-          <div className="flex items-center gap-6 md:gap-8 font-mono text-xs uppercase tracking-widest text-white/60">
+          {/* Center Links */}
+          <div className="hidden md:flex items-center gap-8 text-[11px] font-medium uppercase tracking-[0.2em] text-white/50">
+            <a href="#" className="hover:text-white transition-colors">Home</a>
             <a href="#about" className="hover:text-white transition-colors">About</a>
-            <a href="#works" className="hover:text-white transition-colors">Works</a>
-            <a href="#value" className="hover:text-white transition-colors">Values</a>
+            <a href="#services" className="hover:text-white transition-colors">Services</a>
+            <a href="#works" className="hover:text-white transition-colors text-white">Work</a>
+            <a href="#insights" className="hover:text-white transition-colors">Insights</a>
             <a href="#contact" className="hover:text-white transition-colors">Contact</a>
           </div>
 
-          <a
-            href="#contact"
-            className="hidden md:inline-flex px-5 py-2 bg-white text-zinc-950 hover:bg-[#ff1f4b] hover:text-white font-mono font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all duration-300"
-          >
-            Talk With Me
-          </a>
+          {/* Right Icons */}
+          <div className="flex items-center gap-4">
+            <button className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </button>
+            <button className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </button>
+          </div>
         </div>
       </nav>
 
-      {/* ─── HERO SECTION ─── */}
+      {/* ─── HERO SECTION (Lumora Studio Replica Design) ─── */}
       <header
         id="hero"
-        className="relative min-h-screen flex flex-col justify-end overflow-hidden"
+        className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#070913]"
       >
-        {/* ── Full bleed deep background ── */}
-        <div className="absolute inset-0 bg-[#0a0a0a] z-0" />
+        {/* Deep rich dark background */}
+        <div className="absolute inset-0 bg-[#070913] z-0" />
 
-        {/* ── Right side dramatic red/orange fire aura (matches image) ── */}
+        {/* Red and Blue Theme Gradient (requested) */}
         <div
-          className="absolute right-0 top-0 w-full h-full z-0 pointer-events-none"
+          className="absolute inset-0 z-0 pointer-events-none"
           style={{
             background: `
-              radial-gradient(ellipse 55% 80% at 85% 30%, rgba(200,40,10,0.85) 0%, rgba(140,20,5,0.5) 30%, transparent 65%),
-              radial-gradient(ellipse 30% 50% at 95% 10%, rgba(255,80,10,0.5) 0%, transparent 55%)
+              radial-gradient(circle at 10% 40%, rgba(220, 38, 38, 0.15) 0%, transparent 40%),
+              radial-gradient(circle at 5% 60%, rgba(37, 99, 235, 0.12) 0%, transparent 35%),
+              radial-gradient(circle at 25% 45%, rgba(249,115,22,0.15) 0%, transparent 60%)
             `,
           }}
         />
-        {/* Left subtle cool shadow for depth */}
-        <div
-          className="absolute left-0 top-0 w-2/3 h-full z-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse 60% 80% at -10% 50%, rgba(10,10,18,0.95) 0%, transparent 70%)',
-          }}
-        />
 
-        {/* ── Portrait — right side, full-bleed, overlaid ── */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.2 }}
-          className="absolute right-0 top-0 h-full w-[55%] md:w-[50%] z-10 pointer-events-none select-none"
-        >
-          <img
-            src="/hero.jpg"
-            alt="Milan Rayamajhi"
-            className="w-full h-full object-cover object-top"
-            style={{
-              maskImage: 'linear-gradient(to right, transparent 0%, black 30%)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 30%)',
-            }}
-          />
-          {/* Left-edge portrait fade to pure black */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
-          {/* Bottom fade */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
-        </motion.div>
+        {/* Main Content Grid */}
+        <div className="relative z-10 max-w-7xl mx-auto w-full px-6 lg:px-12 py-24 lg:py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center min-h-[80vh]">
 
-        {/* ── Main Content ── */}
-        <div className="relative z-20 max-w-7xl mx-auto w-full px-6 md:px-12 pb-0">
-          <div className="grid grid-cols-1 lg:grid-cols-12 min-h-screen items-center">
+            {/* Left Column: Socials + Portrait */}
+            <div className="lg:col-span-6 flex items-center gap-6 lg:gap-10 relative">
+              {/* Circular Social Icons in Flex Col */}
+              <div className="flex flex-col gap-5 text-white/40 shrink-0">
+                <a href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all duration-300">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                </a>
+                <a href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all duration-300">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/></svg>
+                </a>
+                <a href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all duration-300">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                </a>
+              </div>
 
-            {/* Left column — headline & tagline */}
-            <div className="lg:col-span-6 flex flex-col justify-center space-y-6 pt-32 pb-16 lg:pt-0 lg:pb-0">
+              {/* Portrait Container with Warm Backdrop Glow */}
+              <div className="relative w-full max-w-[420px] aspect-[4/5] rounded-[36px] overflow-hidden border border-white/5 shadow-2xl group">
+                <motion.div
+                  initial={{ scale: 1.03, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 1 }}
+                  className="w-full h-full"
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=800&q=80"
+                    alt={subdomain}
+                    className="w-full h-full object-cover select-none transition-transform duration-700 group-hover:scale-105"
+                    style={{
+                      objectPosition: 'center 20%',
+                    }}
+                  />
+                </motion.div>
+                
+                {/* Dark shading overlay inside portrait */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#070913]/30 via-transparent to-transparent pointer-events-none" />
 
-              {/* "Hey, I'm a" label */}
-              <motion.p
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                {/* 35+ Creative Projects Frosted Badge Overlay */}
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.8 }}
+                  className="absolute bottom-6 left-6 right-6 backdrop-blur-md bg-[#131520]/60 border border-white/10 px-6 py-4 rounded-2xl flex items-center gap-4 select-none shadow-xl"
+                >
+                  <span className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white font-sans">
+                    35+
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-white/85 text-[10px] font-mono tracking-wide uppercase leading-tight">
+                      creative projects
+                    </span>
+                    <span className="text-white/40 text-[9px] font-mono tracking-widest uppercase leading-tight mt-0.5">
+                      delivered
+                    </span>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Right Column: Text & Call to Action */}
+            <div className="lg:col-span-6 flex flex-col justify-center space-y-8 lg:pl-6 text-left">
+              {/* Brand Label/Pill */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="text-white/50 text-sm md:text-base font-light tracking-widest"
+                className="inline-flex items-center gap-2.5"
               >
-                Hey, I&apos;m a
-              </motion.p>
+                <div className="w-5 h-5 rounded-full bg-[#f97316] flex items-center justify-center text-[9px] font-bold text-white shadow-lg shadow-orange-500/20">
+                  ★
+                </div>
+                <span className="text-xs font-semibold tracking-widest uppercase font-mono text-white/90">
+                  {subdomain.toUpperCase()} STUDIO
+                </span>
+              </motion.div>
 
-              {/* Giant job title */}
+              {/* Huge Premium Headline */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.15 }}
-                className="text-[clamp(3.5rem,9vw,7rem)] font-black leading-[0.95] tracking-tighter text-white"
+                className="text-4xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight text-white leading-[1.12] font-sans"
               >
-                AI Prompt<br />
-                <span className="text-white">Engineer</span>
+                Hello, I Craft <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-200 to-white">
+                  Meaningful Brand
+                </span> <br />
+                Experiences
               </motion.h1>
 
-              {/* Right sub-column — the "Great design…" text block matching image */}
-              <motion.div
+              {/* Description Paragraph */}
+              <motion.p
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                className="max-w-xs space-y-3"
+                className="text-white/60 text-sm md:text-base leading-relaxed font-light max-w-xl"
               >
-                <p className="text-white text-base font-semibold leading-snug">
-                  Great AI systems should feel invisible.
-                </p>
-                <p className="text-white/45 text-xs leading-relaxed font-light">
-                  From logo to language, I build prompt layers that connect and convert — production-grade systems that bridge high-fidelity creation and massive business scale.
-                </p>
+                I&apos;m a multidisciplinary creative focused on building custom AI prompt architectures and brand voice systems that feel authentic, strategic, and unforgettable across every touchpoint.
+              </motion.p>
+
+              {/* Call to Actions & Contact Info */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="flex flex-wrap items-center gap-5 pt-4"
+              >
+                {/* Main CTA Pill Button */}
                 <a
                   href="#contact"
-                  className="inline-flex items-center gap-2 mt-2 px-5 py-2.5 bg-[#ff1f4b] hover:bg-white hover:text-zinc-950 text-white font-mono font-bold text-[10px] uppercase tracking-widest rounded-full shadow-lg transition-all duration-300"
+                  className="group inline-flex items-center justify-between gap-5 px-6 py-3.5 bg-[#f97316] hover:bg-white text-zinc-950 font-semibold text-xs rounded-full shadow-xl transition-all duration-300"
                 >
-                  Get In Touch
-                  <ArrowRight className="w-3 h-3" />
+                  <span className="group-hover:text-zinc-950 text-white font-mono uppercase tracking-wider">
+                    Let&apos;s Work Together
+                  </span>
+                  <div className="w-5 h-5 rounded-full bg-zinc-950/10 group-hover:bg-zinc-950/20 flex items-center justify-center transition-colors">
+                    <ArrowRight className="w-3.5 h-3.5 text-white group-hover:text-zinc-950" />
+                  </div>
                 </a>
+
+                {/* Vertical Separator */}
+                <div className="hidden sm:block h-8 w-px bg-white/10 mx-2" />
+
+                {/* Contact Info */}
+                <div className="flex flex-col text-left">
+                  <a href={`mailto:${subdomain}.studio@gmail.com`} className="text-white/65 hover:text-white text-xs font-mono tracking-wide transition-colors">
+                    {subdomain}.studio@gmail.com
+                  </a>
+                  <span className="text-white/30 text-[10px] font-mono tracking-widest uppercase mt-0.5">
+                    +1212 09874 7635 0938
+                  </span>
+                </div>
               </motion.div>
             </div>
 
-            {/* Spacer — right col is the portrait (absolute) */}
-            <div className="lg:col-span-6 hidden lg:block" />
-          </div>
-        </div>
-
-        {/* ── Bottom numbered specialties bar ── */}
-        <div className="relative z-20 w-full border-t border-white/10 bg-[#0a0a0a]/80 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-6 md:px-12">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10"
-            >
-              {[
-                { num: '01', label: 'AI Prompt Design' },
-                { num: '02', label: 'Brand Voice Systems' },
-                { num: '03', label: 'Workflow Automation' },
-                { num: '04', label: 'Creative Direction' },
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="group flex flex-col gap-1 px-6 py-5 hover:bg-white/5 transition-colors duration-300 cursor-default"
-                >
-                  <span className="text-[#ff1f4b] font-mono text-[9px] tracking-widest font-bold">{item.num}</span>
-                  <span className="text-white/60 group-hover:text-white text-[11px] font-mono tracking-wide transition-colors duration-300">
-                    {item.label}
-                  </span>
-                </div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
-
-        {/* ── Trusted-by brand pill row ── */}
-        <div className="relative z-20 w-full bg-[#0a0a0a] border-t border-white/5">
-          <div className="max-w-7xl mx-auto px-6 md:px-12 py-4 flex flex-wrap items-center gap-4">
-            <span className="text-white/25 text-[9px] font-mono uppercase tracking-[0.25em] whitespace-nowrap">
-              Trusted by brands I&apos;ve helped shape
-            </span>
-            {['OpenAI', 'Anthropic', 'Midjourney', 'Zapier', 'Notion'].map((brand) => (
-              <span
-                key={brand}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-white/50 text-[9px] font-mono tracking-widest hover:border-white/20 hover:text-white/80 transition-all duration-300"
-              >
-                <span className="w-1 h-1 rounded-full bg-[#ff1f4b]" />
-                {brand}
-              </span>
-            ))}
           </div>
         </div>
       </header>
