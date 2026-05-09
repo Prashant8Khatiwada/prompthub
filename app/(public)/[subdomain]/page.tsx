@@ -7,8 +7,10 @@ import { adminClient } from '@/lib/supabase/admin'
 import { AdCampaign } from '@/types'
 import { AdPlacementData } from '@/components/public/AdBanner'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// ISR: cache at edge for 60s, revalidate in background.
+// force-dynamic / revalidate=0 caused cold DB+Instagram hits on every request,
+// which can exceed TikTok's in-app browser timeout and show a blank/error page.
+export const revalidate = 60
 
 interface Params {
   params: Promise<{ subdomain: string }>

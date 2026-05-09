@@ -52,9 +52,12 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
+          // NOTE: X-Frame-Options: SAMEORIGIN is intentionally omitted here.
+          // TikTok's in-app browser (WebView) can misinterpret it and block rendering.
+          // We rely on CSP frame-ancestors below for equivalent protection.
           {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self'",
           },
         ],
       },
@@ -65,6 +68,10 @@ const nextConfig: NextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self'",
           },
         ],
       },
