@@ -149,7 +149,7 @@ export default function AdBanner({ placements, position, promptId, creatorId, fi
           className={`w-full object-cover ${fill ? 'h-full' : 'h-auto'}`}
         />
       </a>
-      <span className="absolute top-2 right-2 px-2 py-1 rounded-md bg-zinc-950/60 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-zinc-400 select-none pointer-events-none z-20">
+      <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-zinc-950/60 backdrop-blur-md text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-zinc-400 select-none pointer-events-none z-20">
         Sponsored
       </span>
     </div>

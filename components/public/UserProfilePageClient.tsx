@@ -217,13 +217,13 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
 
           {/* Action Buttons Row */}
           <div className="flex items-center gap-3 mt-6">
-            <Link
+            {/* <Link
               href={portfolioUrl()}
               className="px-6 py-3 bg-[#ff1f4b] hover:bg-[#ff1f4b]/90 text-white font-bold text-xs rounded-full shadow-lg active:scale-95 transition-all duration-300 flex items-center gap-2 select-none"
             >
               <Sparkles className="w-3.5 h-3.5 text-white" />
               <span>View Portfolio</span>
-            </Link>
+            </Link> */}
             <a
               href={creator.instagram_url || `https://instagram.com/${creator.handle?.replace('@', '') || creator.subdomain}`}
               target="_blank"
@@ -241,7 +241,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
               className="px-6 py-3 bg-zinc-900/60 border border-white/10 hover:border-white/25 text-white text-xs font-mono rounded-full font-bold tracking-wide transition-all duration-300 flex items-center gap-2 backdrop-blur-md select-none"
             >
               <Globe className="w-3.5 h-3.5 text-blue-400" />
-              <span>Platform</span>
+              <span>Portfolio</span>
             </a>
           </div>
 
@@ -301,17 +301,17 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
           // Find header banner placement
           const headerBanner = adPlacements.find(p => (p.position as string) === 'discovery_header_banner')
           const fallbackBanner = adPlacements.find(p => (p.position as string) === 'creator_page')
-          
+
           if (creator.ads_enabled !== false && (headerBanner || fallbackBanner)) {
-             return (
-               <div className="mb-12 w-full">
-                 <AdBanner 
-                   placements={headerBanner ? [headerBanner] : [fallbackBanner!]} 
-                   position={headerBanner ? 'discovery_header_banner' : 'creator_page'} 
-                   creatorId={creator.id} 
-                 />
-               </div>
-             )
+            return (
+              <div className="mb-12 w-full">
+                <AdBanner
+                  placements={adPlacements}
+                  position={headerBanner ? 'discovery_header_banner' : 'creator_page'}
+                  creatorId={creator.id}
+                />
+              </div>
+            )
           }
           return null
         })()}
@@ -365,11 +365,11 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                   const items = []
                   const isAdsEnabled = creator.ads_enabled !== false
                   const frequency = creator.ad_frequency || 4
-                  
+
                   // Organize placements for easy lookup
                   const gridSlots: Record<number, AdPlacementData> = {}
                   let headerBanner: AdPlacementData | null = null
-                  
+
                   adPlacements.forEach(p => {
                     if ((p.position as string) === 'discovery_header_banner') {
                       headerBanner = p
@@ -393,7 +393,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                       items.push(
                         <div key={`ad-slot-${i}`} className="relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/30 backdrop-blur-xl shadow-2xl">
                           <AdBanner
-                            placements={[gridSlots[i]]}
+                            placements={adPlacements}
                             position={gridSlots[i].position}
                             creatorId={creator.id}
                             fill
@@ -466,7 +466,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                     if (isAdsEnabled && !hasManualSlots && fallbackAd && (i + 1) % frequency === 0 && i !== filteredPrompts.length - 1) {
                       items.push(
                         <div key={`ad-freq-${i}`} className="relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/30 backdrop-blur-xl shadow-2xl">
-                          <AdBanner placements={[fallbackAd]} position={fallbackAd.position} creatorId={creator.id} fill />
+                          <AdBanner placements={adPlacements} position={fallbackAd.position} creatorId={creator.id} fill />
                         </div>
                       )
                     }

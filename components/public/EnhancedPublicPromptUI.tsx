@@ -366,7 +366,7 @@ export default function EnhancedPublicPromptUI({
 
       {/* Premium Hero Ad Slot */}
       {adHero && (
-        <div className="max-w-4xl mx-auto px-6 mb-4 animate-in fade-in duration-700">
+        <div className="max-w-4xl mx-auto px-6 mb-8 animate-in fade-in duration-700">
           {adHero}
         </div>
       )}
