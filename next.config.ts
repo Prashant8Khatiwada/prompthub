@@ -57,7 +57,7 @@ const nextConfig: NextConfig = {
           // We rely on CSP frame-ancestors below for equivalent protection.
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self'",
+            value: "frame-ancestors 'self' https://*.tiktok.com https://*.facebook.com https://*.instagram.com",
           },
         ],
       },
@@ -71,7 +71,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self'",
+            value: "frame-ancestors 'self' https://*.tiktok.com https://*.facebook.com https://*.instagram.com",
           },
         ],
       },
