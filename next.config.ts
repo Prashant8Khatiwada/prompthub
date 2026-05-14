@@ -32,6 +32,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  trailingSlash: false,
   async headers() {
     return [
       {
@@ -52,13 +53,8 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
-          // NOTE: X-Frame-Options: SAMEORIGIN is intentionally omitted here.
-          // TikTok's in-app browser (WebView) can misinterpret it and block rendering.
-          // We rely on CSP frame-ancestors below for equivalent protection.
-          {
-            key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self' https://*.tiktok.com https://*.facebook.com https://*.instagram.com",
-          },
+          // NOTE: Security headers (CSP/X-Frame) are now handled in middleware.ts
+          // to allow for dynamic overrides for TikTok/social platform compatibility.
         ],
       },
       {
@@ -68,10 +64,6 @@ const nextConfig: NextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, s-maxage=3600, stale-while-revalidate=86400',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self' https://*.tiktok.com https://*.facebook.com https://*.instagram.com",
           },
         ],
       },

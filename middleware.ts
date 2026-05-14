@@ -14,8 +14,12 @@ export async function middleware(request: NextRequest) {
   // Clean port from host if present (e.g., localhost:3000 -> localhost)
   const hostWithoutPort = host.split(':')[0]
 
-  // Detect TikTok browser
-  const isTikTok = userAgent.includes('TikTok') || userAgent.includes('musical_ly')
+  // Detect TikTok browser or crawler
+  const isTikTok = 
+    userAgent.includes('TikTok') || 
+    userAgent.includes('musical_ly') || 
+    userAgent.includes('TikTokBot') || 
+    userAgent.includes('ByteSpider')
 
   // Use the production base domain
   const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
@@ -52,32 +56,35 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 3. Main Domain Handling
-  if (isMainDomain) {
-    // If it's the main domain, let Next.js handle all routes normally
-    return NextResponse.next()
-  }
-
-  // 4. Subdomain Routing (for non-TikTok users or standard flow)
-  // Extract subdomain (e.g., creator.creatopedia.tech -> creator)
+  // 3. Unified Routing & Header Management
   const subdomain = hostWithoutPort.replace(`.${baseDomain}`, '')
+  let response: NextResponse
 
-  if (subdomain && subdomain !== hostWithoutPort) {
-    // Rewrite internally to /[subdomain]/[path]
+  if (isMainDomain) {
+    // Path-based or Main Domain
+    response = NextResponse.next()
+  } else if (subdomain && subdomain !== hostWithoutPort) {
+    // Subdomain Rewrite (Internal)
     const rewriteUrl = new URL(`/${subdomain}${path}`, request.url)
-    const response = NextResponse.rewrite(rewriteUrl)
-    
-    // Add TikTok-specific compatibility headers if it IS TikTok (but we didn't redirect for some reason)
-    if (isTikTok) {
-      // Loosen CSP and Frame options for TikTok's restrictive WebView
-      response.headers.set('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors *;")
-      response.headers.set('X-Frame-Options', 'ALLOWALL')
-    }
-    
-    return response
+    response = NextResponse.rewrite(rewriteUrl)
+  } else {
+    response = NextResponse.next()
   }
 
-  return NextResponse.next()
+  // 4. Apply Security Headers (Consolidated from next.config.ts)
+  // We handle these dynamically to ensure TikTok never gets blocked by strict policies.
+  if (isTikTok) {
+    // TikTok compatibility: Loosened policy to prevent blocks in restrictive WebView
+    response.headers.set('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors *;")
+    // NOTE: X-Frame-Options is intentionally omitted here for TikTok compatibility.
+  } else {
+    // Standard security: Strict policy for normal browsers
+    response.headers.set('Content-Security-Policy', "frame-ancestors 'self' https://*.tiktok.com https://*.facebook.com https://*.instagram.com;")
+    // NOTE: X-Frame-Options is also omitted here to avoid conflicts in social browsers,
+    // as frame-ancestors provides the necessary protection.
+  }
+
+  return response
 }
 
 // See "Matching Paths" below to learn more

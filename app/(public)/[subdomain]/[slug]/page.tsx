@@ -49,9 +49,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
   const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
   
-  // Construct URLs - using the subdomain format which is the primary way these are accessed
-  const domain = `${subdomain}.${baseDomain}`
-  const shareUrl = `https://${domain}/${slug}`
+  // Construct URLs - Prefer path-based format for maximum compatibility (TikTok/social)
+  const shareUrl = `https://${baseDomain}/${subdomain}/${slug}`
   
   // Image prioritization: 
   // 1. Explicit share image
@@ -61,8 +60,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   
   if (!ogImageUrl) {
     // If no custom image, use the dynamic one. 
-    // We use the full absolute URL to ensure scrapers can find it.
-    ogImageUrl = `https://${domain}/${slug}/opengraph-image`
+    // We use the path-based absolute URL to ensure consistency.
+    ogImageUrl = `https://${baseDomain}/${subdomain}/${slug}/opengraph-image`
   } else if (!ogImageUrl.startsWith('http')) {
     // Ensure relative URLs are made absolute (if any)
     ogImageUrl = `https://${baseDomain}${ogImageUrl.startsWith('/') ? '' : '/'}${ogImageUrl}`
