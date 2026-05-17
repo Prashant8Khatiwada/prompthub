@@ -20,6 +20,7 @@ interface Props {
   categories: Category[]
   prompts: PromptWithCategory[]
   adPlacements?: AdPlacementData[]
+  isSubdomain?: boolean
 }
 
 const AI_TOOL_COLORS: Record<string, string> = {
@@ -69,7 +70,7 @@ const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 
-export default function UserProfilePageClient({ creator, igUser, igFeed, categories, prompts, adPlacements = [] }: Props) {
+export default function UserProfilePageClient({ creator, igUser, igFeed, categories, prompts, adPlacements = [], isSubdomain = false }: Props) {
   const [activeTab, setActiveTab] = useState<'creation' | 'profile'>('creation')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
@@ -106,18 +107,22 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
   const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
 
   const promptUrl = (slug: string) => {
+    if (isSubdomain) {
+      return `/creatopedia.tech/${slug}`
+    }
+
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname
       const cleanBaseDomain = baseDomain.replace(/^https?:\/\//, '')
-      const isSubdomain = hostname.startsWith(`${creator.subdomain}.`)
+      const isSubdomainHost = hostname.startsWith(`${creator.subdomain}.`)
 
       // If we are on the main domain (or localhost), we use /subdomain/slug
-      if (hostname === cleanBaseDomain || hostname === 'localhost' || hostname === '127.0.0.1' || !isSubdomain) {
+      if (hostname === cleanBaseDomain || hostname === 'localhost' || hostname === '127.0.0.1' || !isSubdomainHost) {
         return `/${creator.subdomain}/${slug}`
       }
 
-      // If we are already on a subdomain (e.g. milan.Creatopedia.app), we just use /slug
-      return `/${slug}`
+      // If we are already on a subdomain (e.g. milan.creatopedia.tech), we use /creatopedia.tech/slug
+      return `/creatopedia.tech/${slug}`
     }
 
     // Fallback for SSR

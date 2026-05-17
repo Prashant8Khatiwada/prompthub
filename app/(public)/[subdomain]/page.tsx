@@ -6,6 +6,8 @@ import UserProfilePageClient from '@/components/public/UserProfilePageClient'
 import { adminClient } from '@/lib/supabase/admin'
 import { AdCampaign } from '@/types'
 import { AdPlacementData } from '@/components/public/AdBanner'
+import { headers } from 'next/headers'
+import CreatopediaLanding from '@/components/public/CreatopediaLanding'
 
 // ISR: cache at edge for 60s, revalidate in background.
 // force-dynamic / revalidate=0 caused cold DB+Instagram hits on every request,
@@ -27,7 +29,23 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     .or(`subdomain.eq.${subdomain},handle.eq.${subdomain}`)
     .single()
 
-  if (!creator) return { title: 'Creator Not Found' }
+  if (!creator) {
+    const headerList = await headers()
+    const host = headerList.get('host') || ''
+    const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
+    const baseDomain = envBaseDomain.replace(/^https?:\/\//, '')
+    const hostWithoutPort = host.split(':')[0]
+    const isLocalSubdomain = hostWithoutPort.endsWith('.localhost')
+    const isSubdomainHost = (hostWithoutPort !== baseDomain && hostWithoutPort.endsWith(`.${baseDomain}`)) || isLocalSubdomain
+
+    if (isSubdomainHost) {
+      return {
+        title: 'Creatopedia | Where Creators Lead, World Follows',
+        description: 'Join early access for Creatopedia. One platform for every creator niche. Videos, PDFs, tutorials, and paid content curated directly for audiences.',
+      }
+    }
+    return { title: 'Creator Not Found' }
+  }
 
   // Fetch Instagram data for avatar fallback
   const igUser = await fetchInstagramUser(creator.id)
@@ -80,7 +98,20 @@ export default async function UserProfilePage({ params }: Params) {
     .or(`subdomain.eq.${subdomain},handle.eq.${subdomain}`)
     .single()
 
-  if (!creator) notFound()
+  const headerList = await headers()
+  const host = headerList.get('host') || ''
+  const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
+  const baseDomain = envBaseDomain.replace(/^https?:\/\//, '')
+  const hostWithoutPort = host.split(':')[0]
+  const isLocalSubdomain = hostWithoutPort.endsWith('.localhost')
+  const isSubdomainHost = (hostWithoutPort !== baseDomain && hostWithoutPort.endsWith(`.${baseDomain}`)) || isLocalSubdomain
+
+  if (!creator) {
+    if (isSubdomainHost) {
+      return <CreatopediaLanding />
+    }
+    notFound()
+  }
 
   // 2. Fetch all published prompts for this creator
   const { data: prompts } = await supabase
@@ -135,6 +166,8 @@ export default async function UserProfilePage({ params }: Params) {
       return true
     })
 
+  const isSubdomain = hostWithoutPort.startsWith(`${creator.subdomain}.`)
+
   return (
     <main className="min-h-screen bg-[#0a0a0a]">
       <UserProfilePageClient
@@ -144,6 +177,7 @@ export default async function UserProfilePage({ params }: Params) {
         categories={categories ?? []}
         prompts={prompts ?? []}
         adPlacements={placements}
+        isSubdomain={isSubdomain}
       />
     </main>
   )

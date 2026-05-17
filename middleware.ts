@@ -36,6 +36,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // 2. Redirect path-based subdomain URLs on main domain to subdomain hosts (except for TikTok browser compatibility)
+  if (isMainDomain && !isTikTok) {
+    const segments = path.split('/').filter(Boolean)
+    if (segments.length > 0) {
+      const firstSegment = segments[0]
+      const reservedPaths = ['ads', 'browse', 'category', 'experience', 'platforms', 'reach-us', 'login', 'privacy-policy', 'terms']
+      
+      if (!reservedPaths.includes(firstSegment)) {
+        const subdomain = firstSegment
+        const redirectUrl = new URL(request.url)
+        redirectUrl.host = `${subdomain}.${baseDomain}`
+        
+        if (segments.length === 1) {
+          redirectUrl.pathname = '/'
+        } else {
+          // Redirect to the new format: {subdomain}.creatopedia.tech/creatopedia.tech/{slug}
+          if (segments[1] === 'creatopedia.tech') {
+            redirectUrl.pathname = `/${segments.slice(1).join('/')}`
+          } else {
+            redirectUrl.pathname = `/creatopedia.tech/${segments.slice(1).join('/')}`
+          }
+        }
+        
+        console.log(`[Redirect] Redirecting main domain path to subdomain: ${redirectUrl.toString()}`)
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
+  }
+
   // 2. TikTok Compatibility Fix: 
   // TikTok's in-app browser often blocks subdomain-based links (e.g. milan.creatopedia.tech)
   // because it flags them as potential phishing or has issues with SSL on subdomains.
@@ -65,7 +94,14 @@ export async function middleware(request: NextRequest) {
     response = NextResponse.next()
   } else if (subdomain && subdomain !== hostWithoutPort) {
     // Subdomain Rewrite (Internal)
-    const rewriteUrl = new URL(`/${subdomain}${path}`, request.url)
+    // Strip /creatopedia.tech prefix if present, to support {subdomain}.creatopedia.tech/creatopedia.tech/{slug}
+    let cleanPath = path
+    if (path.startsWith('/creatopedia.tech/')) {
+      cleanPath = path.substring('/creatopedia.tech'.length)
+    } else if (path === '/creatopedia.tech') {
+      cleanPath = '/'
+    }
+    const rewriteUrl = new URL(`/${subdomain}${cleanPath}`, request.url)
     response = NextResponse.rewrite(rewriteUrl)
   } else {
     response = NextResponse.next()
