@@ -357,7 +357,7 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
                 onClick={(e) => {
                   e.preventDefault()
                   setActiveVariantIndex(idx)
-                  setIsExpanded(true)
+                  setIsExpanded(false)
                 }}
                 className={`px-3 py-1.5 rounded-lg text-[10.5px] font-bold transition-all duration-300 border select-none ${
                   isActive
