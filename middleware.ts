@@ -38,8 +38,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 2. Redirect path-based subdomain URLs on main domain to subdomain hosts (force for ALL browsers and crawlers to enforce Independent Subdomain Architecture)
-  if (isMainDomain) {
+  // 2. Redirect path-based subdomain URLs on main domain to subdomain hosts (except for TikTok browser compatibility)
+  // DEPRECATED: Redirecting in middleware caused browsers to get stuck in production
+  // due to internal port forwarding (e.g. redirecting to subdomain.creatopedia.tech:3000).
+  // Fix: We now allow the page to render first (good for SEO/crawlers) and perform
+  // a safe client-side redirect using useEffect in UserProfilePageClient.tsx.
+  /*
+  if (isMainDomain && !isTikTok) {
     const segments = path.split('/').filter(Boolean)
     if (segments.length > 0) {
       const firstSegment = segments[0]
@@ -71,12 +76,31 @@ export async function middleware(request: NextRequest) {
       }
     }
   }
+  */
 
   // 2. TikTok Compatibility Fix: 
-  // NOTE: Previously, we redirected TikTok users to path-based URLs due to suspected SSL issues.
-  // However, to bypass TikTok's "infinite path" spam filters, we now intentionally KEEP them on subdomains
-  // (e.g. prashant.creatopedia.tech) as recommended by the new Independent Subdomain Architecture approach.
-  // if (isTikTok && !isMainDomain) { ... removed ... }
+  // TikTok's in-app browser often blocks subdomain-based links (e.g. milan.creatopedia.tech)
+  // because it flags them as potential phishing or has issues with SSL on subdomains.
+  // Fix: Redirect TikTok users from subdomain.domain.tech/slug to domain.tech/subdomain/slug
+  if (isTikTok && !isMainDomain) {
+    const subdomain = hostWithoutPort.replace(`.${baseDomain}`, '')
+    if (subdomain && subdomain !== hostWithoutPort) {
+      console.log(`[TikTok Fix] Redirecting to path-based URL for ${subdomain}`)
+      const redirectUrl = new URL(request.url)
+      if (!isLocalhost) {
+        redirectUrl.protocol = 'https:'
+        redirectUrl.port = ''
+      }
+      redirectUrl.host = baseDomain
+      redirectUrl.pathname = `/${subdomain}${path}`
+      
+      const response = NextResponse.redirect(redirectUrl)
+      
+      // Add a special header to help debug
+      response.headers.set('x-tktk-fix', 'true')
+      return response
+    }
+  }
 
   // Paths that should never be rewritten to subdomain routes
   // These are top-level app routes that must always resolve as-is
@@ -120,8 +144,14 @@ export async function middleware(request: NextRequest) {
     } else if (path === '/creatopedia.tech') {
       cleanPath = '/'
     }
-    const rewriteUrl = new URL(`/${subdomain}${cleanPath}`, request.url)
-    response = NextResponse.rewrite(rewriteUrl)
+
+    // Prevent infinite rewrite loop: if cleanPath already starts with /${subdomain}, do not rewrite again!
+    if (cleanPath.startsWith(`/${subdomain}/`) || cleanPath === `/${subdomain}`) {
+      response = NextResponse.next()
+    } else {
+      const rewriteUrl = new URL(`/${subdomain}${cleanPath}`, request.url)
+      response = NextResponse.rewrite(rewriteUrl)
+    }
   } else {
     response = NextResponse.next()
   }

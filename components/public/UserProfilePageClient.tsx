@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
 import type { Creator, Category, Prompt } from '@/types'
@@ -69,6 +69,63 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
   const [activeTab, setActiveTab] = useState<'creation' | 'profile'>('creation')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
+
+  // Redirect main domain path-based creator URLs to subdomains on the client-side.
+  // This allows the server to fully render the HTML (ideal for SEO and crawlers like TikTok)
+  // and avoids browser lockups caused by middleware-level HTTP redirects matching internal port configurations.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    // Detect TikTok
+    const userAgent = navigator.userAgent || ''
+    const isTikTok = 
+      userAgent.includes('TikTok') || 
+      userAgent.includes('musical_ly') || 
+      userAgent.includes('TikTokBot') || 
+      userAgent.includes('ByteSpider')
+
+    if (isTikTok) return // Let TikTok run path-based for compatibility
+
+    const hostname = window.location.hostname
+    const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
+    const cleanBaseDomain = rawBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
+
+    if (hostname === cleanBaseDomain || isLocalhost) {
+      const path = window.location.pathname
+      const segments = path.split('/').filter(Boolean)
+      
+      if (segments.length > 0) {
+        const firstSegment = segments[0]
+        const reservedPaths = ['admin', 'ads', 'browse', 'category', 'experience', 'platforms', 'reach-us', 'login', 'privacy-policy', 'terms', 'founding-member']
+        
+        if (!reservedPaths.includes(firstSegment)) {
+          let newHost = ''
+          if (isLocalhost) {
+            const port = window.location.port
+            newHost = `${creator.subdomain}.localhost${port ? `:${port}` : ''}`
+          } else {
+            newHost = `${creator.subdomain}.${cleanBaseDomain}`
+          }
+
+          let newPath = '/'
+          if (segments.length > 1) {
+            let remainingSegments = segments.slice(1)
+            if (remainingSegments[0] === cleanBaseDomain) {
+              remainingSegments = remainingSegments.slice(1)
+            }
+            newPath = `/${remainingSegments.join('/')}`
+          }
+
+          const protocol = isLocalhost ? window.location.protocol : 'https:'
+          const newUrl = `${protocol}//${newHost}${newPath}${window.location.search}${window.location.hash}`
+          
+          console.log('[Client Redirect] Redirecting path-based URL to subdomain:', newUrl)
+          window.location.replace(newUrl)
+        }
+      }
+    }
+  }, [creator.subdomain])
 
   // Map category id → category
   const categoryMap = useMemo(() => {
