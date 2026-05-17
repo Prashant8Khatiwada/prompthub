@@ -54,8 +54,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
   const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
 
-  // Primary URL - Prefer path-based format for maximum compatibility (TikTok/social)
-  const shareUrl = `https://${baseDomain}/${creator.subdomain}`
+  // Primary URL - Prefer SUBDOMAIN format for maximum compatibility with social platforms as per Independent Subdomain Architecture
+  const shareUrl = `https://${creator.subdomain}.${baseDomain}`
 
   return {
     title: `${creator.name} – Creatopedia`,

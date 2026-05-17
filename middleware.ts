@@ -73,24 +73,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. TikTok Compatibility Fix: 
-  // TikTok's in-app browser often blocks subdomain-based links (e.g. milan.creatopedia.tech)
-  // because it flags them as potential phishing or has issues with SSL on subdomains.
-  // Fix: Redirect TikTok users from subdomain.domain.tech/slug to domain.tech/subdomain/slug
-  if (isTikTok && !isMainDomain) {
-    const subdomain = hostWithoutPort.replace(`.${baseDomain}`, '')
-    if (subdomain && subdomain !== hostWithoutPort) {
-      console.log(`[TikTok Fix] Redirecting to path-based URL for ${subdomain}`)
-      const redirectUrl = new URL(request.url)
-      redirectUrl.host = baseDomain
-      redirectUrl.pathname = `/${subdomain}${path}`
-      
-      const response = NextResponse.redirect(redirectUrl)
-      
-      // Add a special header to help debug
-      response.headers.set('x-tktk-fix', 'true')
-      return response
-    }
-  }
+  // NOTE: Previously, we redirected TikTok users to path-based URLs due to suspected SSL issues.
+  // However, to bypass TikTok's "infinite path" spam filters, we now intentionally KEEP them on subdomains
+  // (e.g. prashant.creatopedia.tech) as recommended by the new Independent Subdomain Architecture approach.
+  // if (isTikTok && !isMainDomain) { ... removed ... }
 
   // Paths that should never be rewritten to subdomain routes
   // These are top-level app routes that must always resolve as-is
