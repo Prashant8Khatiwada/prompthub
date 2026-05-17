@@ -414,11 +414,11 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                         key={prompt.id}
                         className="group relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-5 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
                       >
-                        {/* Immersive background image */}
+                        {/* Premium Immersive background image */}
                         <div className="absolute inset-0 z-0 select-none">
                           {(() => {
                             const igDisplayUrl = prompt.video_url ? igFeedMap[prompt.video_url] : null
-                            const src = igDisplayUrl || prompt.thumbnail_url
+                            const src = prompt.thumbnail_url
                             return src ? (
                               <img
                                 src={src}

@@ -11,7 +11,7 @@ import { AdPlacementData } from '@/components/public/AdBanner'
 import EnhancedPublicPromptUI from '@/components/public/EnhancedPublicPromptUI'
 import { getCachedCreator, getCachedPrompt, getCachedRelatedPrompts } from '@/lib/data/public-prompts'
 
-export const revalidate = 3600 // 1 hour
+export const revalidate = 60 // 60 seconds (matches the profile page)
 
 interface Params {
   params: Promise<{ subdomain: string; slug: string }>

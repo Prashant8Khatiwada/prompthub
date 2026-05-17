@@ -313,37 +313,38 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
   return (
     <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl transition-shadow hover:shadow-md select-none">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm gap-3">
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center w-full sm:w-auto">
+        <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
           {/* Header/Dots */}
-          <div className="flex items-center gap-1.5 justify-between w-full sm:w-auto flex-shrink-0">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-zinc-800" />
-              <div className="w-3 h-3 rounded-full bg-zinc-800" />
-              <div className="w-3 h-3 rounded-full bg-zinc-800" />
-              <span className="ml-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                prompt.txt
-              </span>
-            </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="w-3 h-3 rounded-full bg-zinc-800" />
+            <div className="w-3 h-3 rounded-full bg-zinc-800" />
+            <div className="w-3 h-3 rounded-full bg-zinc-800" />
+            <span className="ml-2 text-xs font-mono font-bold text-zinc-500 uppercase tracking-widest">
+              prompt.txt
+            </span>
           </div>
 
-          {/* Dynamic Variant Tabs */}
+          {/* Premium Custom Dropdown for Variants */}
           {isVariants && (
-            <div className="flex bg-zinc-950 p-0.5 border border-zinc-800 rounded-xl gap-0.5 select-none overflow-x-auto max-w-full flex-nowrap scrollbar-none">
-              {variants.map((v, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    setActiveVariantIndex(idx)
-                    setIsExpanded(false)
-                  }}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
-                    activeVariantIndex === idx ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'
-                  }`}
-                >
-                  {v.subtitle || `Variant ${idx + 1}`}
-                </button>
-              ))}
+            <div className="relative flex-shrink-0">
+              <select
+                value={activeVariantIndex}
+                onChange={(e) => {
+                  setActiveVariantIndex(Number(e.target.value))
+                  setIsExpanded(false)
+                }}
+                className="appearance-none bg-zinc-950/80 border border-zinc-800 hover:border-zinc-700/80 transition-colors text-zinc-300 text-[11px] font-bold rounded-lg pl-3 pr-8 py-1.5 focus:outline-none focus:ring-1 focus:ring-sky-500/30 cursor-pointer select-none"
+              >
+                {variants.map((v, idx) => (
+                  <option key={idx} value={idx}>
+                    {v.subtitle || `Variant ${idx + 1}`}
+                  </option>
+                ))}
+              </select>
+              {/* Sleek Custom Indicator Arrow */}
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-zinc-500 text-[8px]">
+                ▼
+              </div>
             </div>
           )}
         </div>
