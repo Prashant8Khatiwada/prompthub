@@ -453,7 +453,7 @@ export default function EnhancedPublicPromptUI({
                     </span>
                   </div>
                   {prompt.description && (
-                    <p className="text-zinc-400 text-sm md:text-base leading-relaxed mb-8 font-light">{prompt.description}</p>
+                    <p className="text-zinc-400 text-sm md:text-base leading-relaxed mb-8 font-light whitespace-pre-line">{prompt.description}</p>
                   )}
 
                   {/* Gate component with premium dynamic forms */}

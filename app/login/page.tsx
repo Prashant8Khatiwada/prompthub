@@ -23,8 +23,15 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-    router.push('/admin')
-    router.refresh()
+    // Navigate to the main domain admin — using window.location ensures we
+    // leave the subdomain host (e.g. milan.localhost:3000) and land on the
+    // correct admin origin (localhost:3000/admin in dev, creatopedia.tech/admin in prod)
+    const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN?.replace(/^https?:\/\//, '') || 'creatopedia.tech'
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.endsWith('.localhost'))
+    const adminUrl = isLocalhost
+      ? `http://localhost:${window.location.port || 3000}/admin`
+      : `https://${baseDomain}/admin`
+    window.location.href = adminUrl
   }
 
   return (

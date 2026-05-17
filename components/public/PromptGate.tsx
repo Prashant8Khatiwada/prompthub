@@ -292,23 +292,37 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
     return <PdfPlaceholder prompt={prompt} />
   }
 
-  let variants: { subtitle: string; description: string }[] = []
+  let variants: { subtitle: string; description: string; content?: string }[] = []
   let isVariants = false
 
   try {
     if (content.startsWith('[') && content.endsWith(']')) {
       const parsed = JSON.parse(content)
-      if (Array.isArray(parsed) && parsed.length > 0 && parsed.every(v => 'subtitle' in v && 'description' in v)) {
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed.every(v => 'subtitle' in v)) {
         variants = parsed
         isVariants = true
       }
     }
   } catch (e) {
+    console.warn('[PromptContent] Failed to parse variants JSON:', e)
     isVariants = false
   }
 
-  const currentContent = isVariants ? (variants[activeVariantIndex]?.description || '') : content
-  const hasMoreContent = currentContent.split('\n').length > 5 || currentContent.length > 300
+  const currentVariant = isVariants ? variants[activeVariantIndex] : null
+
+  // `content` = what goes INSIDE the prompt box (what users copy)
+  // New schema: variant.content holds the AI prompt; variant.description holds per-variant instructions
+  // Old schema (backward compat): variant.content is absent, so use variant.description as the prompt
+  const currentPromptContent = currentVariant
+    ? (currentVariant.content || currentVariant.description || '')
+    : content
+
+  // `variantDescription` = per-variant instructions shown ABOVE the box (only in new schema when content field is present)
+  const variantDescription = (currentVariant && currentVariant.content)
+    ? (currentVariant.description || '')
+    : ''
+
+  const hasMoreContent = currentPromptContent.split('\n').length > 5 || currentPromptContent.length > 300
 
   return (
     <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl transition-shadow hover:shadow-md">
@@ -324,14 +338,14 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
         </div>
         <div className="flex-shrink-0">
           <CopyButton
-            content={currentContent}
+            content={currentPromptContent}
             promptId={prompt.id}
             slug={prompt.slug}
           />
         </div>
       </div>
 
-      {/* Premium Variant Links - Rendered below prompt.txt text, wrapping when overflowing, no scrolling! */}
+      {/* Variant Tabs - shown when content is a variants JSON array */}
       {isVariants && (
         <div className="px-4 py-2.5 border-b border-zinc-800/60 bg-zinc-900/30 flex flex-wrap items-center gap-2 select-none">
           {variants.map((v, idx) => {
@@ -343,6 +357,7 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
                 onClick={(e) => {
                   e.preventDefault()
                   setActiveVariantIndex(idx)
+                  setIsExpanded(true)
                 }}
                 className={`px-3 py-1.5 rounded-lg text-[10.5px] font-bold transition-all duration-300 border select-none ${
                   isActive
@@ -356,10 +371,20 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
           })}
         </div>
       )}
-      
+
+      {/* Per-variant description/instructions shown ABOVE the prompt box */}
+      {variantDescription && (
+        <div className="px-6 pt-4 pb-0">
+          <p className="text-zinc-400 text-xs leading-relaxed whitespace-pre-line font-sans">
+            {variantDescription}
+          </p>
+        </div>
+      )}
+
+      {/* Prompt box — only the actual AI prompt content goes here */}
       <div className="relative">
         <div className={`p-6 font-mono text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap break-words select-text transition-all duration-300 ${!isExpanded ? 'max-h-[140px] overflow-hidden' : 'max-h-none'}`}>
-          {currentContent}
+          {currentPromptContent}
         </div>
         
         {/* Gradient fade when collapsed */}

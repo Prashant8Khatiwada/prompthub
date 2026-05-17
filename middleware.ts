@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
     const segments = path.split('/').filter(Boolean)
     if (segments.length > 0) {
       const firstSegment = segments[0]
-      const reservedPaths = ['ads', 'browse', 'category', 'experience', 'platforms', 'reach-us', 'login', 'privacy-policy', 'terms']
+      const reservedPaths = ['admin', 'ads', 'browse', 'category', 'experience', 'platforms', 'reach-us', 'login', 'privacy-policy', 'terms', 'founding-member']
       if (!reservedPaths.includes(firstSegment)) {
         const subdomain = firstSegment
         const redirectUrl = new URL(request.url)
@@ -92,6 +92,22 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Paths that should never be rewritten to subdomain routes
+  // These are top-level app routes that must always resolve as-is
+  const globalReservedPaths = [
+    '/login', '/admin', '/api', '/ads', '/browse', '/category',
+    '/experience', '/platforms', '/reach-us', '/privacy-policy', '/terms',
+    '/_next', '/static', '/favicon.ico', '/founding-member',
+  ]
+  const globalReservedSubdomains = ['admin', 'api', 'www']
+  const isGlobalReserved = globalReservedPaths.some(p => path === p || path.startsWith(p + '/'))
+  
+  // Also treat known system subdomains (like admin.localhost) as reserved — pass through, not a creator
+  const extractedSubdomain = hostWithoutPort.endsWith('.localhost')
+    ? hostWithoutPort.replace('.localhost', '')
+    : hostWithoutPort.replace(`.${baseDomain}`, '')
+  const isSystemSubdomain = globalReservedSubdomains.includes(extractedSubdomain)
+
   // 3. Unified Routing & Header Management
   let subdomain = hostWithoutPort.replace(`.${baseDomain}`, '')
   if (hostWithoutPort.endsWith('.localhost')) {
@@ -105,8 +121,12 @@ export async function middleware(request: NextRequest) {
   if (isMainDomain) {
     // Path-based or Main Domain
     response = NextResponse.next()
+  } else if (isSystemSubdomain || isGlobalReserved) {
+    // System subdomains (admin.localhost) or reserved paths (login, admin, etc.)
+    // must pass through as-is — never rewrite as creator subdomains
+    response = NextResponse.next()
   } else if (subdomain && subdomain !== hostWithoutPort) {
-    // Subdomain Rewrite (Internal)
+    // Creator Subdomain Rewrite (Internal)
     // Strip /creatopedia.tech prefix if present, to support {subdomain}.creatopedia.tech/creatopedia.tech/{slug}
     let cleanPath = path
     if (path.startsWith('/creatopedia.tech/')) {
