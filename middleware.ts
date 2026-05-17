@@ -23,7 +23,7 @@ export async function middleware(request: NextRequest) {
 
   // Use the production base domain
   const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-  const baseDomain = envBaseDomain.replace(/^https?:\/\//, '')
+  const baseDomain = envBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
   const isLocalhost = hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1'
   // On localhost, we treat the main localhost host as the main domain so it triggers local redirects
   const isMainDomain = hostWithoutPort === baseDomain || isLocalhost
