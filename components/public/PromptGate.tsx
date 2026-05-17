@@ -286,7 +286,7 @@ function PdfPlaceholder({ prompt }: { prompt: Prompt }) {
 function PromptContent({ prompt, content }: { prompt: Prompt; content: string }) {
   const isPdf = prompt.content_type === 'pdf'
   const [activeVariantIndex, setActiveVariantIndex] = useState(0)
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   if (isPdf) {
     return <PdfPlaceholder prompt={prompt} />
@@ -322,7 +322,7 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
     ? (currentVariant.description || '')
     : ''
 
-  const hasMoreContent = currentPromptContent.split('\n').length > 5 || currentPromptContent.length > 300
+  const hasMoreContent = currentPromptContent.split('\n').length > 8 || currentPromptContent.length > 500
 
   return (
     <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl transition-shadow hover:shadow-md">
