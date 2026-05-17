@@ -308,22 +308,27 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
   }
 
   const currentContent = isVariants ? (variants[activeVariantIndex]?.description || '') : content
-  const hasMoreContent = currentContent.split('\n').length > 2 || currentContent.length > 120
+  const hasMoreContent = currentContent.split('\n').length > 5 || currentContent.length > 300
 
   return (
     <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl transition-shadow hover:shadow-md select-none">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm gap-3">
-        <div className="flex items-center gap-1.5 justify-between w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <div className="w-3 h-3 rounded-full bg-zinc-800" />
-            <div className="w-3 h-3 rounded-full bg-zinc-800" />
-            <div className="w-3 h-3 rounded-full bg-zinc-800" />
-            <span className="ml-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
-              prompt.txt
-            </span>
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center w-full sm:w-auto">
+          {/* Header/Dots */}
+          <div className="flex items-center gap-1.5 justify-between w-full sm:w-auto flex-shrink-0">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-zinc-800" />
+              <div className="w-3 h-3 rounded-full bg-zinc-800" />
+              <div className="w-3 h-3 rounded-full bg-zinc-800" />
+              <span className="ml-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                prompt.txt
+              </span>
+            </div>
           </div>
+
+          {/* Dynamic Variant Tabs */}
           {isVariants && (
-            <div className="flex bg-zinc-950 p-0.5 border border-zinc-800 rounded-xl gap-0.5 select-none sm:ml-4 flex-nowrap overflow-x-auto max-w-full">
+            <div className="flex bg-zinc-950 p-0.5 border border-zinc-800 rounded-xl gap-0.5 select-none overflow-x-auto max-w-full flex-nowrap scrollbar-none">
               {variants.map((v, idx) => (
                 <button
                   key={idx}
@@ -342,15 +347,17 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
             </div>
           )}
         </div>
-        <CopyButton
-          content={currentContent}
-          promptId={prompt.id}
-          slug={prompt.slug}
-        />
+        <div className="flex-shrink-0 w-full sm:w-auto">
+          <CopyButton
+            content={currentContent}
+            promptId={prompt.id}
+            slug={prompt.slug}
+          />
+        </div>
       </div>
       
       <div className="relative">
-        <div className={`p-6 font-mono text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap break-words select-text transition-all duration-300 ${!isExpanded ? 'max-h-[80px] overflow-hidden' : 'max-h-none'}`}>
+        <div className={`p-6 font-mono text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap break-words select-text transition-all duration-300 ${!isExpanded ? 'max-h-[140px] overflow-hidden' : 'max-h-none'}`}>
           {currentContent}
         </div>
         
