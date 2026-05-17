@@ -38,8 +38,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 2. Redirect path-based subdomain URLs on main domain to subdomain hosts (except for TikTok browser compatibility)
-  if (isMainDomain && !isTikTok) {
+  // 2. Redirect path-based subdomain URLs on main domain to subdomain hosts (force for ALL browsers and crawlers to enforce Independent Subdomain Architecture)
+  if (isMainDomain) {
     const segments = path.split('/').filter(Boolean)
     if (segments.length > 0) {
       const firstSegment = segments[0]

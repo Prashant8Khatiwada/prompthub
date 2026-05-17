@@ -168,8 +168,26 @@ export default async function UserProfilePage({ params }: Params) {
 
   const isSubdomain = hostWithoutPort.startsWith(`${creator.subdomain}.`) || hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1'
 
+  // Generate JSON-LD Structured Data for Trust
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    mainEntity: {
+      '@type': 'Person',
+      name: creator.name,
+      alternateName: creator.handle || creator.subdomain,
+      description: creator.bio,
+      image: creator.avatar_url || igUser?.profile_picture_url || '',
+      url: `https://${creator.subdomain}.${baseDomain}`,
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#0a0a0a]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <UserProfilePageClient
         creator={creator}
         igUser={igUser}

@@ -187,11 +187,37 @@ export default async function PublicPromptPage({ params }: Params) {
 
   console.log('PLACEMENTS LOADED:', placements.length)
 
+  const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
+  const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
+
+  // Generate JSON-LD Structured Data for Trust
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: prompt.title,
+    description: prompt.description,
+    image: prompt.thumbnail_url || prompt.share_image_url || `https://${creator.subdomain}.${baseDomain}/${prompt.slug}/opengraph-image`,
+    author: {
+      '@type': 'Person',
+      name: creator.name,
+      url: `https://${creator.subdomain}.${baseDomain}`
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Creatopedia',
+      url: `https://${baseDomain}`
+    }
+  }
+
   return (
     <main
       style={{ '--brand': creator.brand_color } as React.CSSProperties}
       className="min-h-screen bg-zinc-950 text-white"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ViewTracker key={`tracker-${prompt.id}`} pageId={prompt.id} promptId={prompt.id} creatorId={creator.id} />
 
       <EnhancedPublicPromptUI
