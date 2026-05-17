@@ -222,7 +222,7 @@ export default function EnhancedPublicPromptUI({
       if (hostname === baseDomain || hostname === 'localhost' || hostname === '127.0.0.1' || !isSubdomain) {
         return `/${creator.subdomain}/${clickedPrompt.slug}`
       }
-      return `/creatopedia.tech/${clickedPrompt.slug}`
+      return `/${clickedPrompt.slug}`
     })()
 
     router.push(newPath)

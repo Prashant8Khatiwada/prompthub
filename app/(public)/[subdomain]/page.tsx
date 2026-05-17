@@ -166,7 +166,7 @@ export default async function UserProfilePage({ params }: Params) {
       return true
     })
 
-  const isSubdomain = hostWithoutPort.startsWith(`${creator.subdomain}.`)
+  const isSubdomain = hostWithoutPort.startsWith(`${creator.subdomain}.`) || hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1'
 
   return (
     <main className="min-h-screen bg-[#0a0a0a]">

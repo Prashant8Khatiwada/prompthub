@@ -24,7 +24,9 @@ export async function middleware(request: NextRequest) {
   // Use the production base domain
   const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
   const baseDomain = envBaseDomain.replace(/^https?:\/\//, '')
-  const isMainDomain = hostWithoutPort === baseDomain
+  const isLocalhost = hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1'
+  // On localhost, we treat the main localhost host as the main domain so it triggers local redirects
+  const isMainDomain = hostWithoutPort === baseDomain || isLocalhost
 
   // 1. Bypass for static assets and API
   if (
@@ -42,21 +44,26 @@ export async function middleware(request: NextRequest) {
     if (segments.length > 0) {
       const firstSegment = segments[0]
       const reservedPaths = ['ads', 'browse', 'category', 'experience', 'platforms', 'reach-us', 'login', 'privacy-policy', 'terms']
-      
       if (!reservedPaths.includes(firstSegment)) {
         const subdomain = firstSegment
         const redirectUrl = new URL(request.url)
-        redirectUrl.host = `${subdomain}.${baseDomain}`
+        if (isLocalhost) {
+          const port = host.split(':')[1]
+          redirectUrl.host = `${subdomain}.localhost${port ? `:${port}` : ''}`
+        } else {
+          redirectUrl.host = `${subdomain}.${baseDomain}`
+        }
         
         if (segments.length === 1) {
           redirectUrl.pathname = '/'
         } else {
-          // Redirect to the new format: {subdomain}.creatopedia.tech/creatopedia.tech/{slug}
-          if (segments[1] === 'creatopedia.tech') {
-            redirectUrl.pathname = `/${segments.slice(1).join('/')}`
-          } else {
-            redirectUrl.pathname = `/creatopedia.tech/${segments.slice(1).join('/')}`
+          // Redirect to the clean format: {subdomain}.creatopedia.tech/{slug}
+          // If the old URL had /creatopedia.tech/ prefix in path, strip it
+          let remainingSegments = segments.slice(1)
+          if (remainingSegments[0] === 'creatopedia.tech') {
+            remainingSegments = remainingSegments.slice(1)
           }
+          redirectUrl.pathname = `/${remainingSegments.join('/')}`
         }
         
         console.log(`[Redirect] Redirecting main domain path to subdomain: ${redirectUrl.toString()}`)
@@ -86,7 +93,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // 3. Unified Routing & Header Management
-  const subdomain = hostWithoutPort.replace(`.${baseDomain}`, '')
+  let subdomain = hostWithoutPort.replace(`.${baseDomain}`, '')
+  if (hostWithoutPort.endsWith('.localhost')) {
+    subdomain = hostWithoutPort.replace('.localhost', '')
+  }
+  if (isLocalhost && !hostWithoutPort.includes('.')) {
+    subdomain = 'milan'
+  }
   let response: NextResponse
 
   if (isMainDomain) {

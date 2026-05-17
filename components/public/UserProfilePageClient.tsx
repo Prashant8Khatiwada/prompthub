@@ -108,7 +108,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
 
   const promptUrl = (slug: string) => {
     if (isSubdomain) {
-      return `/creatopedia.tech/${slug}`
+      return `/${slug}`
     }
 
     if (typeof window !== 'undefined') {
@@ -121,8 +121,8 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
         return `/${creator.subdomain}/${slug}`
       }
 
-      // If we are already on a subdomain (e.g. milan.creatopedia.tech), we use /creatopedia.tech/slug
-      return `/creatopedia.tech/${slug}`
+      // If we are already on a subdomain (e.g. milan.creatopedia.tech), we use /slug
+      return `/${slug}`
     }
 
     // Fallback for SSR
