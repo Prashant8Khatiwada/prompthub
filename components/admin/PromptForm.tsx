@@ -139,7 +139,23 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
 
     setVideoUrl(post.permalink)
     const url = post.media_type === 'VIDEO' ? (post.thumbnail_url || post.media_url) : post.media_url
-    setThumbnailUrl(url)
+    
+    // Automatically save Instagram's temporary CDN image to our own public Supabase storage bucket!
+    try {
+      const uploadFd = new FormData()
+      uploadFd.append('url', url)
+      const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFd })
+      const uploadData = await uploadRes.json()
+      if (uploadData.url) {
+        setThumbnailUrl(uploadData.url)
+      } else {
+        console.warn('Instagram image upload to Supabase storage failed:', uploadData.error)
+        setThumbnailUrl(url)
+      }
+    } catch (err) {
+      console.warn('Error uploading Instagram image to Supabase storage:', err)
+      setThumbnailUrl(url)
+    }
 
     if (post.caption) {
       const firstLine = post.caption.split('\n')[0].trim().substring(0, 60)

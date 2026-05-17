@@ -29,7 +29,9 @@ const InstagramIcon = ({ className }: { className?: string }) => (
 )
 
 import PromptGate from './PromptGate'
-import RelatedPrompts from './RelatedPrompts'
+import dynamic from 'next/dynamic'
+
+const RelatedPrompts = dynamic(() => import('./RelatedPrompts'), { ssr: false })
 import AdPopup from './AdPopup'
 import type { AdPlacementData } from './AdBanner'
 import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
