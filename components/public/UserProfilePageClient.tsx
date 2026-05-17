@@ -5,7 +5,7 @@ import Link from 'next/link'
 import type { InstagramUser, InstagramMedia } from '@/lib/instagram'
 import type { Creator, Category, Prompt } from '@/types'
 import InstagramProfile from './InstagramProfile'
-import { Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, LayoutGrid, Globe, Camera, ArrowLeft, BadgeCheck, Check } from 'lucide-react'
+import { Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, LayoutGrid, Globe, Camera, ArrowLeft, BadgeCheck, Check, List } from 'lucide-react'
 import AdBanner, { AdPlacementData } from './AdBanner'
 import { InstagramVerifiedBadge } from '@/components/ui/InstagramVerifiedBadge'
 
@@ -65,14 +65,10 @@ const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
-
-
-
-
-
 export default function UserProfilePageClient({ creator, igUser, igFeed, categories, prompts, adPlacements = [], isSubdomain = false }: Props) {
   const [activeTab, setActiveTab] = useState<'creation' | 'profile'>('creation')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
 
   // Map category id → category
   const categoryMap = useMemo(() => {
@@ -324,39 +320,67 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
         {/* ─── CREATION TAB CONTENT ─── */}
         {activeTab === 'creation' && (
           <div className="space-y-4 animate-in fade-in duration-500">
-            {/* Categories Pills Bar */}
-            {activeCategoryIds.length > 0 && (
-              <div className="flex flex-wrap items-center justify-center gap-1 w-full mx-auto select-none pt-0">
+            {/* Categories & Layout Toggle Bar */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full select-none mt-2">
+              {activeCategoryIds.length > 0 ? (
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 flex-1 w-full">
+                  <button
+                    onClick={() => setActiveCategory(null)}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${activeCategory === null
+                      ? 'bg-blue-600/10 border-blue-500/50 text-blue-400 font-bold shadow-lg shadow-blue-500/5'
+                      : 'bg-zinc-900/40 border-white/5 text-white/40 hover:text-white hover:border-white/15'
+                      }`}
+                  >
+                    All ({prompts.length})
+                  </button>
+                  {activeCategoryIds.map(cat => {
+                    const count = prompts.filter(p => p.category_id === cat.id).length
+                    const isActive = activeCategory === cat.id
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setActiveCategory(isActive ? null : cat.id)}
+                        className={`px-5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${isActive
+                          ? 'bg-blue-600/10 border-blue-500/50 text-blue-400 font-bold shadow-lg shadow-blue-500/5'
+                          : 'bg-zinc-900/40 border-white/5 text-white/40 hover:text-white hover:border-white/15'
+                          }`}
+                      >
+                        {cat.icon && <span className="mr-1.5">{cat.icon}</span>}
+                        {cat.name} ({count})
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="flex-1" />
+              )}
+
+              {/* Grid / List Layout Switcher */}
+              <div className="p-1 bg-zinc-900/60 border border-white/10 rounded-2xl flex items-center gap-1 shadow-2xl shrink-0 backdrop-blur-xl">
                 <button
-                  onClick={() => setActiveCategory(null)}
-                  className={`px-5 py-2.5 rounded-md sm:rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${activeCategory === null
-                    ? 'bg-blue-600/10 border-blue-500/50 text-blue-400 font-bold'
-                    : 'bg-zinc-900/40 border-white/5 text-white/40 hover:text-white hover:border-white/15'
+                  onClick={() => setViewMode('grid')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold font-mono tracking-wider transition-all flex items-center gap-1.5 ${viewMode === 'grid'
+                    ? 'bg-white text-zinc-950 shadow-md font-black'
+                    : 'text-zinc-400 hover:text-white'
                     }`}
                 >
-                  All ({prompts.length})
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Grid</span>
                 </button>
-                {activeCategoryIds.map(cat => {
-                  const count = prompts.filter(p => p.category_id === cat.id).length
-                  const isActive = activeCategory === cat.id
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(isActive ? null : cat.id)}
-                      className={`px-5 py-2.5 rounded-md sm:rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${isActive
-                        ? 'bg-blue-600/10 border-blue-500/50 text-blue-400 font-bold'
-                        : 'bg-zinc-900/40 border-white/5 text-white/40 hover:text-white hover:border-white/15'
-                        }`}
-                    >
-                      {cat.icon && <span className="mr-1.5">{cat.icon}</span>}
-                      {cat.name} ({count})
-                    </button>
-                  )
-                })}
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold font-mono tracking-wider transition-all flex items-center gap-1.5 ${viewMode === 'list'
+                    ? 'bg-white text-zinc-950 shadow-md font-black'
+                    : 'text-zinc-400 hover:text-white'
+                    }`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span>List</span>
+                </button>
               </div>
-            )}
+            </div>
 
-            {/* Prompt Cards Grid (2 CARDS PER ROW ON MOBILE SCREEN) */}
+            {/* Prompt Cards list/grid render */}
             {filteredPrompts.length === 0 ? (
               <div className="py-24 text-center text-zinc-600">
                 <Grid3x3 className="w-10 h-10 mx-auto mb-4 opacity-30" />
@@ -364,7 +388,10 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
               </div>
             ) : (
               <div
-                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 animate-in fade-in duration-500"
+                className={viewMode === 'grid'
+                  ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 animate-in fade-in duration-500"
+                  : "flex flex-col gap-4 max-w-3xl mx-auto w-full animate-in fade-in duration-500"
+                }
               >
                 {(() => {
                   const items = []
@@ -393,8 +420,8 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                     const gate = GATE_LABELS[prompt.gate_type] ?? GATE_LABELS.open
                     const href = promptUrl(prompt.slug)
 
-                    // 1. Check for manual grid slot BEFORE the prompt
-                    if (isAdsEnabled && gridSlots[i]) {
+                    // 1. Check for manual grid slot BEFORE the prompt (only in Grid mode to preserve clean List rows)
+                    if (viewMode === 'grid' && isAdsEnabled && gridSlots[i]) {
                       items.push(
                         <div key={`ad-slot-${i}`} className="relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/30 backdrop-blur-xl shadow-2xl">
                           <AdBanner
@@ -408,67 +435,135 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
                     }
 
                     // 2. Add the prompt itself
-                    items.push(
-                      <Link
-                        href={href}
-                        key={prompt.id}
-                        className="group relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-5 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl"
-                      >
-                        {/* Premium Immersive background image */}
-                        <div className="absolute inset-0 z-0 select-none">
-                          {(() => {
-                            const igDisplayUrl = prompt.video_url ? igFeedMap[prompt.video_url] : null
-                            const src = prompt.thumbnail_url
-                            return src ? (
-                              <img
-                                src={src}
-                                alt={prompt.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-55 group-hover:opacity-70"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-zinc-950 flex items-center justify-center opacity-40">
-                                <Sparkles className="w-10 h-10 text-white/20" />
+                    if (viewMode === 'grid') {
+                      items.push(
+                        <Link
+                          href={href}
+                          key={prompt.id}
+                          className="group relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-pointer select-none flex flex-col justify-between p-3 sm:p-5 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.02] shadow-2xl animate-in fade-in duration-300"
+                        >
+                          {/* Premium Immersive background image */}
+                          <div className="absolute inset-0 z-0 select-none">
+                            {(() => {
+                              const igDisplayUrl = prompt.video_url ? igFeedMap[prompt.video_url] : null
+                              const src = prompt.thumbnail_url
+                              return src ? (
+                                <img
+                                  src={src}
+                                  alt={prompt.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-55 group-hover:opacity-70"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-zinc-950 flex items-center justify-center opacity-40">
+                                  <Sparkles className="w-10 h-10 text-white/20" />
+                                </div>
+                              )
+                            })()}
+                            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/45 to-transparent z-10" />
+                          </div>
+
+                          {/* Top badges */}
+                          <div className="relative z-10 flex justify-between items-start">
+                            <span className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-full border bg-zinc-900/70 border-white/10 text-white/90 backdrop-blur-md">
+                              <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: toolColor }} />
+                              {prompt.ai_tool?.split(',')[0].trim()}
+                            </span>
+                            <div className="flex gap-1 sm:gap-2">
+                              {prompt.content_type === 'pdf' && (
+                                <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 bg-pink-600/20 text-pink-300 border border-pink-500/30 rounded-md sm:rounded-full font-mono uppercase tracking-wide">PDF</span>
+                              )}
+                              <span className="text-[8px] sm:text-[9px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-full font-mono uppercase tracking-wide" style={{ background: `${gate.color}22`, color: gate.color, border: `1px solid ${gate.color}44` }}>{gate.label}</span>
+                            </div>
+                          </div>
+
+                          {/* Text Content */}
+                          <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-2 sm:space-y-4">
+                            <h3 className="text-base sm:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-2">{prompt.title}</h3>
+                            <div className="w-full flex items-center justify-between border-t border-white/10 pt-2 sm:pt-4 select-none">
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] text-zinc-500 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-full bg-zinc-800/80 border border-zinc-700/60 font-mono">
+                                  {OUTPUT_ICONS[prompt.output_type] || <FileText className="w-3.5 h-3.5" />}
+                                  {prompt.output_type}
+                                </span>
                               </div>
-                            )
-                          })()}
-                          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/45 to-transparent z-10" />
-                        </div>
-
-                        {/* Top badges */}
-                        <div className="relative z-10 flex justify-between items-start">
-                          <span className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-full border bg-zinc-900/70 border-white/10 text-white/90 backdrop-blur-md">
-                            <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: toolColor }} />
-                            {prompt.ai_tool?.split(',')[0].trim()}
-                          </span>
-                          <div className="flex gap-1 sm:gap-2">
-                            {prompt.content_type === 'pdf' && (
-                              <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 bg-pink-600/20 text-pink-300 border border-pink-500/30 rounded-md sm:rounded-full font-mono uppercase tracking-wide">PDF</span>
-                            )}
-                            <span className="text-[8px] sm:text-[9px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-full font-mono uppercase tracking-wide" style={{ background: `${gate.color}22`, color: gate.color, border: `1px solid ${gate.color}44` }}>{gate.label}</span>
-                          </div>
-                        </div>
-
-                        {/* Text Content */}
-                        <div className="relative z-10 flex flex-col justify-end h-full w-full space-y-2 sm:space-y-4">
-                          <h3 className="text-base sm:text-2xl font-bold tracking-tight text-white/95 leading-tight select-none line-clamp-2">{prompt.title}</h3>
-                          <div className="w-full flex items-center justify-between border-t border-white/10 pt-2 sm:pt-4 select-none">
-                            <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center gap-1 text-[8px] sm:text-[10px] text-zinc-500 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-full bg-zinc-800/80 border border-zinc-700/60 font-mono">
-                                {OUTPUT_ICONS[prompt.output_type] || <FileText className="w-3.5 h-3.5" />}
-                                {prompt.output_type}
-                              </span>
-                            </div>
-                            <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-md sm:rounded-full bg-white text-zinc-950 font-sans font-bold text-xs shadow-lg group-hover:scale-105 transition-all duration-500 hover:bg-white/90 flex-shrink-0 select-none">
-                              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950" />
+                              <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-md sm:rounded-full bg-white text-zinc-950 font-sans font-bold text-xs shadow-lg group-hover:scale-105 transition-all duration-500 hover:bg-white/90 flex-shrink-0 select-none">
+                                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950" />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </Link>
-                    )
+                        </Link>
+                      )
+                    } else {
+                      items.push(
+                        <Link
+                          href={href}
+                          key={prompt.id}
+                          className="group w-full rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer select-none flex items-center justify-between p-3 sm:p-4 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.01] shadow-2xl gap-4 animate-in fade-in duration-300"
+                        >
+                          {/* Horizontal Row Left Side */}
+                          <div className="flex items-center gap-4 min-w-0 flex-1">
+                            {/* Horizontal Thumbnail Container */}
+                            <div className="relative w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 z-0 select-none bg-zinc-950">
+                              {(() => {
+                                const igDisplayUrl = prompt.video_url ? igFeedMap[prompt.video_url] : null
+                                const src = prompt.thumbnail_url
+                                return src ? (
+                                  <img
+                                    src={src}
+                                    alt={prompt.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-70 group-hover:opacity-90"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center opacity-40">
+                                    <Sparkles className="w-6 h-6 text-white/20" />
+                                  </div>
+                                )
+                              })()}
+                              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 via-transparent to-transparent z-10" />
+                            </div>
 
-                    // 3. Fallback frequency injection (only if no manual slots defined for the whole grid)
+                            {/* Info */}
+                            <div className="flex-1 min-w-0 space-y-1 sm:space-y-2 text-left">
+                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                <span className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 sm:py-1 rounded-md border bg-zinc-900/75 border-white/10 text-white/95">
+                                  <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: toolColor }} />
+                                  {prompt.ai_tool?.split(',')[0].trim()}
+                                </span>
+                                {prompt.content_type === 'pdf' && (
+                                  <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 bg-pink-600/20 text-pink-300 border border-pink-500/30 rounded-md font-mono uppercase tracking-wide">PDF</span>
+                                )}
+                                <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-md font-mono uppercase tracking-wide" style={{ background: `${gate.color}22`, color: gate.color, border: `1px solid ${gate.color}44` }}>{gate.label}</span>
+                              </div>
+
+                              <h3 className="text-sm sm:text-lg font-bold tracking-tight text-white/95 leading-snug line-clamp-1 sm:line-clamp-2 select-none group-hover:text-blue-400 transition-colors">
+                                {prompt.title}
+                              </h3>
+
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] text-zinc-500 px-1.5 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/60 font-mono">
+                                  {OUTPUT_ICONS[prompt.output_type] || <FileText className="w-3 h-3" />}
+                                  {prompt.output_type}
+                                </span>
+                                {prompt.description && (
+                                  <span className="text-[10px] text-zinc-500 truncate hidden sm:inline-block max-w-md font-light">
+                                    — {prompt.description}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Button Right Side */}
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-white text-zinc-950 font-sans font-bold text-xs shadow-lg group-hover:scale-105 transition-all duration-300 hover:bg-white/90 flex-shrink-0 select-none">
+                            <ChevronRight className="w-4 h-4 text-zinc-950" />
+                          </div>
+                        </Link>
+                      )
+                    }
+
+                    // 3. Fallback frequency injection (only in Grid mode, no manual slots defined for the whole grid)
                     const hasManualSlots = Object.keys(gridSlots).length > 0
-                    if (isAdsEnabled && !hasManualSlots && fallbackAd && (i + 1) % frequency === 0 && i !== filteredPrompts.length - 1) {
+                    if (viewMode === 'grid' && isAdsEnabled && !hasManualSlots && fallbackAd && (i + 1) % frequency === 0 && i !== filteredPrompts.length - 1) {
                       items.push(
                         <div key={`ad-freq-${i}`} className="relative aspect-[3/4.2] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/30 backdrop-blur-xl shadow-2xl">
                           <AdBanner placements={adPlacements} position={fallbackAd.position} creatorId={creator.id} fill />

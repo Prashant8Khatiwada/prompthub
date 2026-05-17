@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { LayoutGrid, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, BadgeCheck, Check } from 'lucide-react'
+import { LayoutGrid, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, BadgeCheck, Check, List } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { InstagramVerifiedBadge } from '@/components/ui/InstagramVerifiedBadge'
@@ -133,6 +133,7 @@ export default function EnhancedPublicPromptUI({
   const [libraryPrompts, setLibraryPrompts] = useState<Prompt[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
 
   const postCount = igUser?.media_count ?? 28
   const followerCount = igUser?.followers_count
@@ -480,37 +481,65 @@ export default function EnhancedPublicPromptUI({
               </div>
             ) : (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-zinc-950 min-h-[400px] p-4 sm:p-6 space-y-6 sm:space-y-8 select-none">
-                {/* Categories Pills Bar */}
-                {activeCategoryIds.length > 0 && (
-                  <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto select-none">
+                {/* Categories Pills & Grid/List Layout Toggle */}
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full select-none">
+                  {activeCategoryIds.length > 0 ? (
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 flex-1 w-full">
+                      <button
+                        onClick={() => setActiveCategory(null)}
+                        className={`px-5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${activeCategory === null
+                          ? 'bg-blue-600/10 border-blue-500/50 text-blue-400 font-bold shadow-lg shadow-blue-500/5'
+                          : 'bg-zinc-900/40 border-white/5 text-white/40 hover:text-white hover:border-white/15'
+                          }`}
+                      >
+                        All ({libraryPrompts.length})
+                      </button>
+                      {activeCategoryIds.map(cat => {
+                        const count = libraryPrompts.filter(p => p.category_id === cat.id).length
+                        const isActive = activeCategory === cat.id
+                        return (
+                          <button
+                            key={cat.id}
+                            onClick={() => setActiveCategory(isActive ? null : cat.id)}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${isActive
+                              ? 'bg-blue-600/10 border-blue-500/50 text-blue-400 font-bold shadow-lg shadow-blue-500/5'
+                              : 'bg-zinc-900/40 border-white/5 text-white/40 hover:text-white hover:border-white/15'
+                              }`}
+                          >
+                            {cat.icon && <span className="mr-1.5">{cat.icon}</span>}
+                            {cat.name} ({count})
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex-1" />
+                  )}
+
+                  {/* Grid / List Layout Switcher */}
+                  <div className="p-1 bg-zinc-900/60 border border-white/10 rounded-2xl flex items-center gap-1 shadow-2xl shrink-0 backdrop-blur-xl">
                     <button
-                      onClick={() => setActiveCategory(null)}
-                      className={`px-5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${activeCategory === null
-                        ? 'bg-blue-600/10 border-blue-500/50 text-blue-400 font-bold'
-                        : 'bg-zinc-900/40 border-white/5 text-white/40 hover:text-white hover:border-white/15'
+                      onClick={() => setViewMode('grid')}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold font-mono tracking-wider transition-all flex items-center gap-1.5 ${viewMode === 'grid'
+                        ? 'bg-white text-zinc-950 shadow-md font-black'
+                        : 'text-zinc-400 hover:text-white'
                         }`}
                     >
-                      All ({libraryPrompts.length})
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span>Grid</span>
                     </button>
-                    {activeCategoryIds.map(cat => {
-                      const count = libraryPrompts.filter(p => p.category_id === cat.id).length
-                      const isActive = activeCategory === cat.id
-                      return (
-                        <button
-                          key={cat.id}
-                          onClick={() => setActiveCategory(isActive ? null : cat.id)}
-                          className={`px-5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all duration-300 border ${isActive
-                            ? 'bg-blue-600/10 border-blue-500/50 text-blue-400 font-bold'
-                            : 'bg-zinc-900/40 border-white/5 text-white/40 hover:text-white hover:border-white/15'
-                            }`}
-                        >
-                          {cat.icon && <span className="mr-1.5">{cat.icon}</span>}
-                          {cat.name} ({count})
-                        </button>
-                      )
-                    })}
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold font-mono tracking-wider transition-all flex items-center gap-1.5 ${viewMode === 'list'
+                        ? 'bg-white text-zinc-950 shadow-md font-black'
+                        : 'text-zinc-400 hover:text-white'
+                        }`}
+                    >
+                      <List className="w-3.5 h-3.5" />
+                      <span>List</span>
+                    </button>
                   </div>
-                )}
+                </div>
 
                 {/* Prompt Cards Grid */}
                 {filteredLibraryPrompts.length === 0 ? (
@@ -519,10 +548,79 @@ export default function EnhancedPublicPromptUI({
                     <p className="text-sm">No prompts in this category yet.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
+                  <div
+                    className={viewMode === 'grid'
+                      ? "grid grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500"
+                      : "flex flex-col gap-4 max-w-2xl mx-auto w-full animate-in fade-in duration-500"
+                    }
+                  >
                     {filteredLibraryPrompts.map(p => {
                       const toolColor = AI_TOOL_COLORS[p.ai_tool.split(',')[0].trim()] ?? '#6366f1'
                       const gate = GATE_LABELS[p.gate_type] ?? GATE_LABELS.open
+
+                      if (viewMode === 'list') {
+                        return (
+                          <div
+                            onClick={() => handleLibraryPromptClick(p)}
+                            key={p.id}
+                            className="group w-full rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer select-none flex items-center justify-between p-3 sm:p-4 bg-zinc-900/30 backdrop-blur-xl hover:scale-[1.01] shadow-2xl gap-4 animate-in fade-in duration-300"
+                          >
+                            {/* Horizontal Row Left Side */}
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                              {/* Horizontal Thumbnail Container */}
+                              <div className="relative w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 z-0 select-none bg-zinc-950">
+                                {p.thumbnail_url ? (
+                                  <img
+                                    src={p.thumbnail_url}
+                                    alt={p.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-70 group-hover:opacity-90"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center opacity-40">
+                                    <Sparkles className="w-6 h-6 text-white/20" />
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 via-transparent to-transparent z-10" />
+                              </div>
+
+                              {/* Info */}
+                              <div className="flex-1 min-w-0 space-y-1 sm:space-y-2 text-left">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                  <span className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 sm:py-1 rounded-md border bg-zinc-900/75 border-white/10 text-white/95">
+                                    <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: toolColor }} />
+                                    {p.ai_tool?.split(',')[0].trim()}
+                                  </span>
+                                  {p.content_type === 'pdf' && (
+                                    <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 bg-pink-600/20 text-pink-300 border border-pink-500/30 rounded-md font-mono uppercase tracking-wide">PDF</span>
+                                  )}
+                                  <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-md font-mono uppercase tracking-wide" style={{ background: `${gate.color}22`, color: gate.color, border: `1px solid ${gate.color}44` }}>{gate.label}</span>
+                                </div>
+
+                                <h3 className="text-sm sm:text-lg font-bold tracking-tight text-white/95 leading-snug line-clamp-1 sm:line-clamp-2 select-none group-hover:text-blue-400 transition-colors">
+                                  {p.title}
+                                </h3>
+
+                                <div className="flex items-center gap-2">
+                                  <span className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] text-zinc-500 px-1.5 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/60 font-mono">
+                                    {OUTPUT_ICONS[p.output_type] || <FileText className="w-3 h-3" />}
+                                    {p.output_type}
+                                  </span>
+                                  {p.description && (
+                                    <span className="text-[10px] text-zinc-500 truncate hidden sm:inline-block max-w-md font-light">
+                                      — {p.description}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Action Button Right Side */}
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-white text-zinc-950 font-sans font-bold text-xs shadow-lg group-hover:scale-105 transition-all duration-300 hover:bg-white/90 flex-shrink-0 select-none">
+                              <ChevronRight className="w-4 h-4 text-zinc-950" />
+                            </div>
+                          </div>
+                        )
+                      }
 
                       return (
                         <div

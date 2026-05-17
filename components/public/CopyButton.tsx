@@ -13,12 +13,15 @@ export default function CopyButton({ content, promptId, slug }: Props) {
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
+    console.log("CopyButton handleCopy triggered. Content length:", content?.length, "Content preview:", content?.substring(0, 50))
     try {
       await navigator.clipboard.writeText(content)
+      console.log("Copied to clipboard successfully via navigator.clipboard")
       setCopied(true)
       trackCopy(promptId)
       setTimeout(() => setCopied(false), 2000)
-    } catch {
+    } catch (err) {
+      console.warn("navigator.clipboard failed, using fallback. Error:", err)
       // Fallback for older browsers
       const textarea = document.createElement('textarea')
       textarea.value = content
@@ -26,6 +29,7 @@ export default function CopyButton({ content, promptId, slug }: Props) {
       textarea.select()
       document.execCommand('copy')
       document.body.removeChild(textarea)
+      console.log("Copied to clipboard successfully via fallback")
       setCopied(true)
       trackCopy(promptId)
       setTimeout(() => setCopied(false), 2000)
@@ -36,7 +40,7 @@ export default function CopyButton({ content, promptId, slug }: Props) {
     <button
       id="copy-prompt-btn"
       onClick={handleCopy}
-      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95"
+      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs transition-all duration-200 active:scale-95 whitespace-nowrap"
       style={{
         background: copied ? 'rgb(16 185 129)' : 'var(--brand, #6366f1)',
         color: 'white',

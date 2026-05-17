@@ -286,7 +286,7 @@ function PdfPlaceholder({ prompt }: { prompt: Prompt }) {
 function PromptContent({ prompt, content }: { prompt: Prompt; content: string }) {
   const isPdf = prompt.content_type === 'pdf'
   const [activeVariantIndex, setActiveVariantIndex] = useState(0)
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
 
   if (isPdf) {
     return <PdfPlaceholder prompt={prompt} />
@@ -311,44 +311,18 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
   const hasMoreContent = currentContent.split('\n').length > 5 || currentContent.length > 300
 
   return (
-    <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl transition-shadow hover:shadow-md select-none">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm gap-3">
-        <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
-          {/* Header/Dots */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <div className="w-3 h-3 rounded-full bg-zinc-800" />
-            <div className="w-3 h-3 rounded-full bg-zinc-800" />
-            <div className="w-3 h-3 rounded-full bg-zinc-800" />
-            <span className="ml-2 text-xs font-mono font-bold text-zinc-500 uppercase tracking-widest">
-              prompt.txt
-            </span>
-          </div>
-
-          {/* Premium Custom Dropdown for Variants */}
-          {isVariants && (
-            <div className="relative flex-shrink-0">
-              <select
-                value={activeVariantIndex}
-                onChange={(e) => {
-                  setActiveVariantIndex(Number(e.target.value))
-                  setIsExpanded(false)
-                }}
-                className="appearance-none bg-zinc-950/80 border border-zinc-800 hover:border-zinc-700/80 transition-colors text-zinc-300 text-[11px] font-bold rounded-lg pl-3 pr-8 py-1.5 focus:outline-none focus:ring-1 focus:ring-sky-500/30 cursor-pointer select-none"
-              >
-                {variants.map((v, idx) => (
-                  <option key={idx} value={idx}>
-                    {v.subtitle || `Variant ${idx + 1}`}
-                  </option>
-                ))}
-              </select>
-              {/* Sleek Custom Indicator Arrow */}
-              <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-zinc-500 text-[8px]">
-                ▼
-              </div>
-            </div>
-          )}
+    <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl transition-shadow hover:shadow-md">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
+        {/* Header/Dots */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="w-3 h-3 rounded-full bg-zinc-800" />
+          <div className="w-3 h-3 rounded-full bg-zinc-800" />
+          <div className="w-3 h-3 rounded-full bg-zinc-800" />
+          <span className="ml-2 text-xs font-mono font-bold text-zinc-500 uppercase tracking-widest">
+            prompt.txt
+          </span>
         </div>
-        <div className="flex-shrink-0 w-full sm:w-auto">
+        <div className="flex-shrink-0">
           <CopyButton
             content={currentContent}
             promptId={prompt.id}
@@ -356,6 +330,32 @@ function PromptContent({ prompt, content }: { prompt: Prompt; content: string })
           />
         </div>
       </div>
+
+      {/* Premium Variant Links - Rendered below prompt.txt text, wrapping when overflowing, no scrolling! */}
+      {isVariants && (
+        <div className="px-4 py-2.5 border-b border-zinc-800/60 bg-zinc-900/30 flex flex-wrap items-center gap-2 select-none">
+          {variants.map((v, idx) => {
+            const isActive = idx === activeVariantIndex
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setActiveVariantIndex(idx)
+                }}
+                className={`px-3 py-1.5 rounded-lg text-[10.5px] font-bold transition-all duration-300 border select-none ${
+                  isActive
+                    ? 'bg-blue-600/20 border-blue-500/50 text-blue-400 font-extrabold shadow-sm'
+                    : 'bg-zinc-950/40 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                }`}
+              >
+                {v.subtitle || `Variant ${idx + 1}`}
+              </button>
+            )
+          })}
+        </div>
+      )}
       
       <div className="relative">
         <div className={`p-6 font-mono text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap break-words select-text transition-all duration-300 ${!isExpanded ? 'max-h-[140px] overflow-hidden' : 'max-h-none'}`}>
