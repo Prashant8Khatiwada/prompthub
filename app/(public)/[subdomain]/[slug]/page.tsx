@@ -1,17 +1,17 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
 import { fetchInstagramOEmbed } from '@/lib/oembed'
 import { adminClient } from '@/lib/supabase/admin'
 import ViewTracker from '@/components/public/ViewTracker'
 import AdBanner from '@/components/public/AdBanner'
 import { fetchInstagramMedia, fetchInstagramUser, fetchInstagramFeed } from '@/lib/instagram'
-import { AdPlacementPosition } from '@/types'
+import { AdPlacementPosition, Prompt } from '@/types'
 import { AdPlacementData } from '@/components/public/AdBanner'
 import EnhancedPublicPromptUI from '@/components/public/EnhancedPublicPromptUI'
-import { getCachedCreator, getCachedPrompt, getCachedRelatedPrompts } from '@/lib/data/public-prompts'
+import { RelatedPromptType } from '@/lib/data/public-prompts'
 import { headers } from 'next/headers'
 import { getBaseDomain } from '@/lib/constants'
+import { transformCdnUrls } from '@/lib/cdn'
 
 export const revalidate = 60 // 60 seconds (matches the profile page)
 
@@ -46,21 +46,21 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   const title = `${prompt.title} | ${creator.name}`
   const description = prompt.description ?? `Check out this ${prompt.ai_tool} prompt by ${creator.name}.`
-  
+
   const headerList = await headers()
   const host = headerList.get('x-forwarded-host') || headerList.get('host') || ''
   const hostWithoutPort = host.split(':')[0]
   const baseDomain = getBaseDomain(hostWithoutPort)
-  
+
   // Construct URLs - Prefer SUBDOMAIN format for maximum compatibility (TikTok/social)
   const shareUrl = `https://${subdomain}.${baseDomain}/${slug}`
-  
+
   // Image prioritization: 
   // 1. Explicit share image
   // 2. Thumbnail
   // 3. Fallback to the generated opengraph-image route
   let ogImageUrl = prompt.share_image_url || prompt.thumbnail_url
-  
+
   if (!ogImageUrl) {
     // If no custom image, use the dynamic one. 
     // We use the subdomain-based absolute URL to ensure consistency.
@@ -117,19 +117,40 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function PublicPromptPage({ params }: Params) {
   const { subdomain, slug } = await params
+  const supabase = adminClient
 
-  // 1. Fetch creator by subdomain (Cached)
-  const creator = await getCachedCreator(subdomain)
+  // 1. Fetch creator by subdomain directly from Supabase (Bypassing unstable_cache)
+  const { data: creator } = await supabase
+    .from('creators')
+    .select('*')
+    .eq('subdomain', subdomain)
+    .single()
+
   if (!creator) notFound()
 
-  // 2. Fetch published prompt (Cached)
-  const prompt = await getCachedPrompt(creator.id, slug)
-  if (!prompt) notFound()
+  // 2. Fetch published prompt directly from Supabase
+  const { data: rawPrompt } = await supabase
+    .from('prompts')
+    .select('*')
+    .eq('creator_id', creator.id)
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .single()
 
-  console.log('PROMPT FETCHED (Possibly Cached):', { id: prompt.id, title: prompt.title })
+  if (!rawPrompt) notFound()
+  const prompt = transformCdnUrls(rawPrompt) as Prompt
 
-  // 3. Fetch related prompts (Cached)
-  const related = await getCachedRelatedPrompts(creator.id, prompt.id)
+  console.log('PROMPT FETCHED DIRECTLY:', { id: prompt.id, title: prompt.title })
+
+  // 3. Fetch related prompts directly
+  const { data: rawRelated } = await supabase
+    .from('prompts')
+    .select('id,title,slug,ai_tool,output_type,thumbnail_url')
+    .eq('creator_id', creator.id)
+    .eq('status', 'published')
+    .neq('id', prompt.id)
+    .limit(3)
+  const related = transformCdnUrls(rawRelated || []) as RelatedPromptType[]
 
   const isRawHtml = !!prompt.embed_html || prompt.video_url?.trim().startsWith('<')
   const oEmbedHtml = prompt.embed_html || (prompt.video_url?.trim().startsWith('<')

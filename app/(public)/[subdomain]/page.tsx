@@ -15,7 +15,8 @@ import ViewTracker from '@/components/public/ViewTracker'
 import AdBanner from '@/components/public/AdBanner'
 import { fetchInstagramMedia } from '@/lib/instagram'
 import EnhancedPublicPromptUI from '@/components/public/EnhancedPublicPromptUI'
-import { getCachedPrompt, getCachedRelatedPrompts } from '@/lib/data/public-prompts'
+import { getCachedPrompt, getCachedRelatedPrompts, RelatedPromptType } from '@/lib/data/public-prompts'
+import { Prompt } from '@/types'
 // ISR: cache at edge for 60s, revalidate in background.
 // force-dynamic / revalidate=0 caused cold DB+Instagram hits on every request,
 // which can exceed TikTok's in-app browser timeout and show a blank/error page.
@@ -193,27 +194,45 @@ export default async function UserProfilePage({ params }: Params) {
 
   // ─── MODE A: RENDER PROMPT DETAIL PAGE (If promptSlug is present) ───
   if (promptSlug) {
-    const prompt = await getCachedPrompt(creator.id, promptSlug)
+    // Query Supabase directly to bypass unstable_cache issues in production
+    const { data: prompt } = await supabase
+      .from('prompts')
+      .select('*')
+      .eq('creator_id', creator.id)
+      .eq('slug', promptSlug)
+      .eq('status', 'published')
+      .single()
+
     if (!prompt) notFound()
 
-    const related = await getCachedRelatedPrompts(creator.id, prompt.id)
+    const transformedPrompt = transformCdnUrls(prompt) as Prompt
 
-    const isRawHtml = !!prompt.embed_html || prompt.video_url?.trim().startsWith('<')
-    const oEmbedHtml = prompt.embed_html || (prompt.video_url?.trim().startsWith('<')
-      ? prompt.video_url
-      : (prompt.video_url ? await fetchInstagramOEmbed(prompt.video_url) : null))
+    // Query related prompts directly
+    const { data: rawRelated } = await supabase
+      .from('prompts')
+      .select('id,title,slug,ai_tool,output_type,thumbnail_url')
+      .eq('creator_id', creator.id)
+      .eq('status', 'published')
+      .neq('id', prompt.id)
+      .limit(3)
+    const related = transformCdnUrls(rawRelated || []) as RelatedPromptType[]
 
-    const igMedia = (prompt.video_url && !isRawHtml)
-      ? await fetchInstagramMedia(prompt.video_url, creator.id)
+    const isRawHtml = !!transformedPrompt.embed_html || transformedPrompt.video_url?.trim().startsWith('<')
+    const oEmbedHtml = transformedPrompt.embed_html || (transformedPrompt.video_url?.trim().startsWith('<')
+      ? transformedPrompt.video_url
+      : (transformedPrompt.video_url ? await fetchInstagramOEmbed(transformedPrompt.video_url) : null))
+
+    const igMedia = (transformedPrompt.video_url && !isRawHtml)
+      ? await fetchInstagramMedia(transformedPrompt.video_url, creator.id)
       : null
 
     const igUser = await fetchInstagramUser(creator.id)
     const igFeed = await fetchInstagramFeed(creator.id)
 
     const now = new Date().toISOString()
-    const filters = [`prompt_id.eq.${prompt.id}`, `is_global.eq.true`]
-    if (prompt.category_id) {
-      filters.push(`category_id.eq.${prompt.category_id}`)
+    const filters = [`prompt_id.eq.${transformedPrompt.id}`, `is_global.eq.true`]
+    if (transformedPrompt.category_id) {
+      filters.push(`category_id.eq.${transformedPrompt.category_id}`)
     }
 
     const { data: rawPlacements } = await adminClient
@@ -238,9 +257,9 @@ export default async function UserProfilePage({ params }: Params) {
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'Article',
-      headline: prompt.title,
-      description: prompt.description,
-      image: prompt.thumbnail_url || prompt.share_image_url || `https://${creator.subdomain}.${baseDomain}/${prompt.slug}/opengraph-image`,
+      headline: transformedPrompt.title,
+      description: transformedPrompt.description,
+      image: transformedPrompt.thumbnail_url || transformedPrompt.share_image_url || `https://${creator.subdomain}.${baseDomain}/${transformedPrompt.slug}/opengraph-image`,
       author: {
         '@type': 'Person',
         name: creator.name,
@@ -262,29 +281,29 @@ export default async function UserProfilePage({ params }: Params) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <ViewTracker key={`tracker-${prompt.id}`} pageId={prompt.id} promptId={prompt.id} creatorId={creator.id} />
+        <ViewTracker key={`tracker-${transformedPrompt.id}`} pageId={transformedPrompt.id} promptId={transformedPrompt.id} creatorId={creator.id} />
 
         <EnhancedPublicPromptUI
-          key={prompt.id}
+          key={transformedPrompt.id}
           creator={creator}
-          prompt={prompt}
+          prompt={transformedPrompt}
           igUser={igUser}
           igMedia={igMedia}
           igFeed={igFeed}
           relatedData={related ?? []}
           adHero={
             placements.some((p: AdPlacementData) => p.position === 'above_media') && (
-              <AdBanner placements={placements} position="above_media" promptId={prompt.id} creatorId={creator.id} />
+              <AdBanner placements={placements} position="above_media" promptId={transformedPrompt.id} creatorId={creator.id} />
             )
           }
           adAbovePrompt={
             placements.some((p: AdPlacementData) => p.position === 'above_prompt') && (
-              <AdBanner placements={placements} position="above_prompt" promptId={prompt.id} creatorId={creator.id} />
+              <AdBanner placements={placements} position="above_prompt" promptId={transformedPrompt.id} creatorId={creator.id} />
             )
           }
           adBelowPrompt={
             placements.some((p: AdPlacementData) => p.position === 'below_prompt') && (
-              <AdBanner placements={placements} position="below_prompt" promptId={prompt.id} creatorId={creator.id} />
+              <AdBanner placements={placements} position="below_prompt" promptId={transformedPrompt.id} creatorId={creator.id} />
             )
           }
           adPopupPlacements={placements.filter((p: AdPlacementData) => p.position === 'popup')}
