@@ -9,7 +9,7 @@ import { getBaseDomain } from './lib/constants'
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl
   const path = url.pathname
-  const host = request.headers.get('host') || ''
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
   const userAgent = request.headers.get('user-agent') || ''
   
   // Clean port from host if present (e.g., localhost:3000 -> localhost)
