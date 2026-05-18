@@ -31,13 +31,10 @@ const URL_FIELDS = new Set([
   'share_image_url',
   'video_url',
   'pdf_url',
-  'avatar_url',
   'image_url',
   'banner_url',
   'logo_url',
   'media_url',
-  'src',
-  'url',
 ])
 
 export function toCdnUrl(url: string | null | undefined): string | null {
@@ -48,19 +45,6 @@ export function toCdnUrl(url: string | null | undefined): string | null {
     return `${CDN_URL}/${path}`
   }
   return url
-}
-
-function processValue(value: unknown): unknown {
-  if (typeof value === 'string') {
-    return toCdnUrl(value)
-  }
-  if (Array.isArray(value)) {
-    return value.map(processValue)
-  }
-  if (value && typeof value === 'object') {
-    return transformCdnUrls(value as Record<string, unknown>)
-  }
-  return value
 }
 
 export function transformCdnUrls<T extends Record<string, unknown> | unknown[]>(
@@ -86,8 +70,12 @@ export function transformCdnUrls<T extends Record<string, unknown> | unknown[]>(
       result[key] = value
     } else if (URL_FIELDS.has(key) && typeof value === 'string') {
       result[key] = toCdnUrl(value)
+    } else if (Array.isArray(value)) {
+      result[key] = value
+    } else if (typeof value === 'object') {
+      result[key] = value
     } else {
-      result[key] = processValue(value)
+      result[key] = value
     }
   }
 
