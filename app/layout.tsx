@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+import { PRODUCTION_DOMAIN } from '@/lib/constants'
+
 export const metadata: Metadata = {
   title: { default: 'Creatopedia', template: '%s | Creatopedia' },
   description: 'The branded prompt-delivery platform for AI content creators.',
-  metadataBase: new URL(`https://${(process.env.NEXT_PUBLIC_BASE_DOMAIN || 'localhost:3000').replace(/^https?:\/\//, '')}`),
+  metadataBase: new URL(`https://${PRODUCTION_DOMAIN}`),
 }
 
 import QueryProvider from '@/components/providers/QueryProvider'

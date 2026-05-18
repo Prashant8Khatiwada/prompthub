@@ -11,6 +11,7 @@ import { AdPlacementData } from '@/components/public/AdBanner'
 import EnhancedPublicPromptUI from '@/components/public/EnhancedPublicPromptUI'
 import { getCachedCreator, getCachedPrompt, getCachedRelatedPrompts } from '@/lib/data/public-prompts'
 import { headers } from 'next/headers'
+import { getBaseDomain } from '@/lib/constants'
 
 export const revalidate = 60 // 60 seconds (matches the profile page)
 
@@ -49,16 +50,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const headerList = await headers()
   const host = headerList.get('host') || ''
   const hostWithoutPort = host.split(':')[0]
-
-  let baseDomain = 'creatopedia.tech'
-  if (hostWithoutPort.endsWith('.creatopedia.tech') || hostWithoutPort === 'creatopedia.tech') {
-    baseDomain = 'creatopedia.tech'
-  } else if (hostWithoutPort.endsWith('.localhost') || hostWithoutPort === 'localhost') {
-    baseDomain = 'localhost'
-  } else {
-    const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-    baseDomain = rawBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
-  }
+  const baseDomain = getBaseDomain(hostWithoutPort)
   
   // Construct URLs - Prefer SUBDOMAIN format for maximum compatibility (TikTok/social)
   const shareUrl = `https://${subdomain}.${baseDomain}/${slug}`
@@ -201,16 +193,7 @@ export default async function PublicPromptPage({ params }: Params) {
   const headerList = await headers()
   const host = headerList.get('host') || ''
   const hostWithoutPort = host.split(':')[0]
-
-  let baseDomain = 'creatopedia.tech'
-  if (hostWithoutPort.endsWith('.creatopedia.tech') || hostWithoutPort === 'creatopedia.tech') {
-    baseDomain = 'creatopedia.tech'
-  } else if (hostWithoutPort.endsWith('.localhost') || hostWithoutPort === 'localhost') {
-    baseDomain = 'localhost'
-  } else {
-    const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-    baseDomain = rawBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
-  }
+  const baseDomain = getBaseDomain(hostWithoutPort)
 
   // Generate JSON-LD Structured Data for Trust
   const jsonLd = {

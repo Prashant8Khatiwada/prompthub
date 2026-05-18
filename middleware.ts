@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getBaseDomain } from './lib/constants'
 
 /**
  * PromptHub Middleware
@@ -21,16 +22,8 @@ export async function middleware(request: NextRequest) {
     userAgent.includes('TikTokBot') || 
     userAgent.includes('ByteSpider')
 
-  // Robust base domain auto-detection based on host or env fallback
-  let baseDomain = 'creatopedia.tech'
-  if (hostWithoutPort.endsWith('.creatopedia.tech') || hostWithoutPort === 'creatopedia.tech') {
-    baseDomain = 'creatopedia.tech'
-  } else if (hostWithoutPort.endsWith('.localhost') || hostWithoutPort === 'localhost') {
-    baseDomain = 'localhost'
-  } else {
-    const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-    baseDomain = envBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
-  }
+  // Robust base domain auto-detection
+  const baseDomain = getBaseDomain(hostWithoutPort)
 
   const isLocalhost = hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1'
   // On localhost, we treat the main localhost host as the main domain so it triggers local redirects

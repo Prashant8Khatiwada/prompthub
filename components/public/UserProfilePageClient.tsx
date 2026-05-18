@@ -8,6 +8,7 @@ import InstagramProfile from './InstagramProfile'
 import { Sparkles, FileText, Image as ImageIcon, Video, Code, Music, ChevronRight, Grid3x3, LayoutGrid, Globe, Camera, ArrowLeft, BadgeCheck, Check, List } from 'lucide-react'
 import AdBanner, { AdPlacementData } from './AdBanner'
 import { InstagramVerifiedBadge } from '@/components/ui/InstagramVerifiedBadge'
+import { getBaseDomain } from '@/lib/constants'
 
 interface PromptWithCategory extends Prompt {
   categories?: { name: string } | null
@@ -87,15 +88,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
     if (isTikTok) return // Let TikTok run path-based for compatibility
 
     const hostname = window.location.hostname
-    let cleanBaseDomain = 'creatopedia.tech'
-    if (hostname.endsWith('.creatopedia.tech') || hostname === 'creatopedia.tech') {
-      cleanBaseDomain = 'creatopedia.tech'
-    } else if (hostname.endsWith('.localhost') || hostname === 'localhost') {
-      cleanBaseDomain = 'localhost'
-    } else {
-      const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-      cleanBaseDomain = rawBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
-    }
+    const cleanBaseDomain = getBaseDomain(hostname)
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
 
     if (hostname === cleanBaseDomain || isLocalhost) {
@@ -171,15 +164,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
 
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname
-      let cleanBaseDomain = 'creatopedia.tech'
-      if (hostname.endsWith('.creatopedia.tech') || hostname === 'creatopedia.tech') {
-        cleanBaseDomain = 'creatopedia.tech'
-      } else if (hostname.endsWith('.localhost') || hostname === 'localhost') {
-        cleanBaseDomain = 'localhost'
-      } else {
-        const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-        cleanBaseDomain = rawBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
-      }
+      const cleanBaseDomain = getBaseDomain(hostname)
       const isSubdomainHost = hostname.startsWith(`${creator.subdomain}.`)
 
       // If we are on the main domain (or localhost), we use /subdomain/slug
@@ -198,15 +183,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
   const portfolioUrl = () => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname
-      let cleanBaseDomain = 'creatopedia.tech'
-      if (hostname.endsWith('.creatopedia.tech') || hostname === 'creatopedia.tech') {
-        cleanBaseDomain = 'creatopedia.tech'
-      } else if (hostname.endsWith('.localhost') || hostname === 'localhost') {
-        cleanBaseDomain = 'localhost'
-      } else {
-        const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-        cleanBaseDomain = rawBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
-      }
+      const cleanBaseDomain = getBaseDomain(hostname)
       const isSubdomain = hostname.startsWith(`${creator.subdomain}.`)
 
       if (hostname === cleanBaseDomain || hostname === 'localhost' || hostname === '127.0.0.1' || !isSubdomain) {

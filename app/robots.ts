@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { PRODUCTION_DOMAIN } from '@/lib/constants'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin/', '/api/'],
     },
-    sitemap: `https://${process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'}/sitemap.xml`,
+    sitemap: `https://${PRODUCTION_DOMAIN}/sitemap.xml`,
   }
 }

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { AdCampaign, AdCampaignStatus, AdPlacementPosition } from '@/types'
 import PromptPlacementDesigner from './PromptPlacementDesigner'
+import { PRODUCTION_DOMAIN } from '@/lib/constants'
 
 const inputCls = 'w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm'
 const labelCls = 'block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2'
@@ -101,7 +102,7 @@ export default function AdCampaignForm({
   }
 
   function copyReportLink() {
-    const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
+    const baseDomain = typeof window !== 'undefined' ? window.location.host : PRODUCTION_DOMAIN
     navigator.clipboard.writeText(`https://${baseDomain}/ads/report/${reportToken}`)
     alert('Report link copied to clipboard!')
   }
@@ -349,8 +350,8 @@ export default function AdCampaignForm({
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               <p className="text-sm font-semibold uppercase tracking-wider">Visual Placement Designer</p>
             </div>
-            <PromptPlacementDesigner 
-              selectedPosition={globalPosition} 
+            <PromptPlacementDesigner
+              selectedPosition={globalPosition}
               onChange={setGlobalPosition}
               bannerUrl={bannerUrl}
             />
@@ -359,7 +360,7 @@ export default function AdCampaignForm({
 
         {placementType === 'categories' && (
           <div className="pl-4 border-l-2 border-zinc-800 mt-4 space-y-6">
-            {(categories as any[]).map(c => {
+            {(categories).map(c => {
               const isSelected = !!selectedCategories[c.id]
               return (
                 <div key={c.id} className={`p-6 rounded-2xl border flex flex-col gap-6 transition-all ${isSelected ? 'bg-indigo-600/5 border-indigo-500/20' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'}`}>
@@ -380,12 +381,12 @@ export default function AdCampaignForm({
                     />
                     <p className="font-bold text-lg text-white">{c.name}</p>
                   </label>
-                  
+
                   {isSelected && (
                     <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800">
                       <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Placement for {c.name}</p>
-                      <PromptPlacementDesigner 
-                        selectedPosition={selectedCategories[c.id]} 
+                      <PromptPlacementDesigner
+                        selectedPosition={selectedCategories[c.id]}
                         onChange={(pos) => setSelectedCategories(prev => ({ ...prev, [c.id]: pos }))}
                         bannerUrl={bannerUrl}
                       />
@@ -428,8 +429,8 @@ export default function AdCampaignForm({
                   {isSelected && (
                     <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800">
                       <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Placement for {p.title}</p>
-                      <PromptPlacementDesigner 
-                        selectedPosition={selectedPrompts[p.id]} 
+                      <PromptPlacementDesigner
+                        selectedPosition={selectedPrompts[p.id]}
                         onChange={(pos) => setSelectedPrompts(prev => ({ ...prev, [p.id]: pos }))}
                         bannerUrl={bannerUrl}
                       />

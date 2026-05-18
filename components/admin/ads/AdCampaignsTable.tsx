@@ -6,6 +6,7 @@ import type { AdCampaign } from '@/types'
 import AdCampaignForm from './AdCampaignForm'
 import { X, Plus, Edit2, BarChart2, Copy, Pause, Play, Trash2 } from 'lucide-react'
 import Link from 'next/link'
+import { PRODUCTION_DOMAIN } from '@/lib/constants'
 
 const STATUS_STYLES: Record<string, string> = {
   active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -80,7 +81,7 @@ export default function AdCampaignsTable({ campaigns: initial, clients, prompts,
   }
 
   function copyReportLink(token: string) {
-    const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
+    const baseDomain = typeof window !== 'undefined' ? window.location.host : PRODUCTION_DOMAIN
     navigator.clipboard.writeText(`https://${baseDomain}/ads/report/${token}`)
   }
 

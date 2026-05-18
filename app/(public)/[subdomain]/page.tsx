@@ -8,6 +8,7 @@ import { AdCampaign } from '@/types'
 import { AdPlacementData } from '@/components/public/AdBanner'
 import { headers } from 'next/headers'
 import CreatopediaLanding from '@/components/public/CreatopediaLanding'
+import { getBaseDomain } from '@/lib/constants'
 
 // ISR: cache at edge for 60s, revalidate in background.
 // force-dynamic / revalidate=0 caused cold DB+Instagram hits on every request,
@@ -25,16 +26,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const headerList = await headers()
   const host = headerList.get('host') || ''
   const hostWithoutPort = host.split(':')[0]
-
-  let baseDomain = 'creatopedia.tech'
-  if (hostWithoutPort.endsWith('.creatopedia.tech') || hostWithoutPort === 'creatopedia.tech') {
-    baseDomain = 'creatopedia.tech'
-  } else if (hostWithoutPort.endsWith('.localhost') || hostWithoutPort === 'localhost') {
-    baseDomain = 'localhost'
-  } else {
-    const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-    baseDomain = envBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
-  }
+  const baseDomain = getBaseDomain(hostWithoutPort)
 
   // Find creator by subdomain OR handle
   const { data: creator } = await supabase
@@ -107,16 +99,7 @@ export default async function UserProfilePage({ params }: Params) {
   const headerList = await headers()
   const host = headerList.get('host') || ''
   const hostWithoutPort = host.split(':')[0]
-
-  let baseDomain = 'creatopedia.tech'
-  if (hostWithoutPort.endsWith('.creatopedia.tech') || hostWithoutPort === 'creatopedia.tech') {
-    baseDomain = 'creatopedia.tech'
-  } else if (hostWithoutPort.endsWith('.localhost') || hostWithoutPort === 'localhost') {
-    baseDomain = 'localhost'
-  } else {
-    const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-    baseDomain = envBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
-  }
+  const baseDomain = getBaseDomain(hostWithoutPort)
 
   const isLocalSubdomain = hostWithoutPort.endsWith('.localhost')
   const isSubdomainHost = (hostWithoutPort !== baseDomain && hostWithoutPort.endsWith(`.${baseDomain}`)) || isLocalSubdomain

@@ -7,6 +7,7 @@ import { LayoutGrid, Globe, ArrowLeft, Sparkles, FileText, Image as ImageIcon, V
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { InstagramVerifiedBadge } from '@/components/ui/InstagramVerifiedBadge'
+import { getBaseDomain } from '@/lib/constants'
 
 
 
@@ -220,15 +221,7 @@ export default function EnhancedPublicPromptUI({
     // Use Next.js router for proper navigation
     const newPath = (() => {
       const hostname = window.location.hostname
-      let cleanBaseDomain = 'creatopedia.tech'
-      if (hostname.endsWith('.creatopedia.tech') || hostname === 'creatopedia.tech') {
-        cleanBaseDomain = 'creatopedia.tech'
-      } else if (hostname.endsWith('.localhost') || hostname === 'localhost') {
-        cleanBaseDomain = 'localhost'
-      } else {
-        const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-        cleanBaseDomain = rawBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
-      }
+      const cleanBaseDomain = getBaseDomain(hostname)
       const isSubdomain = hostname.startsWith(`${creator.subdomain}.`)
       if (hostname === cleanBaseDomain || hostname === 'localhost' || hostname === '127.0.0.1' || !isSubdomain) {
         return `/${creator.subdomain}/${clickedPrompt.slug}`
