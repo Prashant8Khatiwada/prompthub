@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache'
 import { adminClient } from '@/lib/supabase/admin'
 import { Creator, Prompt } from '@/types'
+import { transformCdnUrls } from '@/lib/cdn'
 
 export const getCachedCreator = (subdomain: string) => 
   unstable_cache(
@@ -11,7 +12,7 @@ export const getCachedCreator = (subdomain: string) =>
         .eq('subdomain', subdomain)
         .single()
       if (error || !data) return null
-      return data as Creator
+      return transformCdnUrls(data) as Creator
     },
     ['creator', subdomain],
     { revalidate: 1, tags: [`creator-${subdomain}`] }
@@ -28,7 +29,7 @@ export const getCachedPrompt = (creatorId: string, slug: string) =>
         .eq('status', 'published')
         .single()
       if (error || !data) return null
-      return data as Prompt
+      return transformCdnUrls(data) as Prompt
     },
     ['prompt', creatorId, slug],
     { revalidate: 1, tags: [`prompt-${creatorId}-${slug}`] }
@@ -53,7 +54,7 @@ export const getCachedRelatedPrompts = (creatorId: string, currentPromptId: stri
         .eq('status', 'published')
         .neq('id', currentPromptId)
         .limit(3)
-      return (data || []) as RelatedPromptType[]
+      return (transformCdnUrls(data || []) as RelatedPromptType[])
     },
     ['related-prompts', creatorId, currentPromptId],
     { revalidate: 60, tags: [`prompts-list-${creatorId}`] }

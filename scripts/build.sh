@@ -20,6 +20,9 @@ fi
 
 echo "--- Starting Docker build for $IMAGE_TAG (Platform: linux/amd64) ---"
 
+# Disable Next.js cache for fresh builds
+export NEXT_DISABLE_CACHE=1
+
 # Use the values from .env or fall back to hardcoded defaults
 # Note: For NEXT_PUBLIC_BASE_DOMAIN, we ensure it's just the domain without protocol for the layout.tsx logic
 BASE_DOMAIN=${NEXT_PUBLIC_BASE_DOMAIN:-"creatopedia.tech"}
@@ -42,6 +45,7 @@ docker build \
   --build-arg INSTAGRAM_CLIENT_SECRET="${INSTAGRAM_CLIENT_SECRET:-"e3dc546a1370a20d2a3010fd02563acd"}" \
   --build-arg INSTAGRAM_REDIRECT_URI="${INSTAGRAM_REDIRECT_URI:-"https://creatopedia.tech/api/auth/instagram/callback"}" \
   --build-arg TOKEN_ENCRYPTION_KEY="${TOKEN_ENCRYPTION_KEY:-"4d47a1eee73a4fc05718375fe118daa30d6d3cfd9615a6b300a1196d1674f129"}" \
+  --build-arg NEXT_DISABLE_CACHE=1 \
   -t "$IMAGE_TAG" .
 
 if [ $? -eq 0 ]; then

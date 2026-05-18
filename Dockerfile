@@ -36,6 +36,7 @@ ARG INSTAGRAM_CLIENT_ID
 ARG INSTAGRAM_CLIENT_SECRET
 ARG INSTAGRAM_REDIRECT_URI
 ARG TOKEN_ENCRYPTION_KEY
+ARG NEXT_DISABLE_CACHE
 
 # Set environment variables for the build process
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
@@ -52,14 +53,15 @@ ENV INSTAGRAM_CLIENT_ID=$INSTAGRAM_CLIENT_ID
 ENV INSTAGRAM_CLIENT_SECRET=$INSTAGRAM_CLIENT_SECRET
 ENV INSTAGRAM_REDIRECT_URI=$INSTAGRAM_REDIRECT_URI
 ENV TOKEN_ENCRYPTION_KEY=$TOKEN_ENCRYPTION_KEY
+ENV NEXT_DISABLE_CACHE=$NEXT_DISABLE_CACHE
 
 # Disable telemetry during the build
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN \
-  if [ -f yarn.lock ]; then corepack enable yarn && yarn build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+  if [ -f yarn.lock ]; then corepack enable yarn && NEXT_DISABLE_CACHE=1 yarn build; \
+  elif [ -f package-lock.json ]; then NEXT_DISABLE_CACHE=1 npm run build; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && NEXT_DISABLE_CACHE=1 pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi
 

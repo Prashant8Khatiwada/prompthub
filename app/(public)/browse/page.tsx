@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { transformCdnUrls } from '@/lib/cdn'
 import type { Prompt, Creator, Category } from '@/types'
 
 export const revalidate = 60
@@ -23,6 +24,8 @@ export default async function BrowsePage() {
     .eq('status', 'published')
     .order('created_at', { ascending: false }) as { data: PromptWithDetails[] | null }
 
+  const transformedPrompts = transformCdnUrls(prompts || []) as PromptWithDetails[]
+
   return (
     <main className="min-h-screen bg-zinc-950 text-white pt-32 pb-20 px-6">
       <div className="max-w-7xl mx-auto">
@@ -31,9 +34,9 @@ export default async function BrowsePage() {
           <p className="text-zinc-500 text-lg max-w-2xl font-medium">Explore our entire collection of community-verified AI prompts for the next generation of content.</p>
         </header>
 
-        {prompts && prompts.length > 0 ? (
+        {transformedPrompts && transformedPrompts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {prompts.map((p) => (
+            {transformedPrompts.map((p) => (
               <div key={p.id} className="group rounded-[2rem] border border-zinc-800 bg-zinc-900/40 hover:border-zinc-600 transition-all duration-300 hover:-translate-y-2 overflow-hidden shadow-2xl">
                 <div className="aspect-[4/3] relative bg-zinc-800 flex items-center justify-center overflow-hidden">
                   {p.thumbnail_url ? (

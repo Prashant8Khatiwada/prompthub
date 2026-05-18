@@ -1,0 +1,84 @@
+export const SUPABASE_STORAGE_URL = 'https://slbywxgigzuodyrmhdsg.supabase.co/storage/v1/object/public'
+export const CDN_URL = 'https://cdn.creatopedia.tech'
+
+const STORAGE_BUCKETS = ['prompts', 'avatars', 'images', 'banners', 'assets']
+
+function isSupabaseStorageUrl(url: string): boolean {
+  return url?.startsWith(SUPABASE_STORAGE_URL)
+}
+
+function isExternalUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return parsed.hostname !== 'slbywxgigzuodyrmhdsg.supabase.co'
+  } catch {
+    return false
+  }
+}
+
+const URL_FIELDS = new Set([
+  'thumbnail_url',
+  'share_image_url',
+  'video_url',
+  'pdf_url',
+  'avatar_url',
+  'image_url',
+  'banner_url',
+  'logo_url',
+  'media_url',
+  'src',
+  'url',
+])
+
+export function toCdnUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  if (isSupabaseStorageUrl(url)) {
+    const path = url.replace(SUPABASE_STORAGE_URL + '/', '')
+    return `${CDN_URL}/${path}`
+  }
+  return url
+}
+
+function processValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return toCdnUrl(value)
+  }
+  if (Array.isArray(value)) {
+    return value.map(processValue)
+  }
+  if (value && typeof value === 'object') {
+    return transformCdnUrls(value as Record<string, unknown>)
+  }
+  return value
+}
+
+export function transformCdnUrls<T extends Record<string, unknown> | unknown[]>(
+  data: T
+): T {
+  if (Array.isArray(data)) {
+    return data.map(item => {
+      if (item && typeof item === 'object') {
+        return transformCdnUrls(item as Record<string, unknown>) as typeof item
+      }
+      return item
+    }) as T
+  }
+
+  if (typeof data !== 'object' || data === null) {
+    return data
+  }
+
+  const result: Record<string, unknown> = {}
+
+  for (const [key, value] of Object.entries(data)) {
+    if (value === null || value === undefined) {
+      result[key] = value
+    } else if (URL_FIELDS.has(key) && typeof value === 'string') {
+      result[key] = toCdnUrl(value)
+    } else {
+      result[key] = processValue(value)
+    }
+  }
+
+  return result as T
+}

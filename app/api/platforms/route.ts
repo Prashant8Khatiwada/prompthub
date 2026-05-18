@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
+import { transformCdnUrls } from '@/lib/cdn'
 
 export async function GET() {
   const cookieStore = await cookies()
@@ -66,13 +67,16 @@ export async function GET() {
     return { ...p, ig_thumbnail_url: igThumb || null }
   })
 
-  return NextResponse.json({
-    categories: categoriesRes.data || [],
-    creators,
-    prompts
-  }, {
-    headers: {
-      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
+  return NextResponse.json(
+    transformCdnUrls({
+      categories: categoriesRes.data || [],
+      creators,
+      prompts
+    }),
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
+      }
     }
-  })
+  )
 }
