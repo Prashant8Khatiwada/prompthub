@@ -37,9 +37,17 @@ export default function RelatedPrompts({ prompts, subdomain, onPromptClick }: Pr
           const href = (() => {
             if (typeof window !== 'undefined') {
               const hostname = window.location.hostname
-              const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN?.replace(/^https?:\/\//, '') || 'creatopedia.tech'
+              let cleanBaseDomain = 'creatopedia.tech'
+              if (hostname.endsWith('.creatopedia.tech') || hostname === 'creatopedia.tech') {
+                cleanBaseDomain = 'creatopedia.tech'
+              } else if (hostname.endsWith('.localhost') || hostname === 'localhost') {
+                cleanBaseDomain = 'localhost'
+              } else {
+                const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
+                cleanBaseDomain = rawBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
+              }
               const isSubdomain = hostname.startsWith(`${subdomain}.`)
-              if (hostname === baseDomain || hostname === 'localhost' || hostname === '127.0.0.1' || !isSubdomain) {
+              if (hostname === cleanBaseDomain || hostname === 'localhost' || hostname === '127.0.0.1' || !isSubdomain) {
                 return `/${subdomain}/${p.slug}`
               }
               return `/${p.slug}`

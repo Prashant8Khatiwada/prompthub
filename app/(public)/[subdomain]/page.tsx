@@ -22,6 +22,20 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { subdomain } = await params
   const supabase = adminClient // Use admin client to ensure we can always fetch metadata regardless of RLS
 
+  const headerList = await headers()
+  const host = headerList.get('host') || ''
+  const hostWithoutPort = host.split(':')[0]
+
+  let baseDomain = 'creatopedia.tech'
+  if (hostWithoutPort.endsWith('.creatopedia.tech') || hostWithoutPort === 'creatopedia.tech') {
+    baseDomain = 'creatopedia.tech'
+  } else if (hostWithoutPort.endsWith('.localhost') || hostWithoutPort === 'localhost') {
+    baseDomain = 'localhost'
+  } else {
+    const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
+    baseDomain = envBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
+  }
+
   // Find creator by subdomain OR handle
   const { data: creator } = await supabase
     .from('creators')
@@ -30,11 +44,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     .single()
 
   if (!creator) {
-    const headerList = await headers()
-    const host = headerList.get('host') || ''
-    const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-    const baseDomain = envBaseDomain.replace(/^https?:\/\//, '')
-    const hostWithoutPort = host.split(':')[0]
     const isLocalSubdomain = hostWithoutPort.endsWith('.localhost')
     const isSubdomainHost = (hostWithoutPort !== baseDomain && hostWithoutPort.endsWith(`.${baseDomain}`)) || isLocalSubdomain
 
@@ -50,9 +59,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   // Fetch Instagram data for avatar fallback
   const igUser = await fetchInstagramUser(creator.id)
   const avatarUrl = creator.avatar_url || igUser?.profile_picture_url
-
-  const rawBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'creatopedia.tech'
-  const baseDomain = rawBaseDomain.replace(/^https?:\/\//, '')
 
   // Primary URL - Prefer SUBDOMAIN format for maximum compatibility with social platforms as per Independent Subdomain Architecture
   const shareUrl = `https://${creator.subdomain}.${baseDomain}`
@@ -100,9 +106,18 @@ export default async function UserProfilePage({ params }: Params) {
 
   const headerList = await headers()
   const host = headerList.get('host') || ''
-  const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
-  const baseDomain = envBaseDomain.replace(/^https?:\/\//, '')
   const hostWithoutPort = host.split(':')[0]
+
+  let baseDomain = 'creatopedia.tech'
+  if (hostWithoutPort.endsWith('.creatopedia.tech') || hostWithoutPort === 'creatopedia.tech') {
+    baseDomain = 'creatopedia.tech'
+  } else if (hostWithoutPort.endsWith('.localhost') || hostWithoutPort === 'localhost') {
+    baseDomain = 'localhost'
+  } else {
+    const envBaseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'creatopedia.tech'
+    baseDomain = envBaseDomain.replace(/^https?:\/\//, '').split(':')[0]
+  }
+
   const isLocalSubdomain = hostWithoutPort.endsWith('.localhost')
   const isSubdomainHost = (hostWithoutPort !== baseDomain && hostWithoutPort.endsWith(`.${baseDomain}`)) || isLocalSubdomain
 
