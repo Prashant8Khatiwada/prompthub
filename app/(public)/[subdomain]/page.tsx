@@ -9,6 +9,7 @@ import { AdPlacementData } from '@/components/public/AdBanner'
 import { headers } from 'next/headers'
 import CreatopediaLanding from '@/components/public/CreatopediaLanding'
 import { getBaseDomain } from '@/lib/constants'
+import { transformCdnUrls } from '@/lib/cdn'
 
 // ISR: cache at edge for 60s, revalidate in background.
 // force-dynamic / revalidate=0 caused cold DB+Instagram hits on every request,
@@ -119,6 +120,8 @@ export default async function UserProfilePage({ params }: Params) {
     .eq('status', 'published')
     .order('created_at', { ascending: false })
 
+  const transformedPrompts = transformCdnUrls(prompts || [])
+
   // 3. Fetch all categories that have published prompts from this creator
   const categoryIds = [
     ...new Set((prompts ?? []).map((p) => p.category_id).filter(Boolean)),
@@ -191,7 +194,7 @@ export default async function UserProfilePage({ params }: Params) {
         igUser={igUser}
         igFeed={igFeed}
         categories={categories ?? []}
-        prompts={prompts ?? []}
+        prompts={transformedPrompts}
         adPlacements={placements}
         isSubdomain={isSubdomain}
       />

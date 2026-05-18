@@ -2,9 +2,19 @@ export const SUPABASE_STORAGE_URL = 'https://slbywxgigzuodyrmhdsg.supabase.co/st
 export const CDN_URL = 'https://cdn.creatopedia.tech'
 
 const STORAGE_BUCKETS = ['prompts', 'avatars', 'images', 'banners', 'assets']
+const INSTAGRAM_HOSTNAMES = ['cdninstagram.com', 'scontent.cdninstagram.com', 'instagram.com']
 
 function isSupabaseStorageUrl(url: string): boolean {
   return url?.startsWith(SUPABASE_STORAGE_URL)
+}
+
+function isInstagramUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return INSTAGRAM_HOSTNAMES.some(h => parsed.hostname.includes(h) || parsed.hostname.startsWith(h))
+  } catch {
+    return false
+  }
 }
 
 function isExternalUrl(url: string): boolean {
@@ -32,6 +42,7 @@ const URL_FIELDS = new Set([
 
 export function toCdnUrl(url: string | null | undefined): string | null {
   if (!url) return null
+  if (isInstagramUrl(url)) return url
   if (isSupabaseStorageUrl(url)) {
     const path = url.replace(SUPABASE_STORAGE_URL + '/', '')
     return `${CDN_URL}/${path}`
