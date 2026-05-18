@@ -1,16 +1,21 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
 import { fetchInstagramUser, fetchInstagramFeed } from '@/lib/instagram'
 import UserProfilePageClient from '@/components/public/UserProfilePageClient'
 import { adminClient } from '@/lib/supabase/admin'
-import { AdCampaign } from '@/types'
 import { AdPlacementData } from '@/components/public/AdBanner'
 import { headers } from 'next/headers'
 import CreatopediaLanding from '@/components/public/CreatopediaLanding'
 import { getBaseDomain } from '@/lib/constants'
 import { transformCdnUrls } from '@/lib/cdn'
 
+// Prompt details page imports
+import { fetchInstagramOEmbed } from '@/lib/oembed'
+import ViewTracker from '@/components/public/ViewTracker'
+import AdBanner from '@/components/public/AdBanner'
+import { fetchInstagramMedia } from '@/lib/instagram'
+import EnhancedPublicPromptUI from '@/components/public/EnhancedPublicPromptUI'
+import { getCachedPrompt, getCachedRelatedPrompts } from '@/lib/data/public-prompts'
 // ISR: cache at edge for 60s, revalidate in background.
 // force-dynamic / revalidate=0 caused cold DB+Instagram hits on every request,
 // which can exceed TikTok's in-app browser timeout and show a blank/error page.
@@ -21,7 +26,7 @@ interface Params {
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const { subdomain } = await params
+  const { subdomain: pathParam } = await params
   const supabase = adminClient // Use admin client to ensure we can always fetch metadata regardless of RLS
 
   const headerList = await headers()
@@ -29,31 +34,88 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const hostWithoutPort = host.split(':')[0]
   const baseDomain = getBaseDomain(hostWithoutPort)
 
-  // Find creator by subdomain OR handle
+  const isLocalSubdomain = hostWithoutPort.endsWith('.localhost')
+  const isSubdomainHost = (hostWithoutPort !== baseDomain && hostWithoutPort.endsWith(`.${baseDomain}`)) || isLocalSubdomain
+
+  let actualCreatorSubdomain = pathParam
+  let promptSlug: string | null = null
+
+  if (isSubdomainHost) {
+    actualCreatorSubdomain = isLocalSubdomain
+      ? hostWithoutPort.replace('.localhost', '')
+      : hostWithoutPort.replace(`.${baseDomain}`, '')
+
+    if (pathParam && pathParam !== actualCreatorSubdomain) {
+      promptSlug = pathParam
+    }
+  }
+
+  // Find creator by actual subdomain OR handle
   const { data: creator } = await supabase
     .from('creators')
     .select('id, name, handle, bio, avatar_url, subdomain')
-    .or(`subdomain.eq.${subdomain},handle.eq.${subdomain}`)
+    .or(`subdomain.eq.${actualCreatorSubdomain},handle.eq.${actualCreatorSubdomain}`)
     .single()
 
   if (!creator) {
-    const isLocalSubdomain = hostWithoutPort.endsWith('.localhost')
-    const isSubdomainHost = (hostWithoutPort !== baseDomain && hostWithoutPort.endsWith(`.${baseDomain}`)) || isLocalSubdomain
-
-    if (isSubdomainHost) {
+    if (isSubdomainHost && !promptSlug) {
       return {
         title: 'Creatopedia | Where Creators Lead, World Follows',
         description: 'Join early access for Creatopedia. One platform for every creator niche. Videos, PDFs, tutorials, and paid content curated directly for audiences.',
       }
     }
-    return { title: 'Creator Not Found' }
+    return { title: 'Not Found' }
   }
 
-  // Fetch Instagram data for avatar fallback
+  // ─── MODE A: PROMPT METADATA ───
+  if (promptSlug) {
+    const { data: prompt } = await supabase
+      .from('prompts')
+      .select('title,description,thumbnail_url,share_image_url,ai_tool')
+      .eq('slug', promptSlug)
+      .eq('status', 'published')
+      .single()
+
+    if (!prompt) return { title: 'Not Found' }
+
+    const title = `${prompt.title} | ${creator.name}`
+    const description = prompt.description ?? `Check out this ${prompt.ai_tool} prompt by ${creator.name}.`
+    const shareUrl = `https://${creator.subdomain}.${baseDomain}/${promptSlug}`
+
+    let ogImageUrl = prompt.share_image_url || prompt.thumbnail_url
+    if (!ogImageUrl) {
+      ogImageUrl = `https://${creator.subdomain}.${baseDomain}/${promptSlug}/opengraph-image`
+    } else if (!ogImageUrl.startsWith('http')) {
+      ogImageUrl = `https://${baseDomain}${ogImageUrl.startsWith('/') ? '' : '/'}${ogImageUrl}`
+    }
+
+    return {
+      title,
+      description,
+      alternates: { canonical: shareUrl },
+      openGraph: {
+        title,
+        description,
+        url: shareUrl,
+        siteName: 'Creatopedia',
+        locale: 'en_US',
+        type: 'article',
+        authors: [creator.name],
+        images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title, type: 'image/png' }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [ogImageUrl],
+        creator: creator.handle || `@${creator.subdomain}`,
+      },
+    }
+  }
+
+  // ─── MODE B: CREATOR PROFILE METADATA ───
   const igUser = await fetchInstagramUser(creator.id)
   const avatarUrl = creator.avatar_url || igUser?.profile_picture_url
-
-  // Primary URL - Prefer SUBDOMAIN format for maximum compatibility with social platforms as per Independent Subdomain Architecture
   const shareUrl = `https://${creator.subdomain}.${baseDomain}`
 
   return {
@@ -71,7 +133,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
           width: 400,
           height: 400,
           alt: creator.name,
-          type: 'image/jpeg', // Standard for profile pics
+          type: 'image/jpeg',
         }
       ] : [],
       type: 'profile',
@@ -87,15 +149,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 export default async function UserProfilePage({ params }: Params) {
-  const { subdomain } = await params
+  const { subdomain: pathParam } = await params
   const supabase = adminClient
-
-  // 1. Find creator by subdomain OR handle
-  const { data: creator } = await supabase
-    .from('creators')
-    .select('*')
-    .or(`subdomain.eq.${subdomain},handle.eq.${subdomain}`)
-    .single()
 
   const headerList = await headers()
   const host = headerList.get('x-forwarded-host') || headerList.get('host') || ''
@@ -105,14 +160,141 @@ export default async function UserProfilePage({ params }: Params) {
   const isLocalSubdomain = hostWithoutPort.endsWith('.localhost')
   const isSubdomainHost = (hostWithoutPort !== baseDomain && hostWithoutPort.endsWith(`.${baseDomain}`)) || isLocalSubdomain
 
+  let actualCreatorSubdomain = pathParam
+  let promptSlug: string | null = null
+
+  // If we are on a creator subdomain (e.g. milan.creatopedia.tech/hairstyle)
+  // Then the actual creator is 'milan' (from host) and the pathParam ('hairstyle') is the prompt slug!
+  if (isSubdomainHost) {
+    actualCreatorSubdomain = isLocalSubdomain
+      ? hostWithoutPort.replace('.localhost', '')
+      : hostWithoutPort.replace(`.${baseDomain}`, '')
+
+    // Only treat pathParam as a slug if it is NOT the same as the creator subdomain
+    // (e.g. milan.creatopedia.tech/milan shouldn't treat 'milan' as a prompt)
+    if (pathParam && pathParam !== actualCreatorSubdomain) {
+      promptSlug = pathParam
+    }
+  }
+
+  // 1. Find creator by actual subdomain OR handle
+  const { data: creator } = await supabase
+    .from('creators')
+    .select('*')
+    .or(`subdomain.eq.${actualCreatorSubdomain},handle.eq.${actualCreatorSubdomain}`)
+    .single()
+
   if (!creator) {
-    if (isSubdomainHost) {
+    if (isSubdomainHost && !promptSlug) {
       return <CreatopediaLanding />
     }
     notFound()
   }
 
-  // 2. Fetch all published prompts for this creator
+  // ─── MODE A: RENDER PROMPT DETAIL PAGE (If promptSlug is present) ───
+  if (promptSlug) {
+    const prompt = await getCachedPrompt(creator.id, promptSlug)
+    if (!prompt) notFound()
+
+    const related = await getCachedRelatedPrompts(creator.id, prompt.id)
+
+    const isRawHtml = !!prompt.embed_html || prompt.video_url?.trim().startsWith('<')
+    const oEmbedHtml = prompt.embed_html || (prompt.video_url?.trim().startsWith('<')
+      ? prompt.video_url
+      : (prompt.video_url ? await fetchInstagramOEmbed(prompt.video_url) : null))
+
+    const igMedia = (prompt.video_url && !isRawHtml)
+      ? await fetchInstagramMedia(prompt.video_url, creator.id)
+      : null
+
+    const igUser = await fetchInstagramUser(creator.id)
+    const igFeed = await fetchInstagramFeed(creator.id)
+
+    const now = new Date().toISOString()
+    const filters = [`prompt_id.eq.${prompt.id}`, `is_global.eq.true`]
+    if (prompt.category_id) {
+      filters.push(`category_id.eq.${prompt.category_id}`)
+    }
+
+    const { data: rawPlacements } = await adminClient
+      .from('ad_placements')
+      .select('id, position, is_global, prompt_id, category_id, creator_id, campaign:ad_campaigns(*)')
+      .eq('creator_id', creator.id)
+      .or(filters.join(','))
+
+    const placements: AdPlacementData[] = (rawPlacements ?? [])
+      .map((p) => ({
+        ...p,
+        campaign: Array.isArray(p.campaign) ? p.campaign[0] : p.campaign
+      }))
+      .filter((p) => {
+        const cam = p.campaign
+        if (!cam || cam.status !== 'active') return false
+        if (cam.starts_at && cam.starts_at > now) return false
+        if (cam.ends_at && cam.ends_at < now) return false
+        return true
+      }) as AdPlacementData[]
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: prompt.title,
+      description: prompt.description,
+      image: prompt.thumbnail_url || prompt.share_image_url || `https://${creator.subdomain}.${baseDomain}/${prompt.slug}/opengraph-image`,
+      author: {
+        '@type': 'Person',
+        name: creator.name,
+        url: `https://${creator.subdomain}.${baseDomain}`
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Creatopedia',
+        url: `https://${baseDomain}`
+      }
+    }
+
+    return (
+      <main
+        style={{ '--brand': creator.brand_color } as React.CSSProperties}
+        className="min-h-screen bg-zinc-950 text-white"
+      >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <ViewTracker key={`tracker-${prompt.id}`} pageId={prompt.id} promptId={prompt.id} creatorId={creator.id} />
+
+        <EnhancedPublicPromptUI
+          key={prompt.id}
+          creator={creator}
+          prompt={prompt}
+          igUser={igUser}
+          igMedia={igMedia}
+          igFeed={igFeed}
+          relatedData={related ?? []}
+          adHero={
+            placements.some((p: AdPlacementData) => p.position === 'above_media') && (
+              <AdBanner placements={placements} position="above_media" promptId={prompt.id} creatorId={creator.id} />
+            )
+          }
+          adAbovePrompt={
+            placements.some((p: AdPlacementData) => p.position === 'above_prompt') && (
+              <AdBanner placements={placements} position="above_prompt" promptId={prompt.id} creatorId={creator.id} />
+            )
+          }
+          adBelowPrompt={
+            placements.some((p: AdPlacementData) => p.position === 'below_prompt') && (
+              <AdBanner placements={placements} position="below_prompt" promptId={prompt.id} creatorId={creator.id} />
+            )
+          }
+          adPopupPlacements={placements.filter((p: AdPlacementData) => p.position === 'popup')}
+          oEmbedHtml={oEmbedHtml}
+        />
+      </main>
+    )
+  }
+
+  // ─── MODE B: RENDER CREATOR PROFILE PAGE (If no promptSlug) ───
   const { data: prompts } = await supabase
     .from('prompts')
     .select('*, categories(name)')
@@ -122,7 +304,6 @@ export default async function UserProfilePage({ params }: Params) {
 
   const transformedPrompts = transformCdnUrls(prompts || [])
 
-  // 3. Fetch all categories that have published prompts from this creator
   const categoryIds = [
     ...new Set((prompts ?? []).map((p) => p.category_id).filter(Boolean)),
   ]
@@ -135,13 +316,11 @@ export default async function UserProfilePage({ params }: Params) {
       .order('name')
     : { data: [] }
 
-  // 4. Fetch Instagram data
   const [igUser, igFeed] = await Promise.all([
     fetchInstagramUser(creator.id),
     fetchInstagramFeed(creator.id),
   ])
 
-  // 5. Fetch ad placements
   const now = new Date().toISOString()
   const { data: rawPlacements } = await adminClient
     .from('ad_placements')
@@ -150,26 +329,20 @@ export default async function UserProfilePage({ params }: Params) {
     .or(`position.eq.creator_page,position.eq.discovery_header_banner,position.like.discovery_slot_%`)
 
   const placements: AdPlacementData[] = (rawPlacements ?? [])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((p: any) => {
-      // Supabase join might return an array or object
-      const campaign = Array.isArray(p.campaign) ? p.campaign[0] : p.campaign
-      return {
-        ...p,
-        campaign: campaign as AdCampaign
-      }
-    })
+    .map((p) => ({
+      ...p,
+      campaign: Array.isArray(p.campaign) ? p.campaign[0] : p.campaign
+    }))
     .filter((p) => {
       const cam = p.campaign
       if (!cam || cam.status !== 'active') return false
       if (cam.starts_at && cam.starts_at > now) return false
       if (cam.ends_at && cam.ends_at < now) return false
       return true
-    })
+    }) as AdPlacementData[]
 
   const isSubdomain = hostWithoutPort.startsWith(`${creator.subdomain}.`) || hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1'
 
-  // Generate JSON-LD Structured Data for Trust
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
