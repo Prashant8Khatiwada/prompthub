@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const description = prompt.description ?? `Check out this ${prompt.ai_tool} prompt by ${creator.name}.`
   
   const headerList = await headers()
-  const host = headerList.get('host') || ''
+  const host = headerList.get('x-forwarded-host') || headerList.get('host') || ''
   const hostWithoutPort = host.split(':')[0]
   const baseDomain = getBaseDomain(hostWithoutPort)
   
@@ -191,7 +191,7 @@ export default async function PublicPromptPage({ params }: Params) {
   console.log('PLACEMENTS LOADED:', placements.length)
 
   const headerList = await headers()
-  const host = headerList.get('host') || ''
+  const host = headerList.get('x-forwarded-host') || headerList.get('host') || ''
   const hostWithoutPort = host.split(':')[0]
   const baseDomain = getBaseDomain(hostWithoutPort)
 

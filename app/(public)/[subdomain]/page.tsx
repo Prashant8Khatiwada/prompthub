@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const supabase = adminClient // Use admin client to ensure we can always fetch metadata regardless of RLS
 
   const headerList = await headers()
-  const host = headerList.get('host') || ''
+  const host = headerList.get('x-forwarded-host') || headerList.get('host') || ''
   const hostWithoutPort = host.split(':')[0]
   const baseDomain = getBaseDomain(hostWithoutPort)
 
@@ -97,7 +97,7 @@ export default async function UserProfilePage({ params }: Params) {
     .single()
 
   const headerList = await headers()
-  const host = headerList.get('host') || ''
+  const host = headerList.get('x-forwarded-host') || headerList.get('host') || ''
   const hostWithoutPort = host.split(':')[0]
   const baseDomain = getBaseDomain(hostWithoutPort)
 
