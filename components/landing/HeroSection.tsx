@@ -48,7 +48,8 @@ export default function HeroSection() {
 
         {/* Big headline */}
         <h1 className="text-8xl sm:text-6xl md:text-[84px] font-black leading-[1.05] tracking-tight max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
-          <span className="text-white block">We craft stories</span>
+          <span className="text-white block">We craft Movies</span>
+          {/* <span className="text-white block">We craft stories</span> */}
           <span
             className="block mt-2 pb-1"
             style={{

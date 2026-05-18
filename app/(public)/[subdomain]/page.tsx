@@ -87,7 +87,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function UserProfilePage({ params }: Params) {
   const { subdomain } = await params
-  const supabase = await createClient()
+  const supabase = adminClient
 
   // 1. Find creator by subdomain OR handle
   const { data: creator } = await supabase
