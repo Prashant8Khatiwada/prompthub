@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { X, Plus, Trash2 } from 'lucide-react'
 import PromptForm from './PromptForm'
+import type { Prompt } from '@/types'
 
 interface Props {
   isOpen: boolean
   onClose: () => void
-  promptToEdit?: any
+  promptToEdit?: Prompt
 }
 
 interface NewPromptItem {
@@ -81,7 +82,11 @@ export default function PromptModal({ isOpen, onClose, promptToEdit }: Props) {
     }
   }
 
-  const updateItem = (index: number, key: keyof NewPromptItem, value: any) => {
+  const updateItem = <K extends keyof NewPromptItem>(
+    index: number,
+    key: K,
+    value: NewPromptItem[K]
+  ) => {
     setItems(prev => prev.map((item, i) => i === index ? { ...item, [key]: value } : item))
   }
 
@@ -172,8 +177,8 @@ export default function PromptModal({ isOpen, onClose, promptToEdit }: Props) {
       setItems([{ title: '', description: '', content: '', isVariants: false, variants: [{ subtitle: '', description: '' }] }])
       onClose()
       window.location.reload()
-    } catch (err: any) {
-      setError(err.message || 'Failed to create prompts')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create prompts')
     } finally {
       setIsSubmitting(false)
     }
@@ -330,6 +335,9 @@ export default function PromptModal({ isOpen, onClose, promptToEdit }: Props) {
                               <div className="space-y-2">
                                 <input
                                   type="text"
+                                  id={`modal-prompt-${index}-variant-subtitle-${vIdx}`}
+                                  name={`modal-prompt-${index}-variant-subtitle-${vIdx}`}
+                                  autoComplete="off"
                                   value={v.subtitle}
                                   onChange={e => updateVariantItem(index, vIdx, 'subtitle', e.target.value)}
                                   placeholder="Subtitle (e.g., For Men, For Women) *"
@@ -337,6 +345,9 @@ export default function PromptModal({ isOpen, onClose, promptToEdit }: Props) {
                                   required={item.isVariants}
                                 />
                                 <textarea
+                                  id={`modal-prompt-${index}-variant-description-${vIdx}`}
+                                  name={`modal-prompt-${index}-variant-description-${vIdx}`}
+                                  autoComplete="off"
                                   value={v.description}
                                   onChange={e => updateVariantItem(index, vIdx, 'description', e.target.value)}
                                   placeholder="Prompt description/content *"

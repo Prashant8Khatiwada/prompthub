@@ -412,6 +412,9 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
                       <div>
                         <input
                           type="text"
+                          id={`variant-subtitle-${index}`}
+                          name={`variant-subtitle-${index}`}
+                          autoComplete="off"
                           value={variant.subtitle}
                           onChange={e => updateVariantOption(index, 'subtitle', e.target.value)}
                           placeholder="Subtitle (e.g. For Men, For Women) *"
@@ -421,6 +424,9 @@ export default function PromptForm({ defaultValues, promptId, onSuccess }: Props
                       </div>
                       <div>
                         <textarea
+                          id={`variant-description-${index}`}
+                          name={`variant-description-${index}`}
+                          autoComplete="off"
                           value={variant.description}
                           onChange={e => updateVariantOption(index, 'description', e.target.value)}
                           placeholder="Prompt description/content *"

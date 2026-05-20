@@ -41,7 +41,10 @@ export function toCdnUrl(url: string | null | undefined): string | null {
   if (!url) return null
   if (isInstagramUrl(url)) return url
   if (isSupabaseStorageUrl(url)) {
-    const path = url.replace(SUPABASE_STORAGE_URL + '/', '')
+    let path = url.replace(SUPABASE_STORAGE_URL + '/', '')
+    if (path.startsWith('prompts/')) {
+      path = path.substring('prompts/'.length)
+    }
     return `${CDN_URL}/${path}`
   }
   return url
