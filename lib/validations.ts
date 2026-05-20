@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const promptSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
   category_id: z.string().uuid('Category is required'),
-  description: z.string().max(500).optional().nullable().or(z.literal('')),
+  description: z.string().optional().nullable().or(z.literal('')),
   content: z.string().min(1, 'Prompt content is required'),
   ai_tool: z.string().min(1, 'At least one AI tool is required'),
   output_type: z.enum(['image', 'video', 'text', 'code', 'audio']),
