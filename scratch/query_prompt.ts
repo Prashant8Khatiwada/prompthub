@@ -11,15 +11,15 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 async function run() {
   const { data, error } = await supabase
     .from('prompts')
-    .select('id, title, slug, thumbnail_url, share_image_url')
-    .eq('status', 'published')
-    .limit(5)
+    .select('id, title, slug, content')
+    .eq('slug', 'product-photoshot')
+    .single()
 
   if (error) {
-    console.error('Error fetching prompts:', error)
+    console.error('Error fetching prompt:', error)
   } else {
-    console.log('Database Records:')
-    console.log(JSON.stringify(data, null, 2))
+    console.log('Database Content for product-photoshot:')
+    console.log(data.content)
   }
 }
 

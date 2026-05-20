@@ -235,7 +235,7 @@ export default function PromptModal({ isOpen, onClose, promptToEdit }: Props) {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
           {promptToEdit ? (
-            <PromptForm defaultValues={promptToEdit} promptId={promptToEdit.id} onSuccess={onClose} />
+            <PromptForm key={promptToEdit.id} defaultValues={promptToEdit} promptId={promptToEdit.id} onSuccess={onClose} />
           ) : mode === 'single' ? (
             <PromptForm onSuccess={onClose} />
           ) : (
