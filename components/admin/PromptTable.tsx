@@ -13,6 +13,8 @@ import {
   ExternalLink,
   Copy,
   Check,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import type { Prompt } from '@/types'
 import PromptModal from './PromptModal'
@@ -43,6 +45,8 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+const PAGE_SIZE = 10
+
 export default function PromptTable({ prompts: initial, subdomain }: Props) {
   const router = useRouter()
   const [prompts, setPrompts] = useState(initial)
@@ -53,7 +57,11 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
   const [editingPrompt, setEditingPrompt] = useState<PromptWithCategory | null>(null)
   const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+
+  const totalPages = Math.max(1, Math.ceil(prompts.length / PAGE_SIZE))
+  const paginated = prompts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const siteUrl = (slug: string) => `/${subdomain}/${slug}`
 
@@ -88,7 +96,13 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
     setDeletingId(id)
     const res = await fetch(`/api/prompts/${id}`, { method: 'DELETE' })
     if (res.ok) {
-      setPrompts(prev => prev.filter(p => p.id !== id))
+      setPrompts(prev => {
+        const next = prev.filter(p => p.id !== id)
+        // If deleting last item on page, go back one page
+        const newTotalPages = Math.max(1, Math.ceil(next.length / PAGE_SIZE))
+        if (page > newTotalPages) setPage(newTotalPages)
+        return next
+      })
     }
     setDeletingId(null)
   }
@@ -107,158 +121,205 @@ export default function PromptTable({ prompts: initial, subdomain }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800">
-      <table className="w-full text-sm overflow-hidden rounded-2xl">
-        <thead>
-          <tr className="border-b border-zinc-800 bg-zinc-900/50">
-            <th className="text-left px-5 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Title</th>
-            <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden md:table-cell">Category</th>
-            <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden lg:table-cell">Tool</th>
-            <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Gate</th>
-            <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</th>
-            <th className="text-center px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Link</th>
-            <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden xl:table-cell">Created</th>
-            <th className="px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-800">
-          {prompts.map((p) => (
-            <tr key={p.id} className={`hover:bg-zinc-900/40 transition-colors ${deletingId === p.id ? 'opacity-40' : ''}`}>
-              <td className="px-5 py-4">
-                <div>
-                  <p className="font-semibold text-white truncate max-w-[200px]">{p.title}</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">/{p.slug}</p>
-                </div>
-              </td>
-              <td className="px-4 py-4 hidden md:table-cell">
-                <span className="text-xs text-zinc-400">{p.categories?.name || 'Uncategorized'}</span>
-              </td>
-              <td className="px-4 py-4 hidden lg:table-cell">
-                <span className="text-xs font-semibold text-zinc-300">{p.ai_tool}</span>
-              </td>
-              <td className="px-4 py-4">
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${GATE_STYLES[p.gate_type]}`}>
-                  {p.gate_type}
-                </span>
-              </td>
-              <td className="px-4 py-4">
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${STATUS_STYLES[p.status]}`}>
-                  {p.status}
-                </span>
-              </td>
-              <td className="px-4 py-4">
-                <div className="flex items-center justify-center gap-2">
-                  <a
-                    href={siteUrl(p.slug)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-zinc-900/50 text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-zinc-800/50 hover:border-indigo-500/20 transition-all"
-                    title="Open Link"
-                  >
-                    <ExternalLink size={16} />
-                  </a>
-                  <button
-                    onClick={() => handleCopyLink(p)}
-                    className={`w-9 h-9 inline-flex items-center justify-center rounded-lg border transition-all ${
-                      copiedId === p.id 
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                        : 'bg-zinc-900/50 text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border-zinc-800/50 hover:border-indigo-500/20'
-                    }`}
-                    title="Copy Link"
-                  >
-                    {copiedId === p.id ? <Check size={16} /> : <Copy size={16} />}
-                  </button>
-                </div>
-              </td>
-              <td className="px-4 py-4 hidden xl:table-cell">
-                <span className="text-xs text-zinc-500">{formatDate(p.created_at)}</span>
-              </td>
-              <td className="px-4 py-4">
-                <div className="flex items-center justify-end gap-2">
-                  <Link
-                    href={`/admin/prompts/${p.id}/view`}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg text-indigo-400 hover:text-white hover:bg-indigo-600/10 border border-transparent hover:border-indigo-500/20 transition-all"
-                    title="View"
-                  >
-                    <Eye size={18} />
-                  </Link>
+    <div className="space-y-4 mb-10">
+      {/* Table with horizontal scroll */}
+      <div className="rounded-2xl border border-zinc-800 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[700px]">
+            <thead>
+              <tr className="border-b border-zinc-800 bg-zinc-900/50">
+                <th className="text-left px-5 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Title</th>
+                <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden md:table-cell">Category</th>
+                <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden lg:table-cell">Tool</th>
+                <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Gate</th>
+                <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</th>
+                <th className="text-center px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Link</th>
+                <th className="text-left px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden xl:table-cell">Created</th>
+                <th className="px-4 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {paginated.map((p) => (
+                <tr key={p.id} className={`hover:bg-zinc-900/40 transition-colors ${deletingId === p.id ? 'opacity-40' : ''}`}>
+                  <td className="px-5 py-4">
+                    <div>
+                      <p className="font-semibold text-white truncate max-w-[200px]">{p.title}</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">/{p.slug}</p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 hidden md:table-cell">
+                    <span className="text-xs text-zinc-400">{p.categories?.name || 'Uncategorized'}</span>
+                  </td>
+                  <td className="px-4 py-4 hidden lg:table-cell">
+                    <span className="text-xs font-semibold text-zinc-300 truncate max-w-[120px] block">{p.ai_tool}</span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${GATE_STYLES[p.gate_type]}`}>
+                      {p.gate_type}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${STATUS_STYLES[p.status]}`}>
+                      {p.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <a
+                        href={siteUrl(p.slug)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-zinc-900/50 text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-zinc-800/50 hover:border-indigo-500/20 transition-all"
+                        title="Open Link"
+                      >
+                        <ExternalLink size={16} />
+                      </a>
+                      <button
+                        onClick={() => handleCopyLink(p)}
+                        className={`w-9 h-9 inline-flex items-center justify-center rounded-lg border transition-all ${copiedId === p.id
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-zinc-900/50 text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border-zinc-800/50 hover:border-indigo-500/20'
+                          }`}
+                        title="Copy Link"
+                      >
+                        {copiedId === p.id ? <Check size={16} /> : <Copy size={16} />}
+                      </button>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 hidden xl:table-cell">
+                    <span className="text-xs text-zinc-500">{formatDate(p.created_at)}</span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/admin/prompts/${p.id}/view`}
+                        className="w-9 h-9 flex items-center justify-center rounded-lg text-indigo-400 hover:text-white hover:bg-indigo-600/10 border border-transparent hover:border-indigo-500/20 transition-all"
+                        title="View"
+                      >
+                        <Eye size={18} />
+                      </Link>
 
-                  <div className="relative">
-                    <button
-                      ref={el => { buttonRefs.current[p.id] = el }}
-                      onClick={() => {
-                        if (openDropdownId === p.id) {
-                          setOpenDropdownId(null)
-                          setDropdownPos(null)
-                        } else {
-                          const rect = buttonRefs.current[p.id]?.getBoundingClientRect()
-                          if (rect) {
-                            setDropdownPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
-                          }
-                          setOpenDropdownId(p.id)
-                        }
-                      }}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all"
-                    >
-                      <MoreHorizontal size={18} />
-                    </button>
-
-                    {openDropdownId === p.id && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-[9998]"
-                          onClick={() => { setOpenDropdownId(null); setDropdownPos(null) }}
-                        />
-                        <div
-                          className="fixed w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-[9999] py-1 overflow-hidden animate-in fade-in zoom-in duration-200"
-                          style={dropdownPos ? { top: dropdownPos.top, right: dropdownPos.right } : {}}
+                      <div className="relative">
+                        <button
+                          ref={el => { buttonRefs.current[p.id] = el }}
+                          onClick={() => {
+                            if (openDropdownId === p.id) {
+                              setOpenDropdownId(null)
+                              setDropdownPos(null)
+                            } else {
+                              const rect = buttonRefs.current[p.id]?.getBoundingClientRect()
+                              if (rect) {
+                                // Clamp right so dropdown never goes off-screen left
+                                const dropdownWidth = 192 // w-48 = 12rem = 192px
+                                const rawRight = window.innerWidth - rect.right
+                                const clampedRight = Math.max(8, Math.min(rawRight, window.innerWidth - dropdownWidth - 8))
+                                setDropdownPos({ top: rect.bottom + 6, right: clampedRight })
+                              }
+                              setOpenDropdownId(p.id)
+                            }
+                          }}
+                          className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all"
                         >
-                          <button
-                            onClick={() => {
-                              setEditingPrompt(p)
-                              setOpenDropdownId(null)
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
-                          >
-                            <Edit2 size={16} />
-                            <span>Edit Prompt</span>
-                          </button>
+                          <MoreHorizontal size={18} />
+                        </button>
 
-                          <button
-                            onClick={() => {
-                              handleToggleStatus(p)
-                              setOpenDropdownId(null)
-                            }}
-                            disabled={togglingId === p.id || isPending}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-50"
-                          >
-                            {p.status === 'published' ? <CloudOff size={16} /> : <Cloud size={16} />}
-                            <span>{p.status === 'published' ? 'Unpublish' : 'Publish'}</span>
-                          </button>
+                        {openDropdownId === p.id && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-[9998]"
+                              onClick={() => { setOpenDropdownId(null); setDropdownPos(null) }}
+                            />
+                            <div
+                              className="fixed w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-[9999] py-1 overflow-hidden animate-in fade-in zoom-in duration-200"
+                              style={dropdownPos ? { top: dropdownPos.top, right: dropdownPos.right } : {}}
+                            >
+                              <button
+                                onClick={() => {
+                                  setEditingPrompt(p)
+                                  setOpenDropdownId(null)
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
+                              >
+                                <Edit2 size={16} />
+                                <span>Edit Prompt</span>
+                              </button>
 
-                          <div className="h-px bg-zinc-800 my-1" />
+                              <button
+                                onClick={() => {
+                                  handleToggleStatus(p)
+                                  setOpenDropdownId(null)
+                                }}
+                                disabled={togglingId === p.id || isPending}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                              >
+                                {p.status === 'published' ? <CloudOff size={16} /> : <Cloud size={16} />}
+                                <span>{p.status === 'published' ? 'Unpublish' : 'Publish'}</span>
+                              </button>
 
-                          <button
-                            onClick={() => {
-                              handleDelete(p.id, p.title)
-                              setOpenDropdownId(null)
-                            }}
-                            disabled={deletingId === p.id}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-colors disabled:opacity-50"
-                          >
-                            <Trash2 size={16} />
-                            <span>Delete</span>
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                              <div className="h-px bg-zinc-800 my-1" />
+
+                              <button
+                                onClick={() => {
+                                  handleDelete(p.id, p.title)
+                                  setOpenDropdownId(null)
+                                }}
+                                disabled={deletingId === p.id}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-colors disabled:opacity-50"
+                              >
+                                <Trash2 size={16} />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs text-zinc-500">
+            Showing <span className="text-zinc-300 font-semibold">{(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, prompts.length)}</span> of <span className="text-zinc-300 font-semibold">{prompts.length}</span> prompts
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={15} />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pg => (
+              <button
+                key={pg}
+                onClick={() => setPage(pg)}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all border ${pg === page
+                  ? 'bg-indigo-600 text-white border-indigo-500'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800 border-zinc-800 hover:border-zinc-700'
+                  }`}
+              >
+                {pg}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {editingPrompt && (
         <PromptModal
