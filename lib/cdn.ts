@@ -1,11 +1,15 @@
-export const SUPABASE_STORAGE_URL = 'https://slbywxgigzuodyrmhdsg.supabase.co/storage/v1/object/public'
-export const CDN_URL = 'https://cdn.creatopedia.tech'
+// Derive storage URL from env var so it works across DB switches
+const SUPABASE_PROJECT_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://slbywxgigzuodyrmhdsg.supabase.co').replace(/\/$/, '')
+export const SUPABASE_STORAGE_URL = `${SUPABASE_PROJECT_URL}/storage/v1/object/public`
+export const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL || 'https://cdn.creatopedia.tech'
 
 const STORAGE_BUCKETS = ['prompts', 'avatars', 'images', 'banners', 'assets']
 const INSTAGRAM_HOSTNAMES = ['cdninstagram.com', 'scontent.cdninstagram.com', 'instagram.com']
 
 function isSupabaseStorageUrl(url: string): boolean {
-  return url?.startsWith(SUPABASE_STORAGE_URL)
+  // Match both current project and any supabase.co storage URL
+  return url?.startsWith(SUPABASE_STORAGE_URL) ||
+    /https:\/\/[a-z]+\.supabase\.co\/storage\/v1\/object\/public/.test(url)
 }
 
 function isInstagramUrl(url: string): boolean {
@@ -20,7 +24,8 @@ function isInstagramUrl(url: string): boolean {
 function isExternalUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
-    return parsed.hostname !== 'slbywxgigzuodyrmhdsg.supabase.co'
+    // Consider any supabase.co domain as non-external (storage)
+    return !parsed.hostname.endsWith('.supabase.co')
   } catch {
     return false
   }
@@ -41,11 +46,15 @@ export function toCdnUrl(url: string | null | undefined): string | null {
   if (!url) return null
   if (isInstagramUrl(url)) return url
   if (isSupabaseStorageUrl(url)) {
-    let path = url.replace(SUPABASE_STORAGE_URL + '/', '')
-    if (path.startsWith('prompts/')) {
-      path = path.substring('prompts/'.length)
+    // Strip any supabase storage prefix to get the path after /public/
+    const storageMatch = url.match(/\/storage\/v1\/object\/public\/(.+)$/)
+    if (storageMatch) {
+      let path = storageMatch[1]
+      if (path.startsWith('prompts/')) {
+        path = path.substring('prompts/'.length)
+      }
+      return `${CDN_URL}/${path}`
     }
-    return `${CDN_URL}/${path}`
   }
   return url
 }

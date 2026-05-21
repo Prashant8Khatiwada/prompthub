@@ -445,7 +445,7 @@ export default function UserProfilePageClient({ creator, igUser, igFeed, categor
               <div
                 className={viewMode === 'grid'
                   ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 animate-in fade-in duration-500"
-                  : "flex flex-col gap-4 max-w-3xl mx-auto w-full animate-in fade-in duration-500"
+                  : "flex flex-col gap-4 w-full animate-in fade-in duration-500"
                 }
               >
                 {(() => {
