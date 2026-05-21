@@ -1,11 +1,19 @@
 #!/bin/bash
 
 # Creatopedia Docker Build and Push Script
-# This script uses the production keys provided to build and push the Docker image.
+# This script loads local environment variables and builds the Docker image.
 
-# Load environment variables from .env if it exists
+# Load environment variables from .env.local first, then .env as a fallback.
+if [ -f .env.local ]; then
+  set -a
+  . ./.env.local
+  set +a
+fi
+
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+  set -a
+  . ./.env
+  set +a
 fi
 
 # Take Docker username as an environment variable or default to "local"
@@ -23,17 +31,21 @@ echo "--- Starting Docker build for $IMAGE_TAG (Platform: linux/amd64) ---"
 # Disable Next.js cache for fresh builds
 export NEXT_DISABLE_CACHE=1
 
-# Use the values from .env or fall back to hardcoded defaults
-# Note: For NEXT_PUBLIC_BASE_DOMAIN, we ensure it's just the domain without protocol for the layout.tsx logic
-BASE_DOMAIN=${NEXT_PUBLIC_BASE_DOMAIN:-"creatopedia.tech"}
+# Disable Next.js cache for fresh builds
+export NEXT_DISABLE_CACHE=1
+
+# Use the loaded values or fall back to the current environment defaults.
+# For NEXT_PUBLIC_BASE_DOMAIN, keep only the host part for the layout.tsx logic.
+BASE_DOMAIN=${NEXT_PUBLIC_BASE_DOMAIN:-"localhost:3000"}
 BASE_DOMAIN=${BASE_DOMAIN#https://}
 BASE_DOMAIN=${BASE_DOMAIN#http://}
+BASE_DOMAIN=${BASE_DOMAIN%/}
 
 docker build \
   --platform linux/amd64 \
-  --build-arg NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL:-"https://slbywxgigzuodyrmhdsg.supabase.co"}" \
-  --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-"sb_publishable_-mTGIQxaESrC94yQHTmgaA_0czKQo30"}" \
-  --build-arg SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsYnl3eGdpZ3p1b2R5cm1oZHNnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzA5NzQ3MSwiZXhwIjoyMDkyNjczNDcxfQ.QrgqANXTZMhYCLttHREaLny_cKEMDSxgMbIIvAr8f-s"}" \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL:-"https://dtnsrezhudhqpwvqbcfa.supabase.co"}" \
+  --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-"sb_publishable_ZH9EP_9TrqC7zLXy-dGVjg_vSfGbAPL"}" \
+  --build-arg SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bnNyZXpodWRocXB3dnFiY2ZhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTI1NzM1OSwiZXhwIjoyMDk0ODMzMzU5fQ.5_dBk4YZ1wG3HI9B3SXjEq9-ujUW3Q_6Jy3VlNDWvoA"}" \
   --build-arg NEXT_PUBLIC_POSTHOG_KEY="${NEXT_PUBLIC_POSTHOG_KEY:-""}" \
   --build-arg NEXT_PUBLIC_POSTHOG_HOST="${NEXT_PUBLIC_POSTHOG_HOST:-"https://app.posthog.com"}" \
   --build-arg INSTAGRAM_ACCESS_TOKEN="${INSTAGRAM_ACCESS_TOKEN:-"IGAAaNcwNKpMBBZAFpOOEd2Yk1PeVVpdzdXQWNnRnpyWHNTMlhBN1AzU3dEZAmZArS09SMDlNTTl1OTk2TXVpTXFHeWJqT1dadVo2cE9GOVJSdGNOUEdUMGgwNGV5TE9nUDFzOFhjS21ZALVlORGlIUmp3RGo5bEZArX2U1b29Ta3RBNAZDZD"}" \
