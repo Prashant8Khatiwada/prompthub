@@ -553,7 +553,7 @@ export default function EnhancedPublicPromptUI({
                   <div
                     className={viewMode === 'grid'
                       ? "grid grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500"
-                      : "flex flex-col gap-4 max-w-2xl mx-auto w-full animate-in fade-in duration-500"
+                      : "flex flex-col gap-4 w-full animate-in fade-in duration-500"
                     }
                   >
                     {filteredLibraryPrompts.map(p => {

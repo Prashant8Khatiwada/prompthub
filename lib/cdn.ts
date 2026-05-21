@@ -39,6 +39,7 @@ const URL_FIELDS = new Set([
   'banner_url',
   'logo_url',
   'media_url',
+  'avatar_url',
 ])
 
 export function toCdnUrl(url: string | null | undefined): string | null {
