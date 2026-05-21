@@ -3,7 +3,6 @@ const SUPABASE_PROJECT_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://s
 export const SUPABASE_STORAGE_URL = `${SUPABASE_PROJECT_URL}/storage/v1/object/public`
 export const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL || 'https://cdn.creatopedia.tech'
 
-const STORAGE_BUCKETS = ['prompts', 'avatars', 'images', 'banners', 'assets']
 const INSTAGRAM_HOSTNAMES = ['cdninstagram.com', 'scontent.cdninstagram.com', 'instagram.com']
 
 function isSupabaseStorageUrl(url: string): boolean {
