@@ -8,9 +8,9 @@ export async function GET() {
   const supabase = createClient(cookieStore)
 
   const [categoriesRes, creatorsRes, promptsRes] = await Promise.all([
-    supabase.from('categories').select('*').order('name'),
-    supabase.from('creators').select('*'),
-    supabase.from('prompts').select('*').eq('status', 'published')
+    supabase.from('categories').select('id, name, slug, icon, featured').order('name'),
+    supabase.from('creators').select('id, name, handle, subdomain, bio, avatar_url, brand_color, instagram_url, tiktok_url, ads_enabled, ad_frequency'),
+    supabase.from('prompts').select('id, title, slug, ai_tool, output_type, gate_type, content_type, thumbnail_url, description, category_id, creator_id, video_url').eq('status', 'published')
   ])
 
   // Fix null avatar_url directly in API

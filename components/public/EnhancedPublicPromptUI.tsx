@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { InstagramVerifiedBadge } from '@/components/ui/InstagramVerifiedBadge'
 import { getBaseDomain } from '@/lib/constants'
+import { transformCdnUrls } from '@/lib/cdn'
 
 
 
@@ -155,13 +156,13 @@ export default function EnhancedPublicPromptUI({
       try {
         const { data: promptsData, error: pError } = await supabase
           .from('prompts')
-          .select('*, categories(name)')
+          .select('id, title, slug, status, ai_tool, output_type, gate_type, content_type, thumbnail_url, description, category_id, created_at, categories(name)')
           .eq('creator_id', creator.id)
           .eq('status', 'published')
           .order('created_at', { ascending: false })
 
         if (promptsData && !pError) {
-          setLibraryPrompts(promptsData as unknown as Prompt[])
+          setLibraryPrompts(transformCdnUrls(promptsData) as unknown as Prompt[])
 
           const categoryIds = [
             ...new Set(promptsData.map((p) => p.category_id).filter(Boolean)),
