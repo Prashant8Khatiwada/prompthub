@@ -7,6 +7,7 @@ import { AdPlacementData } from '@/components/public/AdBanner'
 import { headers } from 'next/headers'
 import CreatopediaLanding from '@/components/public/CreatopediaLanding'
 import { getBaseDomain } from '@/lib/constants'
+import { transformCdnUrls } from '@/lib/cdn'
 
 export const revalidate = 60
 
@@ -27,13 +28,14 @@ export async function generateMetadata(): Promise<Metadata> {
       : hostWithoutPort.replace(`.${baseDomain}`, '')
 
     if (subdomain && subdomain !== 'www' && subdomain !== 'admin' && subdomain !== 'api') {
-      const { data: creator } = await adminClient
+      const { data: rawCreator } = await adminClient
         .from('creators')
         .select('id, name, handle, bio, avatar_url, subdomain')
         .eq('subdomain', subdomain)
         .single()
 
-      if (creator) {
+      if (rawCreator) {
+        const creator = transformCdnUrls(rawCreator) as typeof rawCreator
         const igUser = await fetchInstagramUser(creator.id)
         const avatarUrl = creator.avatar_url || igUser?.profile_picture_url
         const shareUrl = `https://${creator.subdomain}.${baseDomain}`
@@ -84,20 +86,23 @@ export default async function LandingPage() {
     if (subdomain && subdomain !== 'www' && subdomain !== 'admin' && subdomain !== 'api') {
       // FIX: Use adminClient to bypass RLS for public anonymous reads in production
       const supabase = adminClient
-      const { data: creator } = await supabase
+      const { data: rawCreator } = await supabase
         .from('creators')
         .select('*')
         .eq('subdomain', subdomain)
         .single()
 
-      if (creator) {
+      if (rawCreator) {
+        const creator = transformCdnUrls(rawCreator) as typeof rawCreator
         // Fetch all published prompts for this creator
-        const { data: prompts } = await supabase
+        const { data: rawPrompts } = await supabase
           .from('prompts')
           .select('*, categories(name)')
           .eq('creator_id', creator.id)
           .eq('status', 'published')
           .order('created_at', { ascending: false })
+
+        const prompts = transformCdnUrls(rawPrompts || [])
 
         // Fetch all categories that have published prompts from this creator
         const categoryIds = [

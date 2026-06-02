@@ -120,13 +120,14 @@ export default async function PublicPromptPage({ params }: Params) {
   const supabase = adminClient
 
   // 1. Fetch creator by subdomain directly from Supabase (Bypassing unstable_cache)
-  const { data: creator } = await supabase
+  const { data: rawCreator } = await supabase
     .from('creators')
     .select('*')
     .eq('subdomain', subdomain)
     .single()
 
-  if (!creator) notFound()
+  if (!rawCreator) notFound()
+  const creator = transformCdnUrls(rawCreator) as typeof rawCreator
 
   // 2. Fetch published prompt directly from Supabase
   const { data: rawPrompt } = await supabase

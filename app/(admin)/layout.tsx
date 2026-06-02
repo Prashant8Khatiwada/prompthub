@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/admin/Sidebar'
+import { transformCdnUrls } from '@/lib/cdn'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -10,11 +11,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   
   if (!user) redirect('/login')
 
-  const { data: creator } = await supabase
+  const { data: rawCreator } = await supabase
     .from('creators')
     .select('name,avatar_url,handle')
     .eq('id', user.id)
     .single()
+
+  const creator = rawCreator ? transformCdnUrls(rawCreator) : null
 
   return (
     <div className="flex h-screen bg-zinc-950 overflow-hidden">

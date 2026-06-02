@@ -52,13 +52,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   }
 
   // Find creator by actual subdomain OR handle
-  const { data: creator } = await supabase
+  const { data: rawCreator } = await supabase
     .from('creators')
     .select('id, name, handle, bio, avatar_url, subdomain')
     .or(`subdomain.eq.${actualCreatorSubdomain},handle.eq.${actualCreatorSubdomain}`)
     .single()
 
-  if (!creator) {
+  if (!rawCreator) {
     if (isSubdomainHost && !promptSlug) {
       return {
         title: 'Creatopedia | Where Creators Lead, World Follows',
@@ -67,6 +67,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     }
     return { title: 'Not Found' }
   }
+
+  const creator = transformCdnUrls(rawCreator) as typeof rawCreator
 
   // ─── MODE A: PROMPT METADATA ───
   if (promptSlug) {
@@ -179,18 +181,20 @@ export default async function UserProfilePage({ params }: Params) {
   }
 
   // 1. Find creator by actual subdomain OR handle
-  const { data: creator } = await supabase
+  const { data: rawCreator } = await supabase
     .from('creators')
     .select('*')
     .or(`subdomain.eq.${actualCreatorSubdomain},handle.eq.${actualCreatorSubdomain}`)
     .single()
 
-  if (!creator) {
+  if (!rawCreator) {
     if (isSubdomainHost && !promptSlug) {
       return <CreatopediaLanding />
     }
     notFound()
   }
+
+  const creator = transformCdnUrls(rawCreator) as typeof rawCreator
 
   // ─── MODE A: RENDER PROMPT DETAIL PAGE (If promptSlug is present) ───
   if (promptSlug) {
